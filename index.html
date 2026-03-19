@@ -239,9 +239,10 @@ function buildDateSelect(){ /* replaced by calendar */ }
 
 function buildTabs(){
   const items=[{key:"overview",label:"Overview"},...PL];
-  document.getElementById("tabs").innerHTML=items.map(t=>
-    `<button class="tab${tab===t.key?" on":""}" onclick="st('${t.key}')">${t.label}</button>`
-  ).join("");
+  document.getElementById("tabs").innerHTML=items.map(t=>{
+    const dot = t.color ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${t.color};margin-right:5px;vertical-align:middle;flex-shrink:0"></span>` : '';
+    return `<button class="tab${tab===t.key?" on":""}" onclick="st('${t.key}')" style="display:inline-flex;align-items:center;gap:0">${dot}${t.label}</button>`;
+  }).join("");
 }
 
 // ═══════════════════════════════════════════════════════
@@ -488,7 +489,7 @@ function buildGoogleCampsHTML(camps, ds){
     const sig = _SIG[_adSig({spend:c.spend,sv:c.sv||0,conv:c.conv||0,roas:c.roas||0,cpo:c.cpo||0})];
     const tag = sig.tag ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:${sig.tb};color:${sig.tc};margin-left:6px;white-space:nowrap">${sig.tag}</span>` : '';
     return `<tr style="background:${sig.bg};border-left:3px solid ${sig.border}">
-      <td style="font-size:11px;color:#444;max-width:220px;word-break:break-word;padding-left:6px">${c.name}${tag}</td>
+      <td style="font-size:11px;color:#444;max-width:220px;word-break:break-word;padding-left:6px;cursor:pointer" data-adname="${c.name.replace(/"/g,'&#39;')}" onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()"><span style="border-bottom:1px dashed #ccc">${c.name}</span>${tag}</td>
       <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${fR(c.roas||0)}</td>
       <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${fS(c.spend)}</td>
       <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${fSV(c.sv||0)}</td>
@@ -530,23 +531,66 @@ function buildSnapAdsHTML(ads, adNames, ds, label){
     { label:'KU / QA / BH',     pattern:/Snap_KU|Snap_KW/i },
     { label:'GCC / Retargeting', pattern:/Snap_GCC|GCC_Ret/i },
   ];
+  const SNAP_GEO_KEY = {'UAE':'uae','KSA':'ksa','KU / QA / BH':'ku','GCC / Retargeting':'cat'};
   function detectSnapGeo(n){ for(const g of SNAP_GEO){ if(g.pattern.test(n)) return g.label; } return null; }
+
+  // Compute period geo spend from D.snap daily data for scaling
+  // All-time geo totals (from full daily array) used as baseline
+  const allDays = D.snap || [];
+  const geoAllTime = {uae:{spend:0,sv:0,conv:0}, ksa:{spend:0,sv:0,conv:0}, ku:{spend:0,sv:0,conv:0}};
+  const geoPeriod  = {uae:{spend:0,sv:0,conv:0}, ksa:{spend:0,sv:0,conv:0}, ku:{spend:0,sv:0,conv:0}};
+  allDays.forEach(r => {
+    ['uae','ksa','ku'].forEach(gk => {
+      const g = r[gk]||{};
+      if(!g.spend) return;
+      geoAllTime[gk].spend += g.spend||0;
+      geoAllTime[gk].sv    += g.sv||0;
+      geoAllTime[gk].conv  += g.conv||0;
+      if(ds.includes(r.d)){
+        geoPeriod[gk].spend += g.spend||0;
+        geoPeriod[gk].sv    += g.sv||0;
+        geoPeriod[gk].conv  += g.conv||0;
+      }
+    });
+  });
+  // Scale ratios per geo
+  const scaleRatio = {};
+  ['uae','ksa','ku'].forEach(gk => {
+    scaleRatio[gk] = geoAllTime[gk].spend > 0 ? geoPeriod[gk].spend / geoAllTime[gk].spend : 1;
+  });
 
   const merged = {};
   SNAP_GEO.forEach(g => merged[g.label] = {});
 
   adNames.forEach(name => {
-    let recs = ds.map(d=>(ads[name]||[]).find(x=>x.d===d)).filter(r=>r&&r.spend>0);
-    if (!recs.length) recs = (ads[name]||[]).filter(r=>r&&r.spend>0);
-    const agg = aggRecords(recs);
-    if (!agg.spend) return;
-    // Snap conv is often 0 in ad export — derive from sv / avg purchase value (~$170)
+    // Always use MTD snapshot as base, then scale by period ratio
+    const mtdRecs = (ads[name]||[]).filter(r=>r&&r.spend>0);
+    if(!mtdRecs.length) return;
+    const mtdAgg = aggRecords(mtdRecs);
+    if(!mtdAgg.spend) return;
+
+    const geoLabel = detectSnapGeo(name);
+    if (!geoLabel) return;
+    const gk = SNAP_GEO_KEY[geoLabel] || 'uae';
+    const ratio = scaleRatio[gk] !== undefined ? scaleRatio[gk] : 1;
+
+    // Scale MTD values by period ratio
+    const agg = {
+      spend: Math.round(mtdAgg.spend * ratio * 100) / 100,
+      sv:    Math.round((mtdAgg.sv||0) * ratio * 100) / 100,
+      conv:  Math.round((mtdAgg.conv||0) * ratio),
+      atc:   Math.round((mtdAgg.atc||0) * ratio),
+      roas:  mtdAgg.roas || 0,
+    };
+    if(!agg.spend) return;
+
+    // Derive conv from sv if still 0
     if (agg.sv > 0 && agg.conv === 0) {
       agg.conv = Math.max(1, Math.round(agg.sv / 170));
-      agg.cpo  = Math.round(agg.spend / agg.conv * 100) / 100;
     }
-    const geo = detectSnapGeo(name);
-    if (!geo) return;
+    agg.cpo = agg.conv > 0 ? Math.round(agg.spend / agg.conv * 100) / 100 : 0;
+
+    const geo = geoLabel;
     const dn = name
       .replace(/_En_GLO.*$/i,'')
       .replace(/_mar\d+(_v\d+)?$/i,'')
@@ -620,14 +664,44 @@ function buildTTAdsHTML(ads, adNames, ds, label, periodOverride){
   const merged = {};
   TT_GEO.forEach(g => merged[g.label] = {});
 
+  // Compute period scale ratios from D.tiktok daily data
+  const ttAllDays = D.tiktok || [];
+  const ttGeoKeys = {uae:'uae',ksa:'ksa',ku:'ku',cat:'cat'};
+  const ttGeoAllTime = {uae:{spend:0}, ksa:{spend:0}, ku:{spend:0}, cat:{spend:0}};
+  const ttGeoPeriod  = {uae:{spend:0}, ksa:{spend:0}, ku:{spend:0}, cat:{spend:0}};
+  ttAllDays.forEach(r => {
+    ['uae','ksa','ku','cat'].forEach(gk => {
+      const g=r[gk]||{}; if(!g.spend) return;
+      ttGeoAllTime[gk].spend += g.spend||0;
+      if(ds.includes(r.d)) ttGeoPeriod[gk].spend += g.spend||0;
+    });
+  });
+  const ttScaleRatio = {};
+  ['uae','ksa','ku','cat'].forEach(gk => {
+    ttScaleRatio[gk] = ttGeoAllTime[gk].spend > 0 ? ttGeoPeriod[gk].spend / ttGeoAllTime[gk].spend : 1;
+  });
+  const TT_GEO_KEY = {'UAE':'uae','KSA':'ksa','KU / QA / BH':'ku','GCC / Retargeting':'cat'};
+
   adNames.forEach(name => {
-    // Use ds; fall back to any entry (MTD snapshot) if nothing matches
-    let recs = ds.map(d=>(ads[name]||[]).find(x=>x.d===d)).filter(r=>r&&r.spend>0);
-    if (!recs.length) recs = (ads[name]||[]).filter(r=>r&&r.spend>0);
-    const agg = aggRecords(recs);
-    if (!agg.spend) return;
+    // Always use MTD snapshot, scale by period ratio
+    const mtdRecs = (ads[name]||[]).filter(r=>r&&r.spend>0);
+    if (!mtdRecs.length) return;
+    const mtdAgg = aggRecords(mtdRecs);
+    if (!mtdAgg.spend) return;
     const geo = detectTTGeo(name);
     if (!geo) return;
+    const gk = TT_GEO_KEY[geo] || 'uae';
+    const ratio = ttScaleRatio[gk] !== undefined ? ttScaleRatio[gk] : 1;
+    const agg = {
+      spend: Math.round(mtdAgg.spend * ratio * 100)/100,
+      sv:    Math.round((mtdAgg.sv||0) * ratio * 100)/100,
+      conv:  Math.round((mtdAgg.conv||0) * ratio),
+      atc:   Math.round((mtdAgg.atc||0) * ratio),
+      roas:  mtdAgg.roas||0,
+      cpo:   0,
+    };
+    if(!agg.spend) return;
+    agg.cpo = agg.conv>0 ? Math.round(agg.spend/agg.conv*100)/100 : 0;
     // Strip suffixes and merge
     const dn = name
       .replace(/_En_GLO.*$/i,'')
@@ -1065,7 +1139,7 @@ function buildCampaignTable(datesArr, label){
   ).join("")}</tr>`;
 
   return `<div class="cc" style="margin-bottom:16px">
-    <div class="clbl">Meta — Overall Performance by Campaign — ${label}</div>
+    <div class="clbl">Overall Performance by Campaign — ${label}</div>
     <div style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:12px">
       <thead>${hdr}</thead>
@@ -1345,13 +1419,80 @@ function renderTopAdsInner(baseDates, baseLabel, N, marketFilter, periodFilter){
   ].join('');
 
   const periodBtns = [
-    fBtn('1d',  'Last Day',    periodFilter, 'topAdsSetPeriod'),
     fBtn('7d',  'Last 7 days', periodFilter, 'topAdsSetPeriod'),
     fBtn('3d',  'Last 3 days', periodFilter, 'topAdsSetPeriod'),
   ].join('');
 
+  // ── TikTok ads (MTD snapshot, merged by base name, grouped by geo)
+  function buildPlatAdsRows(platKey, geoPatterns, nameStripRx){
+    const tdFirst = `padding:9px 10px;border-bottom:1px solid #f4f4ef;font-size:11px;color:#333;max-width:260px;word-break:break-word;line-height:1.5`;
+    const tdC = `padding:8px 10px;border-bottom:1px solid #f4f4ef;font-family:'DM Mono',monospace;font-size:12px;text-align:right`;
+    const platAds = GRANULAR[platKey]?.ads || {};
+    const platMerged = {};
+    Object.entries(platAds).forEach(([name, arr]) => {
+      const baseName = name
+        .replace(/_En_GLO.*$/i,'')
+        .replace(/_mar\d+(_v\d+)?$/i,'')
+        .replace(/_v\d+$/i,'')
+        .replace(/\s*[-–]\s*Copy\s*\d*$/i,'')
+        .trim().substring(0,50);
+      if(!platMerged[baseName]) platMerged[baseName]={recs:[],market:'other'};
+      let mkt='other';
+      for(const [pat,geo] of geoPatterns){ if(pat.test(name)){ mkt=geo; break; } }
+      platMerged[baseName].market = mkt;
+      const recs = ds.map(d=>(arr||[]).find(x=>x.d===d)).filter(r=>r&&r.spend>0);
+      if(!recs.length) platMerged[baseName].recs.push(...arr.filter(r=>r&&r.spend>0));
+      else platMerged[baseName].recs.push(...recs);
+    });
+    return Object.entries(platMerged)
+      .map(([nm,{recs,market}])=>{
+        const agg=aggRecs(recs); if(agg.spend<=0) return null;
+        if(marketFilter!=='all'&&market!==marketFilter) return null;
+        // Fix sv/conv if missing
+        if(agg.sv<=0&&agg.roas>0) agg.sv=Math.round(agg.spend*agg.roas*100)/100;
+        if(agg.conv===0&&agg.sv>0) agg.conv=Math.max(1,Math.round(agg.sv/170));
+        if(agg.cpo<=0&&agg.conv>0) agg.cpo=Math.round(agg.spend/agg.conv*100)/100;
+        if(agg.avgPV<=0&&agg.conv>0) agg.avgPV=Math.round(agg.sv/agg.conv*100)/100;
+        return {name:nm,agg,market};
+      })
+      .filter(Boolean)
+      .sort((a,b)=>(b.agg.sv||0)-(a.agg.sv||0))
+      .slice(0,8)
+      .map(ad=>{
+        const a=ad.agg, h=a.spend>0;
+        const s=SIG[adSignal(a)];
+        const tag=s.tag?`<span style="font-size:9px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:20px;background:${s.tb};color:${s.tc};margin-left:7px;vertical-align:middle;white-space:nowrap">${s.tag}</span>`:'';
+        return `<tr style="background:${s.bg};border-left:3px solid ${s.border}">
+          <td style="${tdFirst};cursor:pointer" data-adname="${ad.name.replace(/"/g,'&#39;')}" onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()"><span style="color:#1a1a1a;border-bottom:1px dashed #ccc">${ad.name}</span>${tag}</td>
+          <td style="${tdC}">${h?fC(a.conv):'—'}</td>
+          <td style="${tdC}">${h?fR(a.roas):'—'}</td>
+          <td style="${tdC}">${h?fS(a.spend):'—'}</td>
+          <td style="${tdC}">${a.hasAtc?fC(a.atc):'—'}</td>
+          <td style="${tdC}">${h&&a.cpo>0?fCPO(a.cpo):'—'}</td>
+          <td style="${tdC}">${h&&a.avgPV>0?fSV(a.avgPV):'—'}</td>
+          <td style="${tdC}">${h&&a.sv>0?fSV(a.sv):'—'}</td>
+        </tr>`;
+      }).join('');
+  }
+
+  const ttRows   = buildPlatAdsRows('tiktok', [[/Tiktok_UAE/i,'uae'],[/Tiktok_KSA/i,'ksa'],[/Tiktok_Ku|Tiktok_KW/i,'ku'],[/Tiktok_GCC|Retargeting/i,'cat']]);
+  const snapRows = buildPlatAdsRows('snap',   [[/Snap_UAE|Snapchat_UAE/i,'uae'],[/Snap_KSA|Snapchat_KSA/i,'ksa'],[/Snap_KU|Snap_KW/i,'ku'],[/Snap_GCC/i,'cat']]);
+
+  function platSection(label, color, bodyRows){
+    if(!bodyRows) return '';
+    return `<div style="margin-bottom:2px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.05em;color:#555;padding:6px 10px;background:#f5f5f0;border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:7px">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color}"></span>${label}
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:12px;margin-bottom:10px">
+        <thead>${hdr}</thead>
+        <tbody style="color:#1a1a1a">${bodyRows||`<tr><td colspan="8" style="text-align:center;padding:14px;color:#aaa;font-size:12px">No data for this selection</td></tr>`}</tbody>
+      </table>
+    </div>`;
+  }
+
   return `<div class="cc" style="margin-bottom:16px" id="top-ads-card">
-    <div class="clbl">Meta — Top Performing Ads — ${periodLabel ? periodLabel.replace(" · ","") : baseLabel}</div>
+    <div class="clbl">Overall — Top Performing Ads — ${periodLabel ? periodLabel.replace(" · ","") : baseLabel}</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center">
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <span style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.05em;margin-right:2px">MARKET</span>
@@ -1364,10 +1505,9 @@ function renderTopAdsInner(baseDates, baseLabel, N, marketFilter, periodFilter){
       </div>
     </div>
     <div style="overflow-x:auto" id="top-ads-table-wrap">
-    <table style="width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:12px">
-      <thead>${hdr}</thead>
-      <tbody style="color:#1a1a1a">${rows}</tbody>
-    </table>
+      ${platSection('Meta',    '#1877F2', rows)}
+      ${platSection('TikTok',  '#EE1D52', ttRows)}
+      ${platSection('Snap',    '#FFFC00', snapRows)}
     </div>
   </div>`;
 }
@@ -1759,8 +1899,9 @@ function perfRowSignal(name, agg){
   const sig = AD_SIG[adRowSignal(agg)];
   const tag = sig.tag ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:${sig.tb};color:${sig.tc};margin-left:6px;white-space:nowrap">${sig.tag}</span>` : '';
   const trStyle = `background:${sig.bg};border-left:3px solid ${sig.border}`;
+  const safeName = name.replace(/"/g,'&#39;');
   return `<tr style="${trStyle}">
-    <td style="font-size:11px;color:#444;max-width:200px;word-break:break-word;padding-left:6px">${name}${tag}</td>
+    <td style="font-size:11px;color:#444;max-width:200px;word-break:break-word;padding-left:6px;cursor:pointer" data-adname="${safeName}" onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()"><span style="border-bottom:1px dashed #ccc">${name}</span>${tag}</td>
     ${['roas','spend','sv','conv','cpo'].map((k,i) => {
       if(k==='roas') return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${hasSpend ? fR(agg.roas||0) : '—'}</td>`;
       if(k==='spend') return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${hasSpend ? fS(agg.spend) : '—'}</td>`;
@@ -1939,8 +2080,9 @@ function perfRowSignalOther(name, agg, useSignal=true){
   const h = agg && agg.spend > 0;
   const sig = useSignal ? _SIG[_adSig(agg)] : {bg:'',border:'transparent',tag:'',tc:'',tb:''};
   const tag = sig.tag ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:${sig.tb};color:${sig.tc};margin-left:6px;white-space:nowrap">${sig.tag}</span>` : '';
+  const safeName = name.replace(/"/g,'&#39;');
   return `<tr style="background:${sig.bg};border-left:3px solid ${sig.border}">
-    <td style="font-size:11px;color:#444;max-width:200px;word-break:break-word;padding-left:6px">${name}${tag}</td>
+    <td style="font-size:11px;color:#444;max-width:200px;word-break:break-word;padding-left:6px;cursor:pointer" data-adname="${safeName}" onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()"><span style="border-bottom:1px dashed #ccc">${name}</span>${tag}</td>
     <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fR(agg.roas||0):'—'}</td>
     <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fS(agg.spend):'—'}</td>
     <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fSV(agg.sv||0):'—'}</td>
@@ -2183,17 +2325,52 @@ window.st = t => { tab=t; render(); };
 let _ahcChart = null;
 
 function getAdDailyData(baseName){
-  // Collect per-day data for an ad by merging all key variants
-  const metaAds = GRANULAR.meta?.ads || {};
-  const dayMap = {}; // date → record
+  // Search across ALL platform ad granular data
+  const allAds = {
+    ...( GRANULAR.meta?.ads   || {} ),
+    ...( GRANULAR.tiktok?.ads || {} ),
+    ...( GRANULAR.snap?.ads   || {} ),
+    ...( GRANULAR.google?.ads || {} ),
+  };
+  const dayMap = {};
 
-  Object.entries(metaAds).forEach(([name, arr]) => {
-    const kBase = name.replace(/_mar1[3-9](_v[12])?$/, '').replace(/_v[12]$/, '');
-    if(kBase !== baseName) return;
+  // Strip suffixes for comparison
+  const normalize = n => n
+    .replace(/_En_GLO.*$/i,'')
+    .replace(/_mar\d+(_v\d+)?$/i,'')
+    .replace(/_v\d+$/i,'')
+    .replace(/\s*[-–]\s*Copy\s*\d*$/i,'')
+    .trim();
+
+  Object.entries(allAds).forEach(([name, arr]) => {
+    if(normalize(name) !== baseName && name !== baseName) return;
     arr.forEach(r => {
-      if(r && r.d && !dayMap[r.d]) dayMap[r.d] = r;
+      if(!r || !r.d) return;
+      if(!dayMap[r.d]) dayMap[r.d] = {spend:0,sv:0,conv:0,atc:0,wR:0,roas:0};
+      const e = dayMap[r.d];
+      e.spend += r.spend||0;
+      e.sv    += r.sv||0;
+      e.conv  += r.conv||0;
+      e.atc   += r.atc||0;
+      e.wR    += (r.roas||0)*(r.spend||0);
+      e.roas   = e.spend>0 ? e.wR/e.spend : 0;
     });
   });
+
+  // If we got MTD snapshot entries (non "Mar N" dates), distribute evenly
+  const mtdEntries = Object.entries(dayMap).filter(([d]) => !d.startsWith('Mar '));
+  if(mtdEntries.length && !Object.keys(dayMap).some(d=>d.startsWith('Mar '))) {
+    // Use MTD total and spread across ALL_DATES evenly
+    const mtd = mtdEntries[0][1];
+    const n = ALL_DATES.length;
+    return ALL_DATES.map(d => ({
+      d, spend: Math.round(mtd.spend/n*100)/100,
+      sv: Math.round(mtd.sv/n*100)/100,
+      conv: Math.round(mtd.conv/n),
+      atc: Math.round(mtd.atc/n),
+      roas: mtd.roas
+    }));
+  }
 
   return ALL_DATES.map(d => dayMap[d] || null);
 }
