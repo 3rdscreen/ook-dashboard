@@ -1929,24 +1929,99 @@ function renderGranular(pk, dates) {
   const ads = gran.ads || {};
   let html = '';
 
-  // ── FOLLOWERS campaign — shown separately (brand awareness, no purchase ROAS)
+  // ── FOLLOWERS / BRAND AWARENESS campaign — rich widget
   const followerRecs = ds.map(d=>(adsets[META_FOLLOWERS_KEY]||[]).find(x=>x.d===d)).filter(Boolean);
   if (followerRecs.length) {
     const fSpend = followerRecs.reduce((s,r)=>s+(r.spend||0),0);
-    const fConv  = followerRecs.reduce((s,r)=>s+(r.conv||0),0);
+    const fVisits = followerRecs.reduce((s,r)=>s+(r.conv||0),0);
     if (fSpend > 0) {
-      html += `<div class="cc" style="margin-top:4px">
-        <div class="clbl">FOLLOWERS CAMPAIGN — ${label}</div>
-        <table class="gtbl">
-          <thead><tr><th>Campaign</th><th style="text-align:right">Spend</th><th style="text-align:right">Profile Visits</th><th style="text-align:right">CPF</th></tr></thead>
-          <tbody><tr>
-            <td style="font-size:11px;color:#444">GCC Brand — Social Followers</td>
-            <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${fS(fSpend)}</td>
-            <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${Math.round(fConv).toLocaleString()}</td>
-            <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${fConv>0?"$"+( fSpend/fConv).toFixed(3):"—"}</td>
-          </tr></tbody>
-        </table>
+      const cpv = fVisits>0 ? fSpend/fVisits : 0;
+      // Daily trend data — all dates, followers recs mapped
+      const allFollRecs = (adsets[META_FOLLOWERS_KEY]||[]);
+      const dailySpend  = ALL_DATES.map(d=>{ const r=allFollRecs.find(x=>x.d===d); return r?+(r.spend||0).toFixed(2):null; });
+      const dailyVisits = ALL_DATES.map(d=>{ const r=allFollRecs.find(x=>x.d===d); return r?Math.round(r.conv||0):null; });
+      const dailyCPV    = ALL_DATES.map((d,i)=>{ const sp=dailySpend[i],vi=dailyVisits[i]; return (sp&&vi&&vi>0)?+(sp/vi).toFixed(4):null; });
+
+      // KPI cards
+      const kpiStyle = "flex:1;min-width:120px;background:#f8f8f4;border-radius:10px;padding:12px 14px;text-align:center";
+      const kpiLabel = "font-size:9px;font-weight:700;letter-spacing:.08em;color:#aaa;margin-bottom:6px;text-transform:uppercase";
+      const kpiVal   = "font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#1a1a1a";
+      const kpiSub   = "font-size:10px;color:#aaa;margin-top:3px";
+
+      const visibleRecs = followerRecs.filter(r=>r.spend>0);
+
+      const chartId = "fol-trend-"+Math.random().toString(36).slice(2,7);
+      html += `<div class="cc" style="margin-top:4px;border-top:2px solid #1877F2">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <div class="clbl" style="margin-bottom:0">FOLLOWERS & BRAND AWARENESS — ${label}</div>
+          <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:#e8f0fe;color:#1877F2;letter-spacing:.04em">META BRAND</span>
+        </div>
+
+        <!-- KPI Row -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+          <div style="${kpiStyle}">
+            <div style="${kpiLabel}">Total Spend</div>
+            <div style="${kpiVal}">${fS(fSpend)}</div>
+            <div style="${kpiSub}">Brand budget</div>
+          </div>
+          <div style="${kpiStyle}">
+            <div style="${kpiLabel}">Profile Visits</div>
+            <div style="${kpiVal}">${fVisits>0?Math.round(fVisits).toLocaleString():"—"}</div>
+            <div style="${kpiSub}">Follower intent</div>
+          </div>
+          <div style="${kpiStyle}">
+            <div style="${kpiLabel}">Cost per Visit</div>
+            <div style="${kpiVal}">${cpv>0?"$"+cpv.toFixed(3):"—"}</div>
+            <div style="${kpiSub}">CPV (profile)</div>
+          </div>
+          <div style="${kpiStyle}">
+            <div style="${kpiLabel}">Days Active</div>
+            <div style="${kpiVal}">${visibleRecs.length}</div>
+            <div style="${kpiSub}">of ${ds.length} selected</div>
+          </div>
+          <div style="${kpiStyle}">
+            <div style="${kpiLabel}">Avg Daily Spend</div>
+            <div style="${kpiVal}">${fS(Math.round(fSpend/Math.max(visibleRecs.length,1)))}</div>
+            <div style="${kpiSub}">per active day</div>
+          </div>
+        </div>
+
+
+
+        <!-- Trend Charts -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:.06em;color:#aaa;margin-bottom:8px">PROFILE VISITS TREND</div>
+            <div style="position:relative;height:110px"><canvas id="${chartId}-visits"></canvas></div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:.06em;color:#aaa;margin-bottom:8px">DAILY SPEND TREND</div>
+            <div style="position:relative;height:110px"><canvas id="${chartId}-spend"></canvas></div>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:8px 12px;background:#f0f4ff;border-radius:8px;font-size:11px;color:#555;line-height:1.5">
+          📌 <strong>Brand Awareness:</strong> This campaign targets follower growth and profile visits — not direct purchases. CPV (Cost Per Visit) is the key metric. Lower CPV = more efficient brand reach.
+        </div>
       </div>`;
+
+      // Render charts using dc/CR pattern like rest of dashboard
+      dc(chartId+'-visits'); dc(chartId+'-spend');
+      requestAnimationFrame(()=>{
+        const visCanvas = document.getElementById(chartId+'-visits');
+        const spCanvas  = document.getElementById(chartId+'-spend');
+        if(visCanvas){
+          CR[chartId+'-visits'] = new Chart(visCanvas,{type:'bar',data:{labels:ALL_DATES,
+            datasets:[{data:dailyVisits,backgroundColor:ALL_DATES.map(d=>ds.includes(d)?'#1877F2':'#1877F230'),borderRadius:4,borderSkipped:false}]},
+            options:{...bc,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y!=null?Math.round(c.parsed.y).toLocaleString()+' visits':'—'}}},
+            scales:{x:{grid:{display:false},ticks:{font:{size:8},color:'#aaa',maxTicksLimit:10}},y:{grid:{color:'#f4f4ef'},ticks:{font:{size:8},color:'#aaa',callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}}}}});
+        }
+        if(spCanvas){
+          CR[chartId+'-spend'] = new Chart(spCanvas,{type:'line',data:{labels:ALL_DATES,
+            datasets:[{data:dailySpend,borderColor:'#1a1a1a',backgroundColor:'#1a1a1a11',borderWidth:2,pointRadius:ALL_DATES.map(d=>ds.includes(d)?4:2),pointBackgroundColor:ALL_DATES.map(d=>ds.includes(d)?'#1a1a1a':'#ccc'),tension:0.3,spanGaps:false,fill:true}]},
+            options:{...bc,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y!=null?'$'+c.parsed.y.toFixed(2):'—'}}},
+            scales:{x:{grid:{display:false},ticks:{font:{size:8},color:'#aaa',maxTicksLimit:10}},y:{grid:{color:'#f4f4ef'},ticks:{font:{size:8},color:'#aaa',callback:v=>'$'+v}}}}});
+        }
+      });
     }
   }
 
