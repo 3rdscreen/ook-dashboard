@@ -249,6 +249,9 @@ function buildTabs(){
 // CALENDAR PICKER
 // ═══════════════════════════════════════════════════════
 const ALL_DATES = ["Mar 1","Mar 2","Mar 3","Mar 4","Mar 5","Mar 6","Mar 7","Mar 8","Mar 9","Mar 10","Mar 11","Mar 12","Mar 13","Mar 14","Mar 15","Mar 16","Mar 17","Mar 18","Mar 19","Mar 20","Mar 21","Mar 22","Mar 23","Mar 24"];
+
+const BUDGET_MARKERS = [{"date":"Mar 2","platform":"meta","direction":"down"},{"date":"Mar 4","platform":"meta","direction":"down"},{"date":"Mar 5","platform":"meta","direction":"down"},{"date":"Mar 7","platform":"google","direction":"up"},{"date":"Mar 8","platform":"google","direction":"down"},{"date":"Mar 9","platform":"tiktok","direction":"down"},{"date":"Mar 10","platform":"google","direction":"up"},{"date":"Mar 10","platform":"tiktok","direction":"up"},{"date":"Mar 11","platform":"meta","direction":"down"},{"date":"Mar 11","platform":"tiktok","direction":"down"},{"date":"Mar 13","platform":"meta","direction":"up"},{"date":"Mar 13","platform":"tiktok","direction":"down"},{"date":"Mar 14","platform":"meta","direction":"down"},{"date":"Mar 14","platform":"tiktok","direction":"up"},{"date":"Mar 15","platform":"meta","direction":"up"},{"date":"Mar 16","platform":"google","direction":"down"},{"date":"Mar 18","platform":"google","direction":"up"},{"date":"Mar 19","platform":"google","direction":"down"},{"date":"Mar 19","platform":"snap","direction":"down"},{"date":"Mar 21","platform":"google","direction":"up"},{"date":"Mar 21","platform":"meta","direction":"up"},{"date":"Mar 23","platform":"meta","direction":"down"}];
+
 let calOpen=false, calPickStart=null, calPickEnd=null, calHover=null, calOffset=0;
 
 function dateIndex(d){ return ALL_DATES.indexOf(d); }
@@ -806,10 +809,10 @@ function reRenderMetaAds(){
   const GEO_GROUPS2 = [
     { label:'UAE',          pattern:/_UAE_/i },
     { label:'KSA',          pattern:/_KSA_/i },
-    { label:'KU / QA / BH',pattern:/_Ku[_&]/i },
+    { label:'KU / QA / BH',pattern:/_Ku[_&\s]|Ku\s*&\s*Qa|Ku\s*&\s*Q/i },
     { label:'Catalogue',    pattern:/^EN_|^en_/ },
   ];
-  function detectGeo2(n){ for(const g of GEO_GROUPS2){ if(g.pattern.test(n)) return g.label; } return null; }
+  function detectGeo2(n, adset){ for(const g of GEO_GROUPS2){ if(g.pattern.test(n)) return g.label; } if(adset){ for(const g of GEO_GROUPS2){ if(g.pattern.test(adset)) return g.label; } } return null; }
   const adsByGeo2 = {}; GEO_GROUPS2.forEach(g=>adsByGeo2[g.label]=[]);
   // Group by stripped display name within each geo to merge duplicates
   const adsByGeoMerged = {};
@@ -921,8 +924,10 @@ function renderOverviewRange(rd){
     ];
   }).flat();
   _atcDates = rd;
-  document.getElementById("view").innerHTML=`<div class="g5">${cardHTML}</div>${buildCampaignTable(rd, selStart+" – "+selEnd)}${buildMarketTable(rd, selStart+" – "+selEnd)}${buildTopAdsTable(rd, selStart+" – "+selEnd, 10)}<div class="cc"><div class="clbl">ROAS TREND — ALL PLATFORMS (${selStart} – ${selEnd} highlighted)</div><div class="cw" style="height:200px"><canvas id="rng-trend"></canvas></div></div>`;
+  document.getElementById("view").innerHTML=`<div class="g5">${cardHTML}</div>${buildSpendChart()}${buildCampaignTable(rd, selStart+" – "+selEnd)}${buildMarketTable(rd, selStart+" – "+selEnd)}${buildTopAdsTable(rd, selStart+" – "+selEnd, 10)}<div class="cc"><div class="clbl">ROAS TREND — ALL PLATFORMS (${selStart} – ${selEnd} highlighted)</div><div class="cw" style="height:200px"><canvas id="rng-trend"></canvas></div></div>`;
   dc("rng-trend");CR["rng-trend"]=new Chart(document.getElementById("rng-trend"),{type:"line",data:{labels:allDatesAll,datasets:trendDS},options:{...bc,plugins:{legend:{position:"top",labels:{boxWidth:8,font:{size:10}}}},scales:ax(v=>`${v}x`)}});
+
+  requestAnimationFrame(()=>renderSpendChart(allDatesAll));
 }
 
 function renderPlatRange(pk, rd){
@@ -1578,6 +1583,70 @@ function getAtcForPlatform(pk){
 }
 let _atcDates = [];
 
+
+
+// ── DAILY SPEND BY PLATFORM CHART ──────────────────────────────────
+let _spendChartInstance = null;
+function buildSpendChart(){
+  return `<div class="cc" style="margin-top:16px"><div class="clbl">DAILY SPEND BY PLATFORM</div><div class="cw" style="height:220px"><canvas id="spend-by-platform"></canvas></div></div>`;
+}
+function renderSpendChart(dates){
+  const el = document.getElementById('spend-by-platform');
+  if(!el) return;
+  if(_spendChartInstance){ _spendChartInstance.destroy(); _spendChartInstance=null; }
+  const platforms = [
+    {key:'meta',   label:'Meta',   color:'#1877F2'},
+    {key:'tiktok', label:'TikTok', color:'#EE1D52'},
+    {key:'snap',   label:'Snap',   color:'#FFCC00'},
+    {key:'google', label:'Google', color:'#34A853'},
+  ];
+  const datasets = platforms.map(p => {
+    const data = dates.map(d => { const r=(D[p.key]||[]).find(x=>x.d===d); return r&&r.spend>0?Math.round(r.spend):null; });
+    const markers = dates.map(d => BUDGET_MARKERS.find(m=>m.date===d&&m.platform===p.key)||null);
+    return {
+      label: p.label,
+      data,
+      borderColor: p.color,
+      backgroundColor: p.color+'18',
+      borderWidth: 2,
+      tension: 0.3,
+      spanGaps: false,
+      fill: false,
+      pointRadius: markers.map(m => m ? 8 : 3),
+      pointStyle: markers.map(m => m ? (m.direction==='up' ? 'triangle' : 'triangle') : 'circle'),
+      rotation: markers.map(m => m ? (m.direction==='up' ? 0 : 180) : 0),
+      pointBackgroundColor: markers.map((m,i) => m ? (m.direction==='up' ? '#22c55e' : '#ef4444') : p.color),
+      pointBorderColor: markers.map(m => m ? '#fff' : p.color),
+      pointBorderWidth: markers.map(m => m ? 2 : 1),
+      pointHoverRadius: markers.map(m => m ? 10 : 5),
+    };
+  });
+  _spendChartInstance = new Chart(el, {
+    type:'line',
+    data:{labels:dates, datasets},
+    options:{
+      ...bc,
+      plugins:{
+        legend:{position:'top',labels:{boxWidth:8,font:{size:10}}},
+        tooltip:{
+          callbacks:{
+            label: ctx => {
+              const p = platforms[ctx.datasetIndex];
+              const d = dates[ctx.dataIndex];
+              const m = BUDGET_MARKERS.find(x=>x.date===d&&x.platform===p.key);
+              let str = p.label+': $'+(ctx.parsed.y||0).toLocaleString();
+              if(m) str += '  '+(m.direction==='up' ? '▲ Budget increased' : '▼ Budget decreased');
+              return str;
+            }
+          }
+        }
+      },
+      scales:ax(v=>'$'+Math.round(v).toLocaleString())
+    }
+  });
+}
+
+
 function renderOverview(d){
   const rws=PL.map(p=>{const r=row(p.key,d);return{...p,r};});
 
@@ -1641,6 +1710,7 @@ function renderOverview(d){
   _atcDates = [d];
   document.getElementById("view").innerHTML=`
     <div class="g5">${cardHTML}</div>
+    ${buildSpendChart()}
     ${buildCampaignTable(d, d)}
     ${buildMarketTable(d, d)}
     ${buildTopAdsTable(d, d, 10)}
@@ -1665,6 +1735,8 @@ function renderOverview(d){
     data:{labels:allDates,datasets:trendDatasets},
     options:{...bc,plugins:{legend:{position:"top",labels:{boxWidth:8,font:{size:10}}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y!=null?c.parsed.y.toFixed(2)+"x":"—"}`}}},scales:ax(v=>`${v}x`)}
   });
+
+  requestAnimationFrame(()=>renderSpendChart(allDates));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1725,6 +1797,7 @@ function renderOverviewMTD(){
   _atcDates = ds;
   document.getElementById("view").innerHTML=`
     <div class="g5">${cardHTML}</div>
+    ${buildSpendChart()}
     ${buildCampaignTable(ds, "MTD Mar 1–"+last)}
     ${buildMarketTable(ds, "MTD Mar 1–"+last)}
     ${buildTopAdsTable(ds, "MTD Mar 1–"+last, 10)}
@@ -1739,6 +1812,8 @@ function renderOverviewMTD(){
     data:{labels:ds,datasets:trendDS},
     options:{...bc,plugins:{legend:{position:"top",labels:{boxWidth:8,font:{size:10}}}},scales:ax(v=>`${v}x`)}
   });
+
+  requestAnimationFrame(()=>renderSpendChart(ds));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2078,7 +2153,7 @@ function renderGranular(pk, dates) {
   const GEO_GROUPS = [
     { label: "UAE",           pattern: /_UAE_/i },
     { label: "KSA",           pattern: /_KSA_/i },
-    { label: "KU / QA / BH", pattern: /_Ku[\s_&]/i },
+    { label: "KU / QA / BH", pattern: /_Ku[\s_&]|Ku\s*&\s*Q/i },
     { label: "Catalogue",     pattern: /^EN_|^en_/    },
   ];
 
