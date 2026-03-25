@@ -439,8 +439,25 @@ function applyPreset(p){
   if(p==="last7"){   applyRange(ds[Math.max(0,ds.length-7)], last, "Last 7 days");   return; }
   if(p==="last14"){  applyRange(ds[Math.max(0,ds.length-14)], last, "Last 14 days");  return; }
   if(p==="last30"){  applyRange(ds[0], last, "Last 30 days");  return; }
-  if(p==="thisweek"){ applyRange("Mar 9", last, "This week");   return; }
-  if(p==="lastweek"){ applyRange("Mar 2", "Mar 8", "Last week"); return; }
+  if(p==="thisweek"){
+    // This week: Monday of current week → last available date
+    const today=new Date(); const dow=today.getDay(); const diffToMon=dow===0?6:dow-1;
+    const monDate=new Date(today); monDate.setDate(today.getDate()-diffToMon);
+    const monDay=monDate.getDate();
+    // Find closest available date >= Monday in ds
+    const twStart = ds.find(d=>+d.replace('Mar ','')>=monDay) || ds[ds.length-7];
+    applyRange(twStart, last, "This week"); return;
+  }
+  if(p==="lastweek"){
+    // Last week: Monday–Sunday of previous week
+    const today=new Date(); const dow=today.getDay(); const diffToMon=dow===0?6:dow-1;
+    const lastSun=new Date(today); lastSun.setDate(today.getDate()-diffToMon-1);
+    const lastMon=new Date(lastSun); lastMon.setDate(lastSun.getDate()-6);
+    const lwStartN=lastMon.getDate(), lwEndN=lastSun.getDate();
+    const lwStart=ds.find(d=>+d.replace('Mar ','')>=lwStartN) || ds[0];
+    const lwEnd=[...ds].reverse().find(d=>+d.replace('Mar ','')<=lwEndN) || last;
+    applyRange(lwStart, lwEnd, "Last week"); return;
+  }
 
 }
 
