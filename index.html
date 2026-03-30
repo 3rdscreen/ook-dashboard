@@ -1672,7 +1672,28 @@ function renderSpendChart(dates){
     options:{
       ...bc,
       plugins:{
-        legend:{position:'top',labels:{boxWidth:8,font:{size:10}}},
+        legend:{
+          position:'top',
+          labels:{boxWidth:8,font:{size:10}},
+          onHover:(e,item)=>{
+            const chart=_spendChartInstance; if(!chart) return;
+            chart.data.datasets.forEach((ds,i)=>{
+              ds.borderColor = i===item.datasetIndex ? platforms[i].color : platforms[i].color+'40';
+              ds.pointBackgroundColor = ds.pointBackgroundColor.map((c,pi)=>
+                i===item.datasetIndex ? (c.length>7?platforms[i].color:c) : c+'40'
+              );
+            });
+            chart.update('none');
+          },
+          onLeave:()=>{
+            const chart=_spendChartInstance; if(!chart) return;
+            chart.data.datasets.forEach((ds,i)=>{
+              ds.borderColor = platforms[i].color;
+              ds.pointBackgroundColor = datasets[i].pointBackgroundColor;
+            });
+            chart.update('none');
+          }
+        },
         tooltip:{
           callbacks:{
             label: ctx => {
@@ -1685,6 +1706,22 @@ function renderSpendChart(dates){
             }
           }
         }
+      },
+      onHover:(e, elements)=>{
+        const chart=_spendChartInstance; if(!chart) return;
+        if(elements && elements.length>0){
+          const hovered=elements[0].datasetIndex;
+          chart.data.datasets.forEach((ds,i)=>{
+            ds.borderColor = i===hovered ? platforms[i].color : platforms[i].color+'38';
+            ds.borderWidth = i===hovered ? 3 : 1.5;
+          });
+        } else {
+          chart.data.datasets.forEach((ds,i)=>{
+            ds.borderColor = platforms[i].color;
+            ds.borderWidth = 2;
+          });
+        }
+        chart.update('none');
       },
       scales:ax(v=>'$'+Math.round(v).toLocaleString())
     }
