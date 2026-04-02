@@ -537,15 +537,29 @@ function applyPreset(p){
   if(p==="last30"){  applyRange(ds[Math.max(0,ds.length-30)], last, "Last 30 days");  return; }
 
   if(p==="thisweek"){
-    const today=new Date(); const dow=today.getDay(); const diffToMon=dow===0?6:dow-1;
-    const monDate=new Date(today); monDate.setDate(today.getDate()-diffToMon);
-    const twStart=ds.find(d=>dateIndex(d)>=ds.length-7)||ds[Math.max(0,ds.length-7)];
-    applyRange(twStart, last, "This week"); return;
+    // Mon–Sun of the current calendar week
+    const today = new Date();
+    const dow = today.getDay(); // 0=Sun
+    const diffToMon = dow===0 ? 6 : dow-1;
+    const monDate = new Date(today); monDate.setDate(today.getDate()-diffToMon);
+    const sunDate = new Date(monDate); sunDate.setDate(monDate.getDate()+6);
+    function fmtD(dt){ const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return months[dt.getMonth()]+' '+dt.getDate(); }
+    const twStart = ds.find(d=>d===fmtD(monDate)) || ds[Math.max(0,ds.length-7)];
+    const twEnd   = ds.find(d=>d===fmtD(sunDate))  || last;
+    applyRange(twStart, twEnd, "This week"); return;
   }
   if(p==="lastweek"){
-    const twStart=ds[Math.max(0,ds.length-14)];
-    const twEnd=ds[Math.max(0,ds.length-8)];
-    applyRange(twStart, twEnd||last, "Last week"); return;
+    // Mon–Sun of the previous calendar week
+    const today = new Date();
+    const dow = today.getDay();
+    const diffToMon = dow===0 ? 6 : dow-1;
+    const thisMonDate = new Date(today); thisMonDate.setDate(today.getDate()-diffToMon);
+    const lwMon = new Date(thisMonDate); lwMon.setDate(thisMonDate.getDate()-7);
+    const lwSun = new Date(lwMon); lwSun.setDate(lwMon.getDate()+6);
+    function fmtD(dt){ const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return months[dt.getMonth()]+' '+dt.getDate(); }
+    const lwStart = ds.find(d=>d===fmtD(lwMon)) || ds[Math.max(0,ds.length-14)];
+    const lwEnd   = ds.find(d=>d===fmtD(lwSun)) || ds[Math.max(0,ds.length-8)];
+    applyRange(lwStart, lwEnd, "Last week"); return;
   }
 }
 
