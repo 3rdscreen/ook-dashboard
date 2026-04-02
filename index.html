@@ -813,7 +813,7 @@ function buildSnapAdsHTML(ads, adNames, ds, label, periodOverride){
     m.atc+=agg.atc||0; m.wR+=(agg.roas||0)*(agg.spend||0);
   });
 
-  const showDayBreakdownSnap = !periodOverride || periodOverride==='7d' || periodOverride==='3d';
+  const showDayBreakdownSnap = periodOverride==='7d' || periodOverride==='3d';
 
   let html='';
   SNAP_GEO.forEach(g => {
