@@ -637,6 +637,8 @@ function buildGoogleCampsHTML(camps, ds, periodOverride){
 
   if(showDayBreakdownG){
     return rows.sort(geoSort).map(c => {
+      const sig = _SIG[_adSig({spend:c.spend,sv:c.sv,conv:c.conv,roas:c.roas,cpo:c.cpo})];
+      const tag = sig.tag ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:${sig.tb};color:${sig.tc};margin-left:6px;white-space:nowrap">${sig.tag}</span>` : '';
       let html = `<tr style="background:${sig.bg};border-left:3px solid ${sig.border}">
         <td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px 6px 6px">${c.name}${tag}</td>
         <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:6px 8px">${fR(c.roas)}</td>
@@ -693,12 +695,15 @@ function reRenderGoogleCamps(){
   let adsDates;
   if(googleCampsPeriod==='7d')      adsDates=allDs.slice(-7);
   else if(googleCampsPeriod==='3d') adsDates=allDs.slice(-3);
-  else adsDates=null; // null = use MTD totals directly
+  else {
+    // Default: use currently selected date(s) — not MTD
+    adsDates = (Array.isArray(_atcDates)&&_atcDates.length) ? _atcDates : [allDs[allDs.length-1]];
+  }
 
   const camps=GRANULAR.google.campaigns||[];
-  const periodTxt=googleCampsPeriod==='7d'?'Last 7 Days':googleCampsPeriod==='3d'?'Last 3 Days':null;
-  const lbl=periodTxt?`CAMPAIGNS — ${periodTxt}`:`CAMPAIGNS — MTD Mar 1–${allDs[allDs.length-1].replace('Mar ','')}`;
-
+  const selLabel = adsDates.length===1 ? adsDates[0] : `${adsDates[0]} – ${adsDates[adsDates.length-1]}`;
+  const periodTxt = googleCampsPeriod==='7d'?'Last 7 Days':googleCampsPeriod==='3d'?'Last 3 Days':null;
+  const lbl = `CAMPAIGNS — ${periodTxt||selLabel}`;
   document.getElementById('google-camps-inner').innerHTML=`<table class="gtbl">${tblHdr(["Campaign",...GOOGLE_HDR])}<tbody>${buildGoogleCampsHTML(camps, adsDates, googleCampsPeriod)}</tbody></table>`;
   document.getElementById('google-camps-label').textContent=lbl;
   ['7d','3d'].forEach(p=>{
@@ -1441,7 +1446,8 @@ function renderOverviewRange(rd){
     ];
   }).flat();
   _atcDates = rd;
-  document.getElementById("view").innerHTML=`<div class="g5">${cardHTML}</div>${buildCampaignTable(rd, selStart+" – "+selEnd)}${buildAdsetTable(rd, selStart+" – "+selEnd)}${buildMarketTable(rd, selStart+" – "+selEnd)}<div class="cc"><div class="clbl">ROAS TREND — ALL PLATFORMS (${selStart} – ${selEnd} highlighted)</div><div class="cw" style="height:200px"><canvas id="rng-trend"></canvas></div></div>`;
+  googleCampsPeriod=null;
+  document.getElementById("view").innerHTML=`<div class="${_prGrid}">${kpis.map(k=>`<div class="card" style="border-top:2px solid ${p.color}"><div class="klbl">${k.l}</div><div class="kval sm">${k.v}</div></div>`).join("")}</div><div class="cc"><div class="clbl">MARKET BREAKDOWN — ${selStart} to ${selEnd}</div><table class="gtbl"><thead><tr><th>Market</th><th>ROAS</th><th>Spend</th><th>Sales Value</th><th>Sales</th>${pk!=='google'?'<th>AOV</th><th>ATC</th>':''}<th>CPO</th></tr></thead><tbody>${gr.map(g=>`<tr><td><span class="gn"><span class="gs" style="background:${g.color}"></span>${g.label}</span></td><td>${g.spend>0?fR(g.roas):"—"}</td><td>${g.spend>0?fS(g.spend):"—"}</td><td>${g.spend>0?fSV(g.sv):"—"}</td><td>${g.spend>0?fC(g.conv):"—"}</td>${pk!=='google'?`<td>${g.spend>0&&g.conv>0?fSV(g.sv/g.conv):'—'}</td><td>${g.atc!=null&&g.atc>0?fC(g.atc):'—'}</td>`:''}<td>${g.spend>0?fCPO(g.cpo):"—"}</td></tr>`).join("")}</tbody></table></div><div class="cc"><div class="clbl">ROAS TREND — ${p.label}</div><div class="cw" style="height:200px"><canvas id="rng-pt"></canvas></div></div>`;
   dc("rng-trend");CR["rng-trend"]=new Chart(document.getElementById("rng-trend"),{type:"line",data:{labels:allDatesAll,datasets:trendDS},options:{...bc,plugins:{legend:{position:"top",labels:{boxWidth:8,font:{size:10}}}},scales:ax(v=>`${v}x`)}});
 }
 
@@ -2541,9 +2547,9 @@ function renderOverview(d){
   });
 
   _atcDates = [d];
+  googleCampsPeriod=null;
   document.getElementById("view").innerHTML=`
     <div class="g5">${cardHTML}</div>
-    ${buildBudgetByMarket(d)}
     ${buildCampaignTable(d, d)}
     ${buildAdsetTable(d, d)}
     ${buildMarketTable(d, d)}
@@ -2629,9 +2635,9 @@ function renderOverviewMTD(){
   });
 
   _atcDates = ds;
+  googleCampsPeriod=null;
   document.getElementById("view").innerHTML=`
     <div class="g5">${cardHTML}</div>
-    ${buildBudgetByMarket(ds)}
     ${buildCampaignTable(ds, "MTD Mar 1–"+last)}
     ${buildAdsetTable(ds, "MTD Mar 1–"+last)}
     ${buildMarketTable(ds, "MTD Mar 1–"+last)}
@@ -2715,7 +2721,7 @@ function renderPlat(pk,d){
     </div>
     <div class="cc"><div class="clbl">SALES — ${p.label}</div><div class="cw" style="height:160px"><canvas id="pc"></canvas></div></div>
     ${pk === 'google' ? buildGoogleBudgetWidget() : ''}
-    ${renderGranular(pk,d)}`;
+    ${(pk==='google'?(googleCampsPeriod=null,''):'')}${renderGranular(pk,d)}`;
   if(pk==='meta') reRenderMetaAds();
   if(pk==='tiktok') reRenderTTAds();
   if(pk==='snap') reRenderSnapAds();
@@ -3460,12 +3466,14 @@ function renderGranularOther(pk, ds, label) {
   if (!gran) return '';
   let html = '';
 
-  // ── CAMPAIGNS table — Google MTD with signal highlighting + period buttons
+  // ── CAMPAIGNS table — Google with period buttons
   if (pk === 'google' && GRANULAR.google.campaigns && GRANULAR.google.campaigns.length > 0) {
-    const campRowsHTML = `<table class="gtbl">${tblHdr(["Campaign",...GOOGLE_HDR])}<tbody>${buildGoogleCampsHTML(GRANULAR.google.campaigns,null)}</tbody></table>`;
+    const selDs = (Array.isArray(_atcDates)&&_atcDates.length) ? _atcDates : [dates()[dates().length-1]];
+    const selLabel = selDs.length===1 ? selDs[0] : `${selDs[0]} – ${selDs[selDs.length-1]}`;
+    const campRowsHTML = `<table class="gtbl">${tblHdr(["Campaign",...GOOGLE_HDR])}<tbody>${buildGoogleCampsHTML(GRANULAR.google.campaigns, selDs, null)}</tbody></table>`;
     html += `<div class="cc" style="margin-top:4px" id="google-camps-card">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-        <div class="clbl" style="margin-bottom:0" id="google-camps-label">CAMPAIGNS — MTD Mar 1–${dates()[dates().length-1].replace('Mar ','')}</div>
+        <div class="clbl" style="margin-bottom:0" id="google-camps-label">CAMPAIGNS — ${selLabel}</div>
         <div style="display:flex;gap:6px;align-items:center">
           <span style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.05em">PERIOD</span>
           <button onclick="googleCampsPeriod=googleCampsPeriod==='7d'?null:'7d';reRenderGoogleCamps()" id="google-camps-btn-7d"
@@ -3730,7 +3738,7 @@ function renderPlatMTD(pk){
     </div>
     <div class="cc"><div class="clbl">ROAS TREND — ${p.label} MTD</div><div class="cw" style="height:200px"><canvas id="m-pt"></canvas></div></div>
     <div class="cc"><div class="clbl">SALES — ${p.label} MTD</div><div class="cw" style="height:160px"><canvas id="m-pc"></canvas></div></div>
-    ${renderGranular(pk, all.map(r=>r.d))}`;
+    ${(pk==='google'?(googleCampsPeriod=null,''):'')}${renderGranular(pk, all.map(r=>r.d))}`;
   if(pk==='meta') reRenderMetaAds();
   if(pk==='tiktok') reRenderTTAds();
   if(pk==='snap') reRenderSnapAds();
