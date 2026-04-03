@@ -855,8 +855,21 @@ function buildSnapAdsHTML(ads, adNames, ds, label, periodOverride){
     if(showDayBreakdownSnap){
       let tbodyRows='';
       rows.forEach(r=>{
+        // Pre-compute daily data for hover card
+        const dailyForHover = {};
+        [...ds].forEach(day=>{
+          const dayRecs=adNames.filter(name=>{
+            const dn2=makeSnapDn(name);
+            return dn2===r.displayName && detectSnapGeo(name)===g.label;
+          }).map(name=>(ads[name]||[]).find(x=>x.d===day)).filter(Boolean);
+          if(!dayRecs.length) return;
+          const dayAgg=aggRecords(dayRecs);
+          if(!dayAgg.spend) return;
+          dailyForHover[day]={spend:Math.round(dayAgg.spend*100)/100,sv:Math.round((dayAgg.sv||0)*100)/100,conv:dayAgg.conv||0,atc:dayAgg.atc||0,roas:Math.round((dayAgg.roas||0)*100)/100,cpo:Math.round((dayAgg.cpo||0)*100)/100};
+        });
+        const dailyJson = JSON.stringify(dailyForHover).replace(/"/g,'&quot;');
         // Total row (bold)
-        tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px">${r.displayName}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
+        tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px;cursor:pointer" data-adname="${r.displayName.replace(/"/g,'&#39;')} [${g.label}]" data-platform="snap" data-daily="${dailyJson}" onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()">${r.displayName}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
           const v=r.agg[k]||0;
           const fmt=k==='roas'?fR(v):k==='spend'?fS(v):k==='sv'?fSV(v):k==='conv'?fC(v):k==='atc'?(v>0?fC(v):'—'):fCPO(v);
           return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:6px 8px">${fmt}</td>`;
@@ -889,7 +902,18 @@ function buildSnapAdsHTML(ads, adNames, ds, label, periodOverride){
       html+=`<div style="margin-bottom:14px">
         <div style="font-size:12px;font-weight:700;letter-spacing:.06em;color:#1a1a1a;margin-bottom:8px;padding:4px 8px;background:#f0ede8;border-radius:6px">${g.label}</div>
         <table class="gtbl"><thead><tr><th>Ad</th>${PERF_HDR.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
-        <tbody>${rows.map(r=>perfRowSignalOther(r.displayName,r.agg,true,'snap')).join('')}</tbody></table>
+        <tbody>${rows.map(r=>{
+          const dailyForHover={};
+          ds.forEach(day=>{
+            const dayRecs=adNames.filter(name=>makeSnapDn(name)===r.displayName&&detectSnapGeo(name)===g.label).map(name=>(ads[name]||[]).find(x=>x.d===day)).filter(Boolean);
+            if(!dayRecs.length)return;
+            const a=aggRecords(dayRecs);
+            if(!a.spend)return;
+            dailyForHover[day]={spend:Math.round(a.spend*100)/100,sv:Math.round((a.sv||0)*100)/100,conv:a.conv||0,atc:a.atc||0,roas:Math.round((a.roas||0)*100)/100,cpo:Math.round((a.cpo||0)*100)/100};
+          });
+          const dj=JSON.stringify(dailyForHover).replace(/"/g,'&quot;');
+          return perfRowSignalOther(r.displayName,r.agg,true,'snap',`${r.displayName.replace(/"/g,"&#39;")} [${g.label}]`,dj);
+        }).join('')}</tbody></table>
       </div>`;
     }
   });
@@ -1064,8 +1088,21 @@ function buildTTAdsHTML(ads, adNames, ds, label, periodOverride){
     if(showDayBreakdownTT){
       let tbodyRows='';
       rows.forEach(r=>{
+        // Pre-compute daily data for hover card
+        const dailyForHover = {};
+        [...ds].forEach(day=>{
+          const dayRecs = adNames.filter(name=>{
+            const dn2=makeTTDn(name);
+            return dn2===r.displayName && detectTTGeo(name)===g.label;
+          }).map(name=>(ads[name]||[]).find(x=>x.d===day)).filter(Boolean);
+          if(!dayRecs.length) return;
+          const dayAgg=aggRecords(dayRecs);
+          if(!dayAgg.spend) return;
+          dailyForHover[day]={spend:Math.round(dayAgg.spend*100)/100,sv:Math.round((dayAgg.sv||0)*100)/100,conv:dayAgg.conv||0,atc:dayAgg.atc||0,roas:Math.round((dayAgg.roas||0)*100)/100,cpo:Math.round((dayAgg.cpo||0)*100)/100};
+        });
+        const dailyJson = JSON.stringify(dailyForHover).replace(/"/g,'&quot;');
         // Total row (bold)
-        tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px">${r.displayName}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
+        tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px;cursor:pointer" data-adname="${r.displayName.replace(/"/g,'&#39;')} [${g.label}]" data-platform="tiktok" data-daily="${dailyJson}" onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()">${r.displayName}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
           const v=r.agg[k]||0;
           const fmt=k==='roas'?fR(v):k==='spend'?fS(v):k==='sv'?fSV(v):k==='conv'?fC(v):k==='atc'?(v>0?fC(v):'—'):fCPO(v);
           return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:6px 8px">${fmt}</td>`;
@@ -1099,7 +1136,18 @@ function buildTTAdsHTML(ads, adNames, ds, label, periodOverride){
       html+=`<div style="margin-bottom:14px">
         <div style="font-size:12px;font-weight:700;letter-spacing:.06em;color:#1a1a1a;margin-bottom:8px;padding:4px 8px;background:#f0ede8;border-radius:6px">${g.label}</div>
         <table class="gtbl"><thead><tr><th>Ad</th>${PERF_HDR.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
-        <tbody>${rows.map(r=>perfRowSignalOther(r.displayName,r.agg,true,'tiktok')).join('')}</tbody></table>
+        <tbody>${rows.map(r=>{
+          const dailyForHover={};
+          ds.forEach(day=>{
+            const dayRecs=adNames.filter(name=>makeTTDn(name)===r.displayName&&detectTTGeo(name)===g.label).map(name=>(ads[name]||[]).find(x=>x.d===day)).filter(Boolean);
+            if(!dayRecs.length)return;
+            const a=aggRecords(dayRecs);
+            if(!a.spend)return;
+            dailyForHover[day]={spend:Math.round(a.spend*100)/100,sv:Math.round((a.sv||0)*100)/100,conv:a.conv||0,atc:a.atc||0,roas:Math.round((a.roas||0)*100)/100,cpo:Math.round((a.cpo||0)*100)/100};
+          });
+          const dj=JSON.stringify(dailyForHover).replace(/"/g,'&quot;');
+          return perfRowSignalOther(r.displayName,r.agg,true,'tiktok',`${r.displayName.replace(/"/g,"&#39;")} [${g.label}]`,dj);
+        }).join('')}</tbody></table>
       </div>`;
     }
   });
@@ -1243,7 +1291,24 @@ function reRenderMetaAds(){
         if(!rows.length) return;
         if(multiType) tbodyRows+=subGrpHdr(ct);
         rows.forEach(r=>{
-          tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px${multiType?' padding-left:24px':''}">${r.displayName}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
+          // Pre-compute daily data for hover card
+          const dailyForHover = {};
+          [...adsDates].forEach(day=>{
+            const dayRecs=Object.keys(ads).filter(name=>{
+              let dn=name.replace(/_mar\d+(_v\d+)?$/i,'').replace(/_apr\d+(_v\d+)?$/i,'').replace(/_v\d+$/i,'').replace(/\s*[-–]\s*Copy\s*\d*$/i,'').trim();
+              dn=dn.replace(/_Meta_(UAE|KSA|Ku[^_]*|GCC[^_]*)_Sales_ASC.*$/i,'').trim();
+              dn=dn.replace(/_Sales_ASC.*$/i,'').trim();
+              dn=dn.replace(/_Catalogue$/i,'').trim();
+              const nameCT=(detectGeo2(name)==='Catalogue')?'Catalogue':detectCampType(name);
+              return dn===r.displayName && detectGeo2(name)===g.label && nameCT===ct;
+            }).map(name=>(ads[name]||[]).find(x=>x.d===day)).filter(Boolean);
+            if(!dayRecs.length) return;
+            const dayAgg=aggRecords(dayRecs);
+            if(!dayAgg.spend) return;
+            dailyForHover[day]={spend:Math.round(dayAgg.spend*100)/100,sv:Math.round((dayAgg.sv||0)*100)/100,conv:dayAgg.conv||0,atc:dayAgg.atc||0,roas:Math.round((dayAgg.roas||0)*100)/100,cpo:Math.round((dayAgg.cpo||0)*100)/100};
+          });
+          const dailyJson = JSON.stringify(dailyForHover).replace(/"/g,'&quot;');
+          tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px${multiType?' padding-left:24px':''};cursor:pointer" data-adname="${r.displayName.replace(/"/g,'&#39;')} [${g.label}]" data-platform="meta" data-daily="${dailyJson}" data-geo="${g.label}" onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()">${r.displayName}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
             const v=r.agg[k]||0;
             const fmt=k==='roas'?fR(v):k==='spend'?fS(v):k==='sv'?fSV(v):k==='conv'?fC(v):k==='atc'?(v>0?fC(v):'—'):fCPO(v);
             return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:6px 8px">${fmt}</td>`;
@@ -1280,7 +1345,26 @@ function reRenderMetaAds(){
         const rows=campRows(gData[ct]);
         if(!rows.length) return;
         if(multiType) tbodyRows+=subGrpHdr(ct);
-        tbodyRows+=rows.map(r=>perfRowSignal(r.displayName,r.agg)).join('');
+        rows.forEach(r=>{
+          // Always compute daily data so hover card has correct numbers
+          const dailyForHover = {};
+          adsDates.forEach(day=>{
+            const dayRecs=Object.keys(ads).filter(name=>{
+              let dn=name.replace(/_mar\d+(_v\d+)?$/i,'').replace(/_apr\d+(_v\d+)?$/i,'').replace(/_v\d+$/i,'').replace(/\s*[-–]\s*Copy\s*\d*$/i,'').trim();
+              dn=dn.replace(/_Meta_(UAE|KSA|Ku[^_]*|GCC[^_]*)_Sales_ASC.*$/i,'').trim();
+              dn=dn.replace(/_Sales_ASC.*$/i,'').trim();
+              dn=dn.replace(/_Catalogue$/i,'').trim();
+              const nameCT=(detectGeo2(name)==='Catalogue')?'Catalogue':detectCampType(name);
+              return dn===r.displayName && detectGeo2(name)===g.label && nameCT===ct;
+            }).map(name=>(ads[name]||[]).find(x=>x.d===day)).filter(Boolean);
+            if(!dayRecs.length) return;
+            const dayAgg=aggRecords(dayRecs);
+            if(!dayAgg.spend) return;
+            dailyForHover[day]={spend:Math.round(dayAgg.spend*100)/100,sv:Math.round((dayAgg.sv||0)*100)/100,conv:dayAgg.conv||0,atc:dayAgg.atc||0,roas:Math.round((dayAgg.roas||0)*100)/100,cpo:Math.round((dayAgg.cpo||0)*100)/100};
+          });
+          const dailyJson=JSON.stringify(dailyForHover).replace(/"/g,'&quot;');
+          tbodyRows+=perfRowSignal(r.displayName,r.agg,`${r.displayName.replace(/"/g,"&#39;")} [${g.label}]`,dailyJson);
+        });
       });
       adsHTML2+=`<div style="margin-bottom:14px">
         <div style="font-size:12px;font-weight:700;letter-spacing:.06em;color:#1a1a1a;margin-bottom:8px;padding:4px 8px;background:#f0ede8;border-radius:6px">${g.label}</div>
@@ -2852,14 +2936,16 @@ const AD_SIG = {
   neutral: { bg:'',        border:'transparent', tag:'', tc:'', tb:'' },
 };
 
-function perfRowSignal(name, agg){
+function perfRowSignal(name, agg, dataAdname, dataDaily){
   const hasSpend = agg && agg.spend > 0;
   const sig = AD_SIG[adRowSignal(agg)];
   const tag = sig.tag ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:${sig.tb};color:${sig.tc};margin-left:6px;white-space:nowrap">${sig.tag}</span>` : '';
   const trStyle = `background:${sig.bg};border-left:3px solid ${sig.border}`;
   const safeName = name.replace(/"/g,'&#39;');
+  const adName = dataAdname || safeName;
+  const dailyAttr = dataDaily ? ` data-daily="${dataDaily}"` : '';
   return `<tr style="${trStyle}">
-    <td style="font-size:11px;color:#444;max-width:200px;word-break:break-word;padding-left:6px;cursor:pointer" data-adname="${safeName}" data-platform="meta" onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()"><span style="border-bottom:1px dashed #ccc">${name}</span>${tag}</td>
+    <td style="font-size:11px;color:#444;max-width:200px;word-break:break-word;padding-left:6px;cursor:pointer" data-adname="${adName}" data-platform="meta"${dailyAttr} onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()"><span style="border-bottom:1px dashed #ccc">${name}</span>${tag}</td>
     ${['roas','spend','sv','conv','atc','cpo'].map((k,i) => {
       if(k==='roas') return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${hasSpend ? fR(agg.roas||0) : '—'}</td>`;
       if(k==='spend') return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${hasSpend ? fS(agg.spend) : '—'}</td>`;
@@ -3249,13 +3335,15 @@ const _SIG = {
   good:   {bg:'#f9fafb',border:'#86efac',tag:'✅ Keep Running',    tc:'#166534',tb:'#f0fdf4'},
   neutral:{bg:'',border:'transparent',tag:'',tc:'',tb:''},
 };
-function perfRowSignalOther(name, agg, useSignal=true, platform=''){
+function perfRowSignalOther(name, agg, useSignal=true, platform='', dataAdname='', dataDaily=''){
   const h = agg && agg.spend > 0;
   const sig = useSignal ? _SIG[_adSig(agg)] : {bg:'',border:'transparent',tag:'',tc:'',tb:''};
   const tag = sig.tag ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:${sig.tb};color:${sig.tc};margin-left:6px;white-space:nowrap">${sig.tag}</span>` : '';
   const safeName = name.replace(/"/g,'&#39;');
+  const adName = dataAdname || safeName;
+  const dailyAttr = dataDaily ? ` data-daily="${dataDaily}"` : '';
   return `<tr style="background:${sig.bg};border-left:3px solid ${sig.border}">
-    <td style="font-size:11px;color:#444;max-width:200px;word-break:break-word;padding-left:6px;cursor:pointer" data-adname="${safeName}" data-platform="${platform}" onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()"><span style="border-bottom:1px dashed #ccc">${name}</span>${tag}</td>
+    <td style="font-size:11px;color:#444;max-width:200px;word-break:break-word;padding-left:6px;cursor:pointer" data-adname="${adName}" data-platform="${platform}"${dailyAttr} onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()"><span style="border-bottom:1px dashed #ccc">${name}</span>${tag}</td>
     <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fR(agg.roas||0):'—'}</td>
     <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fS(agg.spend):'—'}</td>
     <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fSV(agg.sv||0):'—'}</td>
@@ -3643,13 +3731,32 @@ window.st = t => { tab=t; render(); };
 // ── Ad Hover Chart
 let _ahcChart = null;
 
-function getAdDailyData(baseName){
-  // Strip geo suffix appended by makeTTDn/makeDN e.g. " [UAE]", " [KSA]", " [GCC]", " [Ku & Qa]"
+function getAdDailyData(baseName, platform){
+  // Extract geo label BEFORE stripping — e.g. " [UAE]" → geo filter
+  const geoMatch = baseName.match(/\s*\[([^\]]+)\]\s*$/);
+  const geoLabel = geoMatch ? geoMatch[1].trim().toUpperCase() : null;
+
+  // Strip geo suffix for base name matching
   baseName = baseName.replace(/\s*\[[^\]]+\]\s*$/, '').trim();
-  // ── Normalize helper — strips date/version suffixes
+
+  // Geo filter: only include keys that belong to the same geo as the hovered ad
+  function keyMatchesGeo(k) {
+    if (!geoLabel) return true;
+    const ku = k.toUpperCase();
+    if (geoLabel === 'UAE') return ku.includes('_UAE');
+    if (geoLabel === 'KSA') return ku.includes('_KSA');
+    if (geoLabel.includes('KU') || geoLabel.includes('QA') || geoLabel.includes('BH'))
+      return /_(KU[_&\s\/]|KW\/|QAT|KWT|KUW)/i.test(k) || /Ku\s*&\s*Qa/i.test(k) || /Ku&Qat/i.test(k);
+    if (geoLabel.includes('GCC') || geoLabel.includes('CAT') || geoLabel.includes('RETARG') || geoLabel.includes('CATALOGUE'))
+      return /GCC|Catalogue|Retarget/i.test(k);
+    return true;
+  }
+
+  // ── Normalize helper — strips date/version suffixes only (keep geo in key for filtering above)
   const normalize = n => n
     .replace(/\s*\[[^\]]+\]\s*$/, '')
     .replace(/_mar\d+(_v\d+)?$/i,'')
+    .replace(/_apr\d+(_v\d+)?$/i,'')
     .replace(/_v\d+$/i,'')
     .replace(/\s*[-–]\s*Copy\s*\d*$/i,'')
     .replace(/_En_GLO.*$/i,'')
@@ -3676,10 +3783,14 @@ function getAdDailyData(baseName){
     });
   }
 
-  // ── Search across ALL platform ad granular data (ads + adsets)
+  // ── Search ONLY the platform's ad granular data (ads + adsets)
+  // If platform is known, restrict to that platform only — prevents cross-platform key collision
+  const platformsToSearch = platform && ['meta','tiktok','snap','google'].includes(platform)
+    ? [platform]
+    : ['meta','tiktok','snap','google'];
+
   const allSources = {};
-  // Add all ads
-  ['meta','tiktok','snap','google'].forEach(pk => {
+  platformsToSearch.forEach(pk => {
     const ads = GRANULAR[pk]?.ads || {};
     Object.entries(ads).forEach(([k,v]) => { allSources[k] = v; });
     // Also add adsets so adset-level data shows in chart
@@ -3701,10 +3812,13 @@ function getAdDailyData(baseName){
       || (normBase.length >= 25 && normalize(name).startsWith(normBase))
       || (baseName.length >= 30 && name.startsWith(baseName));
     if(!matches) return;
+    // Geo filter — only include keys matching the hovered geo label
+    if(!keyMatchesGeo(name)) return;
     arr.forEach(r => {
       if(!r || !r.d) return;
-      const isMar = r.d.startsWith('Mar ');
-      const target = isMar ? dayMap : mtdMap;
+      // MTD snapshot entries have labels like "MTD Mar 1-16" — real dates are "Mar N" or "Apr N"
+      const isRealDate = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d+$/.test(r.d);
+      const target = isRealDate ? dayMap : mtdMap;
       const key = r.d;
       if(!target[key]) target[key] = {spend:0,sv:0,conv:0,atc:0,wR:0};
       const e = target[key];
@@ -3736,11 +3850,13 @@ function getAdDailyData(baseName){
     const mtdRoas = mtd.spend>0 ? mtd.wR/mtd.spend : 0;
 
     // Detect which platform this ad belongs to for proportional daily scaling
-    let platKey = null;
-    ['tiktok','snap','meta','google'].forEach(pk => {
-      const ads = {...(GRANULAR[pk]?.ads||{}), ...(GRANULAR[pk]?.adsets||{})};
-      if(Object.keys(ads).some(k => normalize(k)===baseName || k===baseName)) platKey = pk;
-    });
+    let platKey = platform || null;
+    if (!platKey) {
+      ['tiktok','snap','meta','google'].forEach(pk => {
+        const ads = {...(GRANULAR[pk]?.ads||{}), ...(GRANULAR[pk]?.adsets||{})};
+        if(Object.keys(ads).some(k => normalize(k)===baseName || k===baseName)) platKey = pk;
+      });
+    }
 
     // Get platform daily spend totals for proportional distribution
     const platDaily = ALL_DATES.map(d => {
@@ -3769,16 +3885,89 @@ function getAdDailyData(baseName){
 function showAdHoverChartByEl(event, el){
   const baseName = el.getAttribute('data-adname') || '';
   const platform = el.getAttribute('data-platform') || '';
-  // Resolve the active period for this platform's ad table
+  const dailyAttr = el.getAttribute('data-daily') || '';
   let period = null;
-  if(platform === 'meta')   period = metaAdsPeriod;
+  if(platform === 'meta')        period = metaAdsPeriod;
   else if(platform === 'tiktok') period = ttAdsPeriod;
   else if(platform === 'snap')   period = snapAdsPeriod;
   else period = _topAdsState.period !== 'all' ? _topAdsState.period : null;
-  showAdHoverChart(event, baseName, period);
+  // If pre-computed daily data is attached, pass it directly — guaranteed to match the table
+  let precomputed = null;
+  if(dailyAttr){
+    try { precomputed = JSON.parse(dailyAttr.replace(/&quot;/g,'"')); } catch(e){}
+  }
+  showAdHoverChart(event, baseName, period, platform, precomputed);
 }
 
-function showAdHoverChart(event, baseName, period){
+function showAdHoverChartFromDaily(event, baseName, dailyMap){
+  const popup    = document.getElementById('ad-hover-chart');
+  const titleEl  = document.getElementById('ahc-title');
+  const canvas   = document.getElementById('ahc-canvas');
+  const verdictEl= document.getElementById('ahc-verdict');
+  const kpisEl   = document.getElementById('ahc-kpis');
+  const insightEl= document.getElementById('ahc-insight');
+
+  // dailyMap is { "Mar 27": {spend,sv,conv,atc,roas,cpo}, ... }
+  // Use exactly the dates in dailyMap (which match the table period)
+  const chartDates = Object.keys(dailyMap).sort((a,b) => ALL_DATES.indexOf(a) - ALL_DATES.indexOf(b));
+
+  let totSpend=0, totSV=0, totConv=0, totAtc=0, wR=0;
+  chartDates.forEach(d => {
+    const r = dailyMap[d];
+    if(!r || r.spend<=0) return;
+    totSpend += r.spend;
+    totSV    += r.sv||0;
+    totConv  += r.conv||0;
+    totAtc   += r.atc||0;
+    wR       += (r.roas||0)*r.spend;
+  });
+  const avgRoas = totSpend>0 ? wR/totSpend : 0;
+  const cpo     = totConv>0  ? totSpend/totConv : 0;
+
+  // Last 3 days trend
+  const last3Dates = chartDates.slice(-3);
+  let r3Spend=0, r3wR=0;
+  last3Dates.forEach(d => { const r=dailyMap[d]; if(r&&r.spend>0){r3Spend+=r.spend; r3wR+=(r.roas||0)*r.spend;} });
+  const recentRoas = r3Spend>0 ? r3wR/r3Spend : 0;
+
+  const ROAS_TARGET=3.0, CPO_TARGET=60;
+  const roasTrend = avgRoas>0 ? (recentRoas-avgRoas)/avgRoas : 0;
+  const noConv=totConv===0, lowSpend=totSpend<50;
+  let verdict, verdictClass, insight;
+  if(noConv&&totSpend>100){ verdict='🔴 Consider Turning Off'; verdictClass='ahc-off'; insight=`$${totSpend.toFixed(0)} spent with 0 purchases. High ATC (${totAtc}) but no conversions.`; }
+  else if(avgRoas>=ROAS_TARGET*1.5&&recentRoas>=ROAS_TARGET){ verdict='🟢 Keep Running — Strong'; verdictClass='ahc-keep'; insight=`${avgRoas.toFixed(1)}x ROAS (${roasTrend>=0?'+':''}${(roasTrend*100).toFixed(0)}% recent trend). Scale budget or test new creatives.`; }
+  else if(avgRoas>=ROAS_TARGET){ verdict='🟢 Keep Running'; verdictClass='ahc-keep'; insight=`${avgRoas.toFixed(1)}x ROAS above target. ${recentRoas<avgRoas?'Recent days slightly weaker — monitor.':'Momentum holding.'}`; }
+  else if(avgRoas>=ROAS_TARGET*0.6&&recentRoas>=ROAS_TARGET){ verdict='🟡 Watch — Recovering'; verdictClass='ahc-watch'; insight=`Overall ${avgRoas.toFixed(1)}x but recent 3 days hit ${recentRoas.toFixed(1)}x. Give it 2–3 more days.`; }
+  else if(avgRoas<ROAS_TARGET*0.5&&totSpend>150){ verdict='🔴 Turn Off / Pause'; verdictClass='ahc-off'; insight=`${avgRoas.toFixed(1)}x ROAS well below ${ROAS_TARGET}x target. CPO $${cpo.toFixed(0)} vs $${CPO_TARGET} target.`; }
+  else if(lowSpend){ verdict='⚪ Too Early to Judge'; verdictClass='ahc-watch'; insight=`Only $${totSpend.toFixed(0)} spent. Need more data.`; }
+  else { verdict='🟡 Watch Closely'; verdictClass='ahc-watch'; insight=`${avgRoas.toFixed(1)}x ROAS below ${ROAS_TARGET}x target. CPO $${cpo.toFixed(0)}. ${recentRoas<avgRoas?'Declining recently.':'No recent improvement.'}`; }
+
+  const roasColor = avgRoas>=ROAS_TARGET?'good':avgRoas>=ROAS_TARGET*0.6?'warn':'bad';
+  const cpoColor  = cpo===0?'':cpo<=CPO_TARGET?'good':cpo<=CPO_TARGET*1.5?'warn':'bad';
+
+  verdictEl.className = verdictClass;
+  verdictEl.textContent = verdict;
+  titleEl.textContent = baseName.replace(/\s*\[[^\]]+\]\s*$/, '').length>48 ? baseName.replace(/\s*\[[^\]]+\]\s*$/, '').substring(0,48)+'…' : baseName.replace(/\s*\[[^\]]+\]\s*$/, '');
+  kpisEl.innerHTML = [['ROAS',avgRoas>0?avgRoas.toFixed(1)+'x':'—',roasColor],['SPEND','$'+Math.round(totSpend).toLocaleString(),''],['CPO',cpo>0?'$'+cpo.toFixed(0):'—',cpoColor],['SALES',totConv||'0',totConv>0?'good':'bad']].map(([l,v,cls])=>`<div class="ahc-kpi"><span class="ahc-kpi-label">${l}</span><span class="ahc-kpi-val ${cls}">${v}</span></div>`).join('');
+  insightEl.textContent = insight;
+
+  if(_ahcChart){ _ahcChart.destroy(); _ahcChart=null; }
+  const roasData = chartDates.map(d => { const r=dailyMap[d]; return (r&&r.spend>0)?+(r.roas||0).toFixed(2):null; });
+  const targetLine = chartDates.map(()=>ROAS_TARGET);
+  _ahcChart = new Chart(canvas, {
+    type:'line',
+    data:{ labels:chartDates.map(d=>d.replace('Mar ','').replace('Apr ','')),
+      datasets:[
+        {label:'ROAS',data:roasData,borderColor:'#1877F2',backgroundColor:'transparent',borderWidth:2,pointRadius:roasData.map(v=>v!==null?4:0),pointBackgroundColor:'#1877F2',tension:0.3,spanGaps:false,yAxisID:'y'},
+        {label:'Target',data:targetLine,borderColor:'#ef4444',borderWidth:1.5,borderDash:[4,3],pointRadius:0,fill:false,yAxisID:'y',tension:0}
+      ]},
+    options:{responsive:false,animation:false,plugins:{legend:{position:'top',labels:{boxWidth:7,font:{size:8},padding:6,filter:item=>item.text!==''}},tooltip:{callbacks:{label:c=>c.datasetIndex===0?`ROAS: ${c.parsed.y!=null?c.parsed.y.toFixed(2)+'x':'—'}`:`Target: ${ROAS_TARGET}x`}}},scales:{x:{ticks:{font:{size:8},maxTicksLimit:8},grid:{display:false}},y:{position:'left',ticks:{font:{size:8},callback:v=>v+'x'},grid:{color:'#f8f8f4'},min:0}}}
+  });
+  popup.style.display='block';
+  positionAdHoverChart(event);
+}
+
+function showAdHoverChart(event, baseName, period, platform, precomputed){
   period = period || null;
   const popup    = document.getElementById('ad-hover-chart');
   const titleEl  = document.getElementById('ahc-title');
@@ -3787,20 +3976,28 @@ function showAdHoverChart(event, baseName, period){
   const kpisEl   = document.getElementById('ahc-kpis');
   const insightEl= document.getElementById('ahc-insight');
 
-  // Collect per-day data (indexed by ALL_DATES)
-  const dailyData = getAdDailyData(baseName);
-
-  // ── Determine which dates to aggregate for KPIs
+  // If precomputed daily map passed from table row, use it directly — exact match with table
+  // Otherwise fall back to getAdDailyData
+  let dailyData;
   let activeDates;
-  if (period === '3d') {
-    activeDates = ALL_DATES.slice(-3);
-  } else if (period === '1d') {
-    activeDates = ALL_DATES.slice(-1);
-  } else if (period === 'all') {
-    activeDates = ALL_DATES.slice();
+  if(precomputed){
+    // precomputed is {date: {spend,sv,conv,atc,roas,cpo}} — use these dates directly
+    const sortedDates = Object.keys(precomputed).sort((a,b)=>ALL_DATES.indexOf(a)-ALL_DATES.indexOf(b));
+    activeDates = sortedDates;
+    dailyData = ALL_DATES.map(d => precomputed[d] ? {...precomputed[d], d} : null);
   } else {
-    // Default: always last 7 days (gives enough data for meaningful recommendation)
-    activeDates = ALL_DATES.slice(-7);
+    // Collect per-day data (indexed by ALL_DATES) — restrict to platform to avoid cross-platform collision
+    dailyData = getAdDailyData(baseName, platform);
+    // ── Determine which dates to aggregate for KPIs
+    if (period === '3d') {
+      activeDates = ALL_DATES.slice(-3);
+    } else if (period === '1d') {
+      activeDates = ALL_DATES.slice(-1);
+    } else if (period === 'all') {
+      activeDates = ALL_DATES.slice();
+    } else {
+      activeDates = ALL_DATES.slice(-7);
+    }
   }
   const periodDates = new Set(activeDates);
 
@@ -3875,7 +4072,8 @@ function showAdHoverChart(event, baseName, period){
   // ── Render verdict + KPIs
   verdictEl.className = verdictClass;
   verdictEl.textContent = verdict;
-  titleEl.textContent = baseName.length > 48 ? baseName.substring(0,48)+'…' : baseName;
+  const displayName = baseName.replace(/\s*\[[^\]]+\]\s*$/, '');
+  titleEl.textContent = displayName.length > 48 ? displayName.substring(0,48)+'…' : displayName;
 
   kpisEl.innerHTML = [
     ['ROAS', avgRoas>0 ? avgRoas.toFixed(1)+'x' : '—', roasColor],
