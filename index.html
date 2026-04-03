@@ -571,6 +571,21 @@ let snapAdsPeriod=null;
 let googleCampsPeriod=null;
 
 function buildGoogleCampsHTML(camps, ds, periodOverride){
+  // Geo sort order: UAE first, then KSA, then KU/KUW
+  const GEO_ORDER = {uae: 0, ksa: 1, ku: 2};
+  function geoRank(c) {
+    const n = (c.name||c.geo||'').toUpperCase();
+    if (n.includes('UAE')) return 0;
+    if (n.includes('KSA') || n.includes('SAU')) return 1;
+    if (n.includes('KUW') || n.includes('KWT') || n.includes('QAT')) return 2;
+    const g = c.geo || '';
+    return GEO_ORDER[g] !== undefined ? GEO_ORDER[g] : 3;
+  }
+  function geoSort(a, b) {
+    const gd = geoRank(a) - geoRank(b);
+    if (gd !== 0) return gd;
+    return b.spend - a.spend; // within same geo, sort by spend desc
+  }
   // Map each campaign to its geo
   let rows;
 
@@ -614,10 +629,7 @@ function buildGoogleCampsHTML(camps, ds, periodOverride){
   const showDayBreakdownG = (periodOverride==='7d' || periodOverride==='3d') && ds && ds.length > 1;
 
   if(showDayBreakdownG){
-    return rows.sort((a,b)=>b.spend-a.spend).map(c => {
-      const sig = _SIG[_adSig({spend:c.spend,sv:c.sv,conv:c.conv,roas:c.roas,cpo:c.cpo})];
-      const tag = sig.tag ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:${sig.tb};color:${sig.tc};margin-left:6px;white-space:nowrap">${sig.tag}</span>` : '';
-      // Total row (bold)
+    return rows.sort(geoSort).map(c => {
       let html = `<tr style="background:${sig.bg};border-left:3px solid ${sig.border}">
         <td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px 6px 6px">${c.name}${tag}</td>
         <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:6px 8px">${fR(c.roas)}</td>
@@ -653,7 +665,7 @@ function buildGoogleCampsHTML(camps, ds, periodOverride){
     }).join('');
   }
 
-  return rows.sort((a,b)=>b.spend-a.spend).map(c => {
+  return rows.sort(geoSort).map(c => {
     const sig = _SIG[_adSig({spend:c.spend,sv:c.sv,conv:c.conv,roas:c.roas,cpo:c.cpo})];
     const tag = sig.tag ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:${sig.tb};color:${sig.tc};margin-left:6px;white-space:nowrap">${sig.tag}</span>` : '';
     return `<tr style="background:${sig.bg};border-left:3px solid ${sig.border}">
