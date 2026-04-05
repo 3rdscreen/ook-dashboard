@@ -693,6 +693,8 @@ function reRenderGoogleCamps(){
 }
 
 function buildSnapAdsHTML(ads, adNames, ds, label, periodOverride){
+  // Reset cache every render so hover always matches current period
+  window.SNAP_AD_DAILY_CACHE = {};
   const SNAP_GEO = [
     { label:'UAE',               pattern:/Snap_UAE|Snapchat_UAE|UAE_Snap/i },
     { label:'KSA',               pattern:/Snap_KSA|Snapchat_KSA/i },
@@ -943,6 +945,8 @@ function reRenderSnapAds(){
 }
 
 function buildTTAdsHTML(ads, adNames, ds, label, periodOverride){
+  // Reset cache every render so hover always matches current period
+  window.TT_AD_DAILY_CACHE = {};
   const TT_GEO = [
     { label:'UAE',               pattern:/Tiktok_UAE/i },
     { label:'KSA',               pattern:/Tiktok_KSA/i },
