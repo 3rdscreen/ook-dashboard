@@ -1592,7 +1592,7 @@ function buildCampaignTable(datesArr, label){
     });
   });
 
-  const cols = ["Campaign","Purchases","ROAS","Spent","ATC","CPO","Avg Conv. Value","Conversion Value"];
+  const cols = ["Campaign","Purchases","ROAS","Spent","ATC","CPO","AOV","Conversion Value"];
   const hdr = `<tr style="background:#f8f8f4">${cols.map((c,i)=>
     `<th style="padding:9px ${i===0?14:8}px;text-align:${i===0?"left":"center"};font-size:10px;font-weight:700;letter-spacing:.06em;color:#888;border-bottom:2px solid #ebebeb;white-space:nowrap">${c}</th>`
   ).join("")}</tr>`;
@@ -1735,7 +1735,7 @@ function buildAdsetTable(datesArr, label){
     });
   });
 
-  const cols = ["Ad Set","Purchases","ROAS","Spent","ATC","CPO","Avg Conv. Value","Conversion Value"];
+  const cols = ["Ad Set","Purchases","ROAS","Spent","ATC","CPO","AOV","Conversion Value"];
   const hdr = `<tr style="background:#f8f8f4">${cols.map((c,i)=>
     `<th style="padding:9px ${i===0?14:8}px;text-align:${i===0?'left':'center'};font-size:10px;font-weight:700;letter-spacing:.06em;color:#888;border-bottom:2px solid #ebebeb;white-space:nowrap">${c}</th>`
   ).join('')}</tr>`;
