@@ -879,7 +879,7 @@ function buildSnapAdsHTML(ads, adNames, ds, label, periodOverride){
       let tbodyRows='';
       rows.forEach(r=>{
         // Total row (bold)
-        tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px">${r.displayName}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
+        tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px">${r.displayName}</td>${['roas','conv','spend','atc','cpo','sv'].map(k=>{
           const v=r.agg[k]||0;
           const fmt=k==='roas'?fR(v):k==='spend'?fS(v):k==='sv'?fSV(v):k==='conv'?fC(v):k==='atc'?(v>0?fC(v):'—'):fCPO(v);
           return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:6px 8px">${fmt}</td>`;
@@ -890,7 +890,7 @@ function buildSnapAdsHTML(ads, adNames, ds, label, periodOverride){
           const cached = window.SNAP_AD_DAILY_CACHE[_ckS]?.[day];
           if(!cached||!cached.spend) return;
           const dayAgg = cached;
-            tbodyRows+=`<tr><td style="font-size:11px;color:#888;padding:3px 8px 3px 24px">↳ ${day}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
+            tbodyRows+=`<tr><td style="font-size:11px;color:#888;padding:3px 8px 3px 24px">↳ ${day}</td>${['roas','conv','spend','atc','cpo','sv'].map(k=>{
               const v=dayAgg[k]||0;
               const fmt=k==='roas'?fR(v):k==='spend'?fS(v):k==='sv'?fSV(v):k==='conv'?fC(v):k==='atc'?(v>0?fC(v):'—'):fCPO(v);
               return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:#888;padding:3px 8px">${fmt}</td>`;
@@ -1067,7 +1067,7 @@ function buildTTAdsHTML(ads, adNames, ds, label, periodOverride){
       let tbodyRows='';
       rows.forEach(r=>{
         // Total row (bold)
-        tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px">${r.displayName}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
+        tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px">${r.displayName}</td>${['roas','conv','spend','atc','cpo','sv'].map(k=>{
           const v=r.agg[k]||0;
           const fmt=k==='roas'?fR(v):k==='spend'?fS(v):k==='sv'?fSV(v):k==='conv'?fC(v):k==='atc'?(v>0?fC(v):'—'):fCPO(v);
           return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:6px 8px">${fmt}</td>`;
@@ -1085,7 +1085,7 @@ function buildTTAdsHTML(ads, adNames, ds, label, periodOverride){
           }
           const dayAgg=aggRecords(dayRecs);
           if(!dayAgg.spend) return;
-          tbodyRows+=`<tr><td style="font-size:11px;color:#888;padding:3px 8px 3px 24px">↳ ${day}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
+          tbodyRows+=`<tr><td style="font-size:11px;color:#888;padding:3px 8px 3px 24px">↳ ${day}</td>${['roas','conv','spend','atc','cpo','sv'].map(k=>{
             const v=dayAgg[k]||0;
             const fmt=k==='roas'?fR(v):k==='spend'?fS(v):k==='sv'?fSV(v):k==='conv'?fC(v):k==='atc'?(v>0?fC(v):'—'):fCPO(v);
             return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:#888;padding:3px 8px">${fmt}</td>`;
@@ -1246,7 +1246,7 @@ function reRenderMetaAds(){
         if(!rows.length) return;
         if(multiType) tbodyRows+=subGrpHdr(ct);
         rows.forEach(r=>{
-          tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px${multiType?' padding-left:24px':''}">${r.displayName}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
+          tbodyRows+=`<tr style="background:#f8f8f4"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px${multiType?' padding-left:24px':''}">${r.displayName}</td>${['roas','conv','spend','atc','cpo','sv'].map(k=>{
             const v=r.agg[k]||0;
             const fmt=k==='roas'?fR(v):k==='spend'?fS(v):k==='sv'?fSV(v):k==='conv'?fC(v):k==='atc'?(v>0?fC(v):'—'):fCPO(v);
             return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:6px 8px">${fmt}</td>`;
@@ -1264,7 +1264,7 @@ function reRenderMetaAds(){
             if(!dayRecs.length) return;
             const dayAgg=aggRecords(dayRecs);
             if(!dayAgg.spend) return;
-            tbodyRows+=`<tr><td style="font-size:11px;color:#888;padding:3px 8px 3px ${multiType?'40px':'24px'}">↳ ${day}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
+            tbodyRows+=`<tr><td style="font-size:11px;color:#888;padding:3px 8px 3px ${multiType?'40px':'24px'}">↳ ${day}</td>${['roas','conv','spend','atc','cpo','sv'].map(k=>{
               const v=dayAgg[k]||0;
               const fmt=k==='roas'?fR(v):k==='spend'?fS(v):k==='sv'?fSV(v):k==='conv'?fC(v):k==='atc'?(v>0?fC(v):'—'):fCPO(v);
               return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:#888;padding:3px 8px">${fmt}</td>`;
@@ -1334,12 +1334,11 @@ function renderOverviewRange(rd){
   const dotRow=(p,valFn)=>`<div class="orow"><span class="orow-lbl"><span style="width:8px;height:8px;border-radius:50%;background:${p.color};display:inline-block;flex-shrink:0"></span>${p.label}</span><span class="orow-val">${p.a.spend>0?valFn(p.a):"—"}</span></div>`;
   const bySpend=sorted(a=>a.spend);
   const cards=[
-    {lbl:"SPEND",sub:"TOTAL",val:fS(totSpend),rows:bySpend,fn:a=>fS(a.spend)},
     {lbl:"ROAS",sub:`${selStart}–${selEnd}`,val:fR(blended),rows:bySpend,fn:a=>fR(a.roas)},
-    {lbl:"SALES VALUE",sub:"TOTAL",val:fSV(totSV),rows:bySpend,fn:a=>fSV(a.sv)},
     {lbl:"SALES",sub:"TOTAL",val:fC(totConv),rows:bySpend,fn:a=>fC(a.conv)},
-    {lbl:"ATC",sub:"TOTAL",val:fC(totAtc),rows:bySpend,fn:a=>a.atc>0?fC(a.atc):'—'},
+    {lbl:"SPEND",sub:"TOTAL",val:fS(totSpend),rows:bySpend,fn:a=>fS(a.spend)},
     {lbl:"CPO",sub:"BLENDED",val:fCPO(totCPO),rows:bySpend,fn:a=>fCPO(a.cpo)},
+    {lbl:"SALES VALUE",sub:"TOTAL",val:fSV(totSV),rows:bySpend,fn:a=>fSV(a.sv)},
   ];
   const cardHTML=cards.map(c=>`<div class="card"><div class="klbl" style="margin-bottom:4px">${c.lbl}</div><div class="klbl" style="margin-bottom:10px;font-size:9px;color:#ccc">${c.sub}</div><div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 10px;border-bottom:2px solid #e6e6e0;margin-bottom:4px;"><span style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700">${c.val}</span></div>${c.rows.map(p=>dotRow(p,c.fn)).join("")}</div>`).join("");
   const trendDS=PL.map(p=>{
@@ -1362,8 +1361,8 @@ function renderPlatRange(pk, rd){
   if(!totSpend){document.getElementById("view").innerHTML=`<div class="nodata">No data for ${p.label} in this range</div>`;return;}
   const mtdRoas=totSpend>0?wR/totSpend:0, mtdCPO=totConv>0?totSpend/totConv:0;
   const gr=geos.map((g,i)=>{let sp=0,sv=0,cv=0,wr=0;rd.forEach(d=>{const r=row(pk,d);if(r){const geo=r[g]||{};sp+=geo.spend||0;sv+=geo.sv||0;cv+=geo.conv||0;wr+=(geo.roas||0)*(geo.spend||0);}});return{g,label:GL[g],color:GC[i],spend:sp,sv,conv:cv,roas:sp>0?wr/sp:0,cpo:cv>0?sp/cv:0};});
-  const kpis=[{l:"ROAS",v:fR(mtdRoas)},{l:"SPEND",v:fS(totSpend)},{l:"SALES VALUE",v:fSV(totSV)},{l:"SALES",v:fC(totConv)},...(pk!=='google'?[{l:"ATC",v:totAtc>0?fC(totAtc):'—'}]:[]),{l:"CPO",v:fCPO(mtdCPO)}];
-  document.getElementById("view").innerHTML=`<div class="${pk==='google'?'g5':'g6'}">${kpis.map(k=>`<div class="card" style="border-top:2px solid ${p.color}"><div class="klbl">${k.l}</div><div class="kval sm">${k.v}</div></div>`).join("")}</div><div class="cc"><div class="clbl">MARKET BREAKDOWN — ${selStart} to ${selEnd}</div><table class="gtbl"><thead><tr><th>Market</th><th>ROAS</th><th>Spend</th><th>Sales Value</th><th>Sales</th><th>CPO</th></tr></thead><tbody>${gr.map(g=>`<tr><td><span class="gn"><span class="gs" style="background:${g.color}"></span>${g.label}</span></td><td>${g.spend>0?fR(g.roas):"—"}</td><td>${g.spend>0?fS(g.spend):"—"}</td><td>${g.spend>0?fSV(g.sv):"—"}</td><td>${g.spend>0?fC(g.conv):"—"}</td><td>${g.spend>0?fCPO(g.cpo):"—"}</td></tr>`).join("")}</tbody></table></div><div class="cc"><div class="clbl">ROAS TREND — ${p.label}</div><div class="cw" style="height:200px"><canvas id="rng-pt"></canvas></div></div>`;
+  const kpis=(pk==='meta'||pk==='tiktok'||pk==='snap')?[{l:"SALES",v:fC(totConv)},{l:"SPEND",v:fS(totSpend)},{l:"ROAS",v:fR(mtdRoas)},{l:"ATC",v:totAtc>0?fC(totAtc):'—'},{l:"CPO",v:fCPO(mtdCPO)},{l:"SALES VALUE",v:fSV(totSV)}]:[{l:"ROAS",v:fR(mtdRoas)},{l:"SPEND",v:fS(totSpend)},{l:"SALES VALUE",v:fSV(totSV)},{l:"SALES",v:fC(totConv)},{l:"CPO",v:fCPO(mtdCPO)}];
+  document.getElementById("view").innerHTML=`<div class="${pk==='google'?'g5':'g6'}">${kpis.map(k=>`<div class="card" style="border-top:2px solid ${p.color}"><div class="klbl">${k.l}</div><div class="kval sm">${k.v}</div></div>`).join("")}</div><div class="cc"><div class="clbl">MARKET BREAKDOWN — ${selStart} to ${selEnd}</div><table class="gtbl"><thead><tr><th>Market</th><th>ROAS</th><th>Sales</th><th>Spend</th>${pk!=='google'?'<th>ATC</th>':''}<th>CPO</th><th>Sales Value</th></tr></thead><tbody>${(()=>{const totAtcRng=totAtc||0;const totSpendRng=gr.reduce((s,g)=>s+g.spend,0);return gr.map(g=>{const gAtc=pk!=='google'&&totSpendRng>0?Math.round(totAtcRng*(g.spend/totSpendRng)):0;return`<tr><td><span class="gn"><span class="gs" style="background:${g.color}"></span>${g.label}</span></td><td>${g.spend>0?fR(g.roas):"—"}</td><td>${g.spend>0?fC(g.conv):"—"}</td><td>${g.spend>0?fS(g.spend):"—"}</td>${pk!=='google'?`<td>${g.spend>0&&gAtc>0?fC(gAtc):"—"}</td>`:''}<td>${g.spend>0?fCPO(g.cpo):"—"}</td><td>${g.spend>0?fSV(g.sv):"—"}</td></tr>`;}).join('');})()}</tbody></table></div><div class="cc"><div class="clbl">ROAS TREND — ${p.label}</div><div class="cw" style="height:200px"><canvas id="rng-pt"></canvas></div></div>`;
   // ROAS trend — show only selected range dates
   const rdSet=new Set(rd);
   dc("rng-pt");CR["rng-pt"]=new Chart(document.getElementById("rng-pt"),{type:"line",
@@ -2399,11 +2398,11 @@ function renderOverview(d){
   // KPI cards: ROAS, SPEND, SALES VALUE, SALES, CPO
   const bySpendD=sortedBy("spend");
   const cards=[
-    {lbl:"SPEND",sub:"TOTAL",val:fS(allSpend),rows:bySpendD,fn:p=>fS(p.spend)},
     {lbl:"ROAS",sub:"WEIGHTED AVG.",val:fR(blendedRoas),rows:bySpendD,fn:p=>fR(p.roas)},
-    {lbl:"SALES VALUE",sub:"TOTAL",val:fSV(allSV),rows:bySpendD,fn:p=>fSV(p.sv)},
     {lbl:"SALES",sub:"TOTAL",val:fC(allConv),rows:bySpendD,fn:p=>fC(p.conv)},
+    {lbl:"SPEND",sub:"TOTAL",val:fS(allSpend),rows:bySpendD,fn:p=>fS(p.spend)},
     {lbl:"CPO",sub:"BLENDED",val:fCPO(totalCPO),rows:bySpendD,fn:p=>fCPO(p.cpo)},
+    {lbl:"SALES VALUE",sub:"TOTAL",val:fSV(allSV),rows:bySpendD,fn:p=>fSV(p.sv)},
   ];
 
   const cardHTML=cards.map(c=>`
@@ -2492,11 +2491,11 @@ function renderOverviewMTD(){
 
   const bySpendM=sorted(a=>a.spend);
   const cards=[
-    {lbl:"SPEND",sub:"TOTAL",val:fS(totSpend),rows:bySpendM,fn:a=>fS(a.spend)},
     {lbl:"ROAS",sub:"WEIGHTED AVG.",val:fR(blended),rows:bySpendM,fn:a=>fR(a.roas)},
-    {lbl:"SALES VALUE",sub:"TOTAL",val:fSV(totSV),rows:bySpendM,fn:a=>fSV(a.sv)},
     {lbl:"SALES",sub:"TOTAL",val:fC(totConv),rows:bySpendM,fn:a=>fC(a.conv)},
+    {lbl:"SPEND",sub:"TOTAL",val:fS(totSpend),rows:bySpendM,fn:a=>fS(a.spend)},
     {lbl:"CPO",sub:"BLENDED",val:fCPO(totCPO),rows:bySpendM,fn:a=>fCPO(a.cpo)},
+    {lbl:"SALES VALUE",sub:"TOTAL",val:fSV(totSV),rows:bySpendM,fn:a=>fSV(a.sv)},
   ];
 
   const cardHTML=cards.map(c=>`
@@ -2552,6 +2551,187 @@ function renderOverviewMTD(){
 // ═══════════════════════════════════════════════════════
 // PLATFORM TAB
 // ═══════════════════════════════════════════════════════
+
+// ── MTD Market Breakdown table (used in renderPlat single-day view) ──
+function buildMTDMarketTable(pk, p) {
+  if(pk==='google') return '';
+  const all=D[pk]||[];
+  const last=ALL_DATES[ALL_DATES.length-1];
+  const curMon=last.replace(/ \d+$/,'');
+  const mtdDates=ALL_DATES.filter(d=>d.startsWith(curMon));
+  const geos=GK[pk], tS='padding:9px 0;border-bottom:1px solid #f4f4ef;font-family:monospace;font-size:12px;font-weight:700;background:#f4f4ef';
+
+  // Aggregate geo totals for MTD
+  const gr=geos.map((g,i)=>{
+    let sp=0,sv=0,cv=0,wr=0;
+    mtdDates.forEach(dt=>{const rr=all.find(x=>x.d===dt);if(rr&&rr.spend>0){const geo=rr[g]||{};sp+=geo.spend||0;sv+=geo.sv||0;cv+=geo.conv||0;wr+=(geo.roas||0)*(geo.spend||0);}});
+    return{g,label:GL[g],color:GC[i],spend:sp,sv,conv:cv,roas:sp>0?wr/sp:0,cpo:cv>0?sp/cv:0};
+  });
+
+  // Total platform ATC for MTD
+  const totAtcMTD=mtdDates.reduce((s,dt)=>{const rr=all.find(x=>x.d===dt);return s+(rr?+(rr.atc||0):0);},0);
+  const totSpendMTD=gr.reduce((s,g)=>s+g.spend,0);
+
+  const rows=gr.map(g=>{
+    const gAtc=totSpendMTD>0?Math.round(totAtcMTD*(g.spend/totSpendMTD)):0;
+    return`<tr>
+      <td><span class="gn"><span class="gs" style="background:${g.color}"></span>${g.label}</span></td>
+      <td>${g.spend>0?fR(g.roas):'—'}</td>
+      <td>${g.spend>0?fC(g.conv):'—'}</td>
+      <td>${g.spend>0?fS(g.spend):'—'}</td>
+      <td>${g.spend>0&&gAtc>0?fC(gAtc):'—'}</td>
+      <td>${g.spend>0?fCPO(g.cpo):'—'}</td>
+      <td>${g.spend>0?fSV(g.sv):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Meta followers row
+  let folRow='';
+  if(pk==='meta'){
+    const folRecs=(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>mtdDates.includes(r.d));
+    const fSp=folRecs.reduce((s,r)=>s+(r.spend||0),0);
+    const fCv=folRecs.reduce((s,r)=>s+(r.purchase_conv||0),0);
+    const fSv=folRecs.reduce((s,r)=>s+(r.sv||0),0);
+    if(fSp>0) folRow=`<tr><td><span class="gn"><span class="gs" style="background:#94a3b8"></span>Followers / Brand</span></td><td>${fCv>0?fC(fCv):'—'}</td><td>${fS(fSp)}</td><td>—</td><td>—</td><td>—</td><td>${fSv>0?fSV(fSv):'—'}</td></tr>`;
+  }
+
+  // Total row
+  const folRecs2=pk==='meta'?(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>mtdDates.includes(r.d)):[];
+  const fSp2=folRecs2.reduce((s,r)=>s+(r.spend||0),0);
+  const fCv2=folRecs2.reduce((s,r)=>s+(r.purchase_conv||0),0);
+  const fSv2=folRecs2.reduce((s,r)=>s+(r.sv||0),0);
+  const tSp=totSpendMTD+fSp2, tSv=gr.reduce((s,g)=>s+g.sv,0)+fSv2, tCv=gr.reduce((s,g)=>s+g.conv,0)+fCv2;
+  const tWr=gr.reduce((s,g)=>s+(g.roas*g.spend),0);
+  const tRoas=tSp>0?tWr/tSp:0, tCpo=tCv>0?tSp/tCv:0;
+  const totalRow=`<tr style="border-top:2px solid #1a1a1a"><td style="padding:9px 0;background:#f4f4ef;font-size:12px;font-weight:700;color:#1a1a1a">Total</td><td style="${tS}">${tRoas>0?fR(tRoas):'—'}</td><td style="${tS}">${tCv>0?fC(tCv):'—'}</td><td style="${tS}">${fS(tSp)}</td><td style="${tS}">${totAtcMTD>0?fC(totAtcMTD):'—'}</td><td style="${tS}">${tCpo>0?fCPO(tCpo):'—'}</td><td style="${tS}">${tSv>0?fSV(tSv):'—'}</td></tr>`;
+
+  return`<div class="cc">
+    <div class="clbl">MARKET BREAKDOWN — MTD ${curMon} 1–${last}</div>
+    <table class="gtbl">
+      <thead><tr><th>Market</th><th>ROAS</th><th>Sales</th><th>Spend</th><th>ATC</th><th>CPO</th><th>Sales Value</th></tr></thead>
+      <tbody>${rows}${folRow}${totalRow}</tbody>
+    </table>
+  </div>`;
+}
+
+
+// ── Last 7 Days Market Breakdown table (used in renderPlat single-day view) ──
+function buildLast7MarketTable(pk, p) {
+  if(pk==='google') return '';
+  const all=D[pk]||[];
+  const last=ALL_DATES[ALL_DATES.length-1];
+  const last7=ALL_DATES.slice(-7);
+  const tS='padding:9px 0;border-bottom:1px solid #f4f4ef;font-family:monospace;font-size:12px;font-weight:700;background:#f4f4ef';
+  const geos=GK[pk];
+
+  const gr=geos.map((g,i)=>{
+    let sp=0,sv=0,cv=0,wr=0;
+    last7.forEach(dt=>{const rr=all.find(x=>x.d===dt);if(rr&&rr.spend>0){const geo=rr[g]||{};sp+=geo.spend||0;sv+=geo.sv||0;cv+=geo.conv||0;wr+=(geo.roas||0)*(geo.spend||0);}});
+    return{g,label:GL[g],color:GC[i],spend:sp,sv,conv:cv,roas:sp>0?wr/sp:0,cpo:cv>0?sp/cv:0};
+  });
+
+  const totAtc7=last7.reduce((s,dt)=>{const rr=all.find(x=>x.d===dt);return s+(rr?+(rr.atc||0):0);},0);
+  const totSpend7=gr.reduce((s,g)=>s+g.spend,0);
+
+  const rows=gr.map(g=>{
+    const gAtc=totSpend7>0?Math.round(totAtc7*(g.spend/totSpend7)):0;
+    return`<tr>
+      <td><span class="gn"><span class="gs" style="background:${g.color}"></span>${g.label}</span></td>
+      <td>${g.spend>0?fR(g.roas):'—'}</td>
+      <td>${g.spend>0?fC(g.conv):'—'}</td>
+      <td>${g.spend>0?fS(g.spend):'—'}</td>
+      <td>${g.spend>0&&gAtc>0?fC(gAtc):'—'}</td>
+      <td>${g.spend>0?fCPO(g.cpo):'—'}</td>
+      <td>${g.spend>0?fSV(g.sv):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  let folRow='';
+  if(pk==='meta'){
+    const folRecs=(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>last7.includes(r.d));
+    const fSp=folRecs.reduce((s,r)=>s+(r.spend||0),0);
+    const fCv=folRecs.reduce((s,r)=>s+(r.purchase_conv||0),0);
+    const fSv=folRecs.reduce((s,r)=>s+(r.sv||0),0);
+    if(fSp>0) folRow=`<tr><td><span class="gn"><span class="gs" style="background:#94a3b8"></span>Followers / Brand</span></td><td>${fCv>0?fC(fCv):'—'}</td><td>${fS(fSp)}</td><td>—</td><td>—</td><td>—</td><td>${fSv>0?fSV(fSv):'—'}</td></tr>`;
+  }
+
+  const folRecs2=pk==='meta'?(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>last7.includes(r.d)):[];
+  const fSp2=folRecs2.reduce((s,r)=>s+(r.spend||0),0);
+  const fCv2=folRecs2.reduce((s,r)=>s+(r.purchase_conv||0),0);
+  const fSv2=folRecs2.reduce((s,r)=>s+(r.sv||0),0);
+  const tSp=totSpend7+fSp2, tSv=gr.reduce((s,g)=>s+g.sv,0)+fSv2, tCv=gr.reduce((s,g)=>s+g.conv,0)+fCv2;
+  const tWr=gr.reduce((s,g)=>s+(g.roas*g.spend),0);
+  const tRoas=tSp>0?tWr/tSp:0, tCpo=tCv>0?tSp/tCv:0;
+  const totalRow=`<tr style="border-top:2px solid #1a1a1a"><td style="padding:9px 0;background:#f4f4ef;font-size:12px;font-weight:700;color:#1a1a1a">Total</td><td style="${tS}">${tRoas>0?fR(tRoas):'—'}</td><td style="${tS}">${tCv>0?fC(tCv):'—'}</td><td style="${tS}">${fS(tSp)}</td><td style="${tS}">${totAtc7>0?fC(totAtc7):'—'}</td><td style="${tS}">${tCpo>0?fCPO(tCpo):'—'}</td><td style="${tS}">${tSv>0?fSV(tSv):'—'}</td></tr>`;
+
+  return`<div class="cc">
+    <div class="clbl">MARKET BREAKDOWN — LAST 7 DAYS (${last7[0]}–${last})</div>
+    <table class="gtbl">
+      <thead><tr><th>Market</th><th>ROAS</th><th>Sales</th><th>Spend</th><th>ATC</th><th>CPO</th><th>Sales Value</th></tr></thead>
+      <tbody>${rows}${folRow}${totalRow}</tbody>
+    </table>
+  </div>`;
+}
+
+
+// ── Last 30 Days Market Breakdown table (used in renderPlat single-day view) ──
+function buildLast30MarketTable(pk, p) {
+  if(pk==='google') return '';
+  const all=D[pk]||[];
+  const last=ALL_DATES[ALL_DATES.length-1];
+  const last30=ALL_DATES.slice(-30);
+  const tS='padding:9px 0;border-bottom:1px solid #f4f4ef;font-family:monospace;font-size:12px;font-weight:700;background:#f4f4ef';
+  const geos=GK[pk];
+
+  const gr=geos.map((g,i)=>{
+    let sp=0,sv=0,cv=0,wr=0;
+    last30.forEach(dt=>{const rr=all.find(x=>x.d===dt);if(rr&&rr.spend>0){const geo=rr[g]||{};sp+=geo.spend||0;sv+=geo.sv||0;cv+=geo.conv||0;wr+=(geo.roas||0)*(geo.spend||0);}});
+    return{g,label:GL[g],color:GC[i],spend:sp,sv,conv:cv,roas:sp>0?wr/sp:0,cpo:cv>0?sp/cv:0};
+  });
+
+  const totAtc30=last30.reduce((s,dt)=>{const rr=all.find(x=>x.d===dt);return s+(rr?+(rr.atc||0):0);},0);
+  const totSpend30=gr.reduce((s,g)=>s+g.spend,0);
+
+  const rows=gr.map(g=>{
+    const gAtc=totSpend30>0?Math.round(totAtc30*(g.spend/totSpend30)):0;
+    return`<tr>
+      <td><span class="gn"><span class="gs" style="background:${g.color}"></span>${g.label}</span></td>
+      <td>${g.spend>0?fR(g.roas):'—'}</td>
+      <td>${g.spend>0?fC(g.conv):'—'}</td>
+      <td>${g.spend>0?fS(g.spend):'—'}</td>
+      <td>${g.spend>0&&gAtc>0?fC(gAtc):'—'}</td>
+      <td>${g.spend>0?fCPO(g.cpo):'—'}</td>
+      <td>${g.spend>0?fSV(g.sv):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  let folRow='';
+  if(pk==='meta'){
+    const folRecs=(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>last30.includes(r.d));
+    const fSp=folRecs.reduce((s,r)=>s+(r.spend||0),0);
+    const fCv=folRecs.reduce((s,r)=>s+(r.purchase_conv||0),0);
+    const fSv=folRecs.reduce((s,r)=>s+(r.sv||0),0);
+    if(fSp>0) folRow=`<tr><td><span class="gn"><span class="gs" style="background:#94a3b8"></span>Followers / Brand</span></td><td>${fCv>0?fC(fCv):'—'}</td><td>${fS(fSp)}</td><td>—</td><td>—</td><td>—</td><td>${fSv>0?fSV(fSv):'—'}</td></tr>`;
+  }
+
+  const folRecs2=pk==='meta'?(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>last30.includes(r.d)):[];
+  const fSp2=folRecs2.reduce((s,r)=>s+(r.spend||0),0);
+  const fCv2=folRecs2.reduce((s,r)=>s+(r.purchase_conv||0),0);
+  const fSv2=folRecs2.reduce((s,r)=>s+(r.sv||0),0);
+  const tSp=totSpend30+fSp2, tSv=gr.reduce((s,g)=>s+g.sv,0)+fSv2, tCv=gr.reduce((s,g)=>s+g.conv,0)+fCv2;
+  const tWr=gr.reduce((s,g)=>s+(g.roas*g.spend),0);
+  const tRoas=tSp>0?tWr/tSp:0, tCpo=tCv>0?tSp/tCv:0;
+  const totalRow=`<tr style="border-top:2px solid #1a1a1a"><td style="padding:9px 0;background:#f4f4ef;font-size:12px;font-weight:700;color:#1a1a1a">Total</td><td style="${tS}">${tRoas>0?fR(tRoas):'—'}</td><td style="${tS}">${tCv>0?fC(tCv):'—'}</td><td style="${tS}">${fS(tSp)}</td><td style="${tS}">${totAtc30>0?fC(totAtc30):'—'}</td><td style="${tS}">${tCpo>0?fCPO(tCpo):'—'}</td><td style="${tS}">${tSv>0?fSV(tSv):'—'}</td></tr>`;
+
+  return`<div class="cc">
+    <div class="clbl">MARKET BREAKDOWN — LAST 30 DAYS (${last30[0]}–${last})</div>
+    <table class="gtbl">
+      <thead><tr><th>Market</th><th>ROAS</th><th>Sales</th><th>Spend</th><th>ATC</th><th>CPO</th><th>Sales Value</th></tr></thead>
+      <tbody>${rows}${folRow}${totalRow}</tbody>
+    </table>
+  </div>`;
+}
+
 function renderPlat(pk,d){
   const p=PL.find(x=>x.key===pk), r=row(pk,d), geos=GK[pk], all=D[pk]||[];
   // For Meta charts: show current month only (MTD). Always reflects whichever month has data.
@@ -2565,12 +2745,18 @@ function renderPlat(pk,d){
   });
 
   // KPI cards: ROAS, SPEND, SALES VALUE, SALES, ATC, CPO
-  const kpis=[
+  const kpis=(pk==='meta'||pk==='tiktok'||pk==='snap')?[
+    {l:"SALES",      v:fC(r.conv)},
+    {l:"SPEND",      v:fS(r.spend)},
+    {l:"ROAS",       v:fR(r.roas)},
+    {l:"ATC",        v:r.atc>0?fC(r.atc):'—'},
+    {l:"CPO",        v:fCPO(r.cpo)},
+    {l:"SALES VALUE",v:fSV(r.sv)},
+  ]:[
     {l:"ROAS",      v:fR(r.roas)},
     {l:"SPEND",     v:fS(r.spend)},
     {l:"SALES VALUE",v:fSV(r.sv)},
     {l:"SALES",     v:fC(r.conv)},
-    ...(pk!=='google'?[{l:"ATC",v:r.atc>0?fC(r.atc):'—'}]:[]),
     {l:"CPO",       v:fCPO(r.cpo)},
   ];
 
@@ -2578,26 +2764,31 @@ function renderPlat(pk,d){
     <div class="${pk==='google'?'g5':'g6'}">
       ${kpis.map(k=>`<div class="card" style="border-top:2px solid ${p.color}"><div class="klbl">${k.l}</div><div class="kval sm">${k.v}</div></div>`).join("")}
     </div>
-    <div class="cc">
+${pk!=='meta'?`    <div class="cc">
       <div class="clbl">MARKET BREAKDOWN — ${d}</div>
       <table class="gtbl">
-        <thead><tr><th>Market</th><th>ROAS</th><th>Spend</th><th>Sales Value</th><th>Sales</th><th>CPO</th></tr></thead>
-        <tbody>${gr.map(g=>`<tr>
+        <thead><tr><th>Market</th><th>ROAS</th><th>Sales</th><th>Spend</th>${pk!=='google'?'<th>ATC</th>':''}<th>CPO</th><th>Sales Value</th></tr></thead>
+        <tbody>${(()=>{const totAtcD=r?+(r.atc||0):0;const totSpendD=gr.reduce((s,g)=>s+g.spend,0);return gr.map(g=>{const gAtc=pk!=='google'&&totSpendD>0?Math.round(totAtcD*(g.spend/totSpendD)):0;return`<tr>
           <td><span class="gn"><span class="gs" style="background:${g.color}"></span>${g.label}</span></td>
           <td>${g.spend>0?fR(g.roas):"—"}</td>
-          <td>${g.spend>0?fS(g.spend):"—"}</td>
-          <td>${g.spend>0?fSV(g.sv):"—"}</td>
           <td>${g.spend>0?fC(g.conv):"—"}</td>
+          <td>${g.spend>0?fS(g.spend):"—"}</td>
+          ${pk!=='google'?`<td>${g.spend>0&&gAtc>0?fC(gAtc):"—"}</td>`:''}
           <td>${g.spend>0?fCPO(g.cpo):"—"}</td>
-        </tr>`).join("")}${(()=>{if(pk!=='meta')return'';const folRecs=(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>r.d===d);const folSpend=folRecs.reduce((s,r)=>s+(r.spend||0),0);const folConv=folRecs.reduce((s,r)=>s+(r.purchase_conv||0),0);const folSV=folRecs.reduce((s,r)=>s+(r.sv||0),0);if(folSpend<=0)return'';return'<tr><td><span class="gn"><span class="gs" style="background:#94a3b8"></span>Followers / Brand</span></td><td>—</td><td>'+fS(folSpend)+'</td><td>'+(folSV>0?fSV(folSV):'—')+'</td><td>'+(folConv>0?fC(folConv):'—')+'</td><td>—</td></tr>';})()}${(()=>{const folRecs2=(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>r.d===d);const fSp=folRecs2.reduce((s,r)=>s+(r.spend||0),0);const fCv=folRecs2.reduce((s,r)=>s+(r.purchase_conv||0),0);const fSv=folRecs2.reduce((s,r)=>s+(r.sv||0),0);const tSp=gr.reduce((s,g)=>s+g.spend,0)+fSp;const tSv=gr.reduce((s,g)=>s+g.sv,0)+fSv;const tCv=gr.reduce((s,g)=>s+g.conv,0)+fCv;const tWr=gr.reduce((s,g)=>s+(g.roas*g.spend),0);const tRoas=tSp>0?tWr/tSp:0;const tCpo=tCv>0?tSp/tCv:0;const tS='padding:9px 0;border-bottom:1px solid #f4f4ef;font-family:monospace;font-size:12px;font-weight:700;background:#f4f4ef';return'<tr style="border-top:2px solid #1a1a1a"><td style="padding:9px 0;background:#f4f4ef;font-size:12px;font-weight:700;color:#1a1a1a">Total</td><td style="'+tS+'">'+(tRoas>0?fR(tRoas):'—')+'</td><td style="'+tS+'">'+fS(tSp)+'</td><td style="'+tS+'">'+(tSv>0?fSV(tSv):'—')+'</td><td style="'+tS+'">'+(tCv>0?fC(tCv):'—')+'</td><td style="'+tS+'">'+(tCpo>0?fCPO(tCpo):'—')+'</td></tr>';})()}</tbody>
+          <td>${g.spend>0?fSV(g.sv):"—"}</td>
+        </tr>`;}).join('');})()}${(()=>{if(pk!=='meta')return'';const folRecs=(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>r.d===d);const folSpend=folRecs.reduce((s,r)=>s+(r.spend||0),0);const folConv=folRecs.reduce((s,r)=>s+(r.purchase_conv||0),0);const folSV=folRecs.reduce((s,r)=>s+(r.sv||0),0);if(folSpend<=0)return'';return'<tr><td><span class="gn"><span class="gs" style="background:#94a3b8"></span>Followers / Brand</span></td><td>'+(folConv>0?fC(folConv):'—')+'</td><td>'+fS(folSpend)+'</td><td>—</td><td>—</td><td>—</td><td>'+(folSV>0?fSV(folSV):'—')+'</td></tr>';})()}${(()=>{const folRecs2=(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>r.d===d);const fSp=folRecs2.reduce((s,r)=>s+(r.spend||0),0);const fCv=folRecs2.reduce((s,r)=>s+(r.purchase_conv||0),0);const fSv=folRecs2.reduce((s,r)=>s+(r.sv||0),0);const tSp=gr.reduce((s,g)=>s+g.spend,0)+fSp;const tSv=gr.reduce((s,g)=>s+g.sv,0)+fSv;const tCv=gr.reduce((s,g)=>s+g.conv,0)+fCv;const tWr=gr.reduce((s,g)=>s+(g.roas*g.spend),0);const tRoas=tSp>0?tWr/tSp:0;const tCpo=tCv>0?tSp/tCv:0;const totAtcAll=r?+(r.atc||0):0;const tS='padding:9px 0;border-bottom:1px solid #f4f4ef;font-family:monospace;font-size:12px;font-weight:700;background:#f4f4ef';return'<tr style="border-top:2px solid #1a1a1a"><td style="padding:9px 0;background:#f4f4ef;font-size:12px;font-weight:700;color:#1a1a1a">Total</td><td style="'+tS+'">'+(tRoas>0?fR(tRoas):'—')+'</td><td style="'+tS+'">'+(tCv>0?fC(tCv):'—')+'</td><td style="'+tS+'">'+fS(tSp)+'</td>'+(pk!=='google'?'<td style="'+tS+'">'+(totAtcAll>0?fC(totAtcAll):'—')+'</td>':'')+'<td style="'+tS+'">'+(tCpo>0?fCPO(tCpo):'—')+'</td><td style="'+tS+'">'+(tSv>0?fSV(tSv):'—')+'</td></tr>';})()}</tbody>
       </table>
-    </div>
+    </div>`:''}  
+
+    ${pk!=='google'?buildMTDMarketTable(pk,p):''}
+    ${pk!=='google'?buildLast7MarketTable(pk,p):''}
+    ${pk!=='google'?buildLast30MarketTable(pk,p):''}
     <div class="cc"><div class="clbl">ROAS TREND — ${p.label}</div><div class="cw" style="height:190px"><canvas id="pt"></canvas></div></div>
-    <div class="gg">
+    ${pk==='google'?`<div class="gg">
       <div class="cc" style="margin-bottom:0"><div class="clbl">SALES VALUE TREND</div><div class="cw" style="height:160px"><canvas id="psv"></canvas></div></div>
       <div class="cc" style="margin-bottom:0"><div class="clbl">CPO TREND</div><div class="cw" style="height:160px"><canvas id="pcpo"></canvas></div></div>
     </div>
-    <div class="cc"><div class="clbl">SALES — ${p.label}</div><div class="cw" style="height:160px"><canvas id="pc"></canvas></div></div>
+    <div class="cc"><div class="clbl">SALES — ${p.label}</div><div class="cw" style="height:160px"><canvas id="pc"></canvas></div></div>`:''}
     ${pk === 'google' ? buildGoogleBudgetWidget() : ''}
     ${renderGranular(pk,d)}`;
   if(pk==='meta') reRenderMetaAds();
@@ -2614,31 +2805,29 @@ function renderPlat(pk,d){
       tension:0.3,spanGaps:false}]},
     options:{...bc,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y!=null?c.parsed.y.toFixed(2)+"x":"—"}`}}},scales:ax(v=>`${v}x`)}});
 
-  // Sales Value trend — highlight selected day
-  dc("psv");CR["psv"]=new Chart(document.getElementById("psv"),{type:"line",
-    data:{labels:chartAll.map(x=>x.d),datasets:[{data:chartAll.map(x=>x.spend>0?Math.round(x.sv||0):null),
-      borderColor:p.color,backgroundColor:p.color+"14",borderWidth:2,
-      pointRadius:chartAll.map(x=>x.d===d?7:2.5),
-      pointBackgroundColor:chartAll.map(x=>x.d===d?p.color:"#fff"),
-      pointBorderColor:p.color,pointBorderWidth:chartAll.map(x=>x.d===d?2.5:1.5),
-      tension:0.3,spanGaps:false}]},
-    options:{...bc,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y!=null?"$"+Math.round(c.parsed.y).toLocaleString():"—"}}},scales:ax(v=>"$"+(v/1000).toFixed(0)+"k")}});
-
-  // CPO trend — highlight selected day
-  dc("pcpo");CR["pcpo"]=new Chart(document.getElementById("pcpo"),{type:"line",
-    data:{labels:chartAll.map(x=>x.d),datasets:[{data:chartAll.map(x=>x.spend>0?+(x.cpo||0).toFixed(2):null),
-      borderColor:p.color,backgroundColor:p.color+"14",borderWidth:2,
-      pointRadius:chartAll.map(x=>x.d===d?7:2.5),
-      pointBackgroundColor:chartAll.map(x=>x.d===d?p.color:"#fff"),
-      pointBorderColor:p.color,pointBorderWidth:chartAll.map(x=>x.d===d?2.5:1.5),
-      tension:0.3,spanGaps:false}]},
-    options:{...bc,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y!=null?"$"+c.parsed.y.toFixed(2):"—"}}},scales:ax(v=>"$"+v)}});
-
-  // Sales bar
-  dc("pc");CR["pc"]=new Chart(document.getElementById("pc"),{type:"bar",
-    data:{labels:chartAll.map(x=>x.d),datasets:[{data:chartAll.map(x=>Math.round(x.conv||0)),
-      backgroundColor:chartAll.map(x=>x.d===d?p.color:p.color+"40"),borderRadius:5,borderSkipped:false}]},
-    options:{...bc,plugins:{legend:{display:false}},scales:ax(v=>v)}});
+  // Sales Value trend, CPO trend, Sales bar — hidden for Meta
+  if(pk==='google'){
+    dc("psv");CR["psv"]=new Chart(document.getElementById("psv"),{type:"line",
+      data:{labels:chartAll.map(x=>x.d),datasets:[{data:chartAll.map(x=>x.spend>0?Math.round(x.sv||0):null),
+        borderColor:p.color,backgroundColor:p.color+"14",borderWidth:2,
+        pointRadius:chartAll.map(x=>x.d===d?7:2.5),
+        pointBackgroundColor:chartAll.map(x=>x.d===d?p.color:"#fff"),
+        pointBorderColor:p.color,pointBorderWidth:chartAll.map(x=>x.d===d?2.5:1.5),
+        tension:0.3,spanGaps:false}]},
+      options:{...bc,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y!=null?"$"+Math.round(c.parsed.y).toLocaleString():"—"}}},scales:ax(v=>"$"+(v/1000).toFixed(0)+"k")}});
+    dc("pcpo");CR["pcpo"]=new Chart(document.getElementById("pcpo"),{type:"line",
+      data:{labels:chartAll.map(x=>x.d),datasets:[{data:chartAll.map(x=>x.spend>0?+(x.cpo||0).toFixed(2):null),
+        borderColor:p.color,backgroundColor:p.color+"14",borderWidth:2,
+        pointRadius:chartAll.map(x=>x.d===d?7:2.5),
+        pointBackgroundColor:chartAll.map(x=>x.d===d?p.color:"#fff"),
+        pointBorderColor:p.color,pointBorderWidth:chartAll.map(x=>x.d===d?2.5:1.5),
+        tension:0.3,spanGaps:false}]},
+      options:{...bc,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y!=null?"$"+c.parsed.y.toFixed(2):"—"}}},scales:ax(v=>"$"+v)}});
+    dc("pc");CR["pc"]=new Chart(document.getElementById("pc"),{type:"bar",
+      data:{labels:chartAll.map(x=>x.d),datasets:[{data:chartAll.map(x=>Math.round(x.conv||0)),
+        backgroundColor:chartAll.map(x=>x.d===d?p.color:p.color+"40"),borderRadius:5,borderSkipped:false}]},
+      options:{...bc,plugins:{legend:{display:false}},scales:ax(v=>v)}});
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2939,18 +3128,18 @@ const SNAP_AD_STATUS = {
 function tblHdr(cols){ return `<thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead>`; }
 function tblRow(cells){ return `<tr>${cells.map((c,i)=>`<td style="${i===0?"font-size:11px;color:#444;max-width:200px;word-break:break-word":"text-align:right;font-family:'DM Mono',monospace;font-size:12px"}">${c}</td>`).join("")}</tr>`; }
 // Standard 5-col table header: Name | ROAS | Spend | Sales Value | Sales | ATC | CPO
-const PERF_HDR = ["ROAS","Spend","Sales Value","Sales","ATC","CPO"];
+const PERF_HDR = ["ROAS","Sales","Spend","ATC","CPO","Sales Value"];
 const GOOGLE_HDR = ["ROAS","Spend","Sales Value","Sales","CPO"]; // Google has no ATC
 function perfRow(name, r){
   const hasSpend = r && r.spend > 0;
   return tblRow([
     name,
     hasSpend ? fR(r.roas||0)  : "—",
-    hasSpend ? fS(r.spend)    : "—",
-    hasSpend ? fSV(r.sv||0)   : "—",
     hasSpend ? fC(r.conv||0)  : "—",
+    hasSpend ? fS(r.spend)    : "—",
     (r && r.atc > 0) ? fC(r.atc) : "—",
     hasSpend ? fCPO(r.cpo||0) : "—",
+    hasSpend ? fSV(r.sv||0)   : "—",
   ]);
 }
 
@@ -3056,7 +3245,7 @@ function perfRowSignal(name, agg, geo=''){
   const safeName = name.replace(/"/g,'&#39;');
   return `<tr style="${trStyle}">
     <td style="font-size:11px;color:#444;max-width:200px;word-break:break-word;padding-left:6px;cursor:pointer" data-adname="${safeName}" data-geo="${geo}" data-platform="meta" onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()"><span style="border-bottom:1px dashed #ccc">${name}</span>${tag}</td>
-    ${['roas','spend','sv','conv','atc','cpo'].map((k,i) => {
+    ${['roas','conv','spend','atc','cpo','sv'].map((k,i) => {
       if(k==='roas') return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${hasSpend ? fR(agg.roas||0) : '—'}</td>`;
       if(k==='spend') return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${hasSpend ? fS(agg.spend) : '—'}</td>`;
       if(k==='sv') return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${hasSpend ? fSV(agg.sv||0) : '—'}</td>`;
@@ -3193,9 +3382,13 @@ function renderGranular(pk, dates) {
   }).filter(Boolean);
 
   if (campRows.length) {
+    const allCampRecs = META_CAMPS.flatMap(c => c.adsets.flatMap(key => ds.map(d=>(adsets[key]||[]).find(x=>x.d===d)).filter(Boolean)));
+    const campTotal = aggRecords(allCampRecs);
+    const tS = 'padding:9px 0;border-bottom:1px solid #f4f4ef;font-family:monospace;font-size:12px;font-weight:700;background:#f4f4ef';
+    const campTotalRow = campTotal.spend>0?`<tr style="border-top:2px solid #1a1a1a"><td style="padding:9px 0;background:#f4f4ef;font-size:12px;font-weight:700;color:#1a1a1a">Total</td><td style="${tS}">${fR(campTotal.roas)}</td><td style="${tS}">${fC(campTotal.conv)}</td><td style="${tS}">${fS(campTotal.spend)}</td><td style="${tS}">${campTotal.atc>0?fC(campTotal.atc):'—'}</td><td style="${tS}">${fCPO(campTotal.cpo)}</td><td style="${tS}">${fSV(campTotal.sv)}</td></tr>`:'';
     html += `<div class="cc" style="margin-top:4px">
       <div class="clbl">SALES CAMPAIGNS — ${label}</div>
-      <table class="gtbl">${tblHdr(["Campaign",...PERF_HDR])}<tbody>${campRows.join("")}</tbody></table>
+      <table class="gtbl">${tblHdr(["Campaign",...PERF_HDR])}<tbody>${campRows.join("")}${campTotalRow}</tbody></table>
     </div>`;
   }
 
@@ -3206,7 +3399,7 @@ function renderGranular(pk, dates) {
     const groupLabel = c.label === 'Catalogue' ? 'Catalogue Ret/Pro' : c.label;
     // Group header row
     const headerRow = `<tr style="background:#f0ede8"><td style="font-size:11px;font-weight:700;color:#222;padding:6px 8px" colspan="6">${groupLabel}</td></tr>` +
-      `<tr style="background:#f0ede8"><td style="font-size:11px;color:#888;padding:2px 8px 6px 20px">Total</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
+      `<tr style="background:#f0ede8"><td style="font-size:11px;color:#888;padding:2px 8px 6px 20px">Total</td>${['roas','conv','spend','atc','cpo','sv'].map(k=>{
         const v = totalAgg[k]||0;
         const fmt = k==='roas'?fR(v):k==='spend'?fS(v):k==='sv'?fSV(v):k==='conv'?fC(v):k==='atc'?(v>0?fC(v):'—'):fCPO(v);
         return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;padding:2px 8px 6px">${fmt}</td>`;
@@ -3217,7 +3410,7 @@ function renderGranular(pk, dates) {
       const agg = aggRecords(recs);
       if (!agg.spend) return null;
       const subName = key.replace('KU Abaya','KU / QA / BH Abaya').replace('KU Pyjama','KU / QA / BH Pyjama').replace('Catalogue Retargeting / Prospecting - GCC','Catalogue Ret/Pro').replace(' - ASC','').replace(' - GCC','');
-      return `<tr><td style="font-size:11px;color:#666;padding:3px 8px 3px 28px">↳ ${subName}</td>${['roas','spend','sv','conv','atc','cpo'].map(k=>{
+      return `<tr><td style="font-size:11px;color:#666;padding:3px 8px 3px 28px">↳ ${subName}</td>${['roas','conv','spend','atc','cpo','sv'].map(k=>{
         const v = agg[k]||0;
         const fmt = k==='roas'?fR(v):k==='spend'?fS(v):k==='sv'?fSV(v):k==='conv'?fC(v):k==='atc'?(v>0?fC(v):'—'):fCPO(v);
         return `<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:#888;padding:3px 8px">${fmt}</td>`;
@@ -3489,11 +3682,11 @@ function perfRowSignalOther(name, agg, useSignal=true, platform='', geo=''){
   return `<tr style="background:${sig.bg};border-left:3px solid ${sig.border}">
     <td style="font-size:11px;color:#444;max-width:200px;word-break:break-word;padding-left:6px;cursor:pointer" data-adname="${safeName}" data-platform="${platform}" data-geo="${geo}" onmouseenter="showAdHoverChartByEl(event,this)" onmouseleave="hideAdHoverChart()"><span style="border-bottom:1px dashed #ccc">${name}</span>${tag}</td>
     <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fR(agg.roas||0):'—'}</td>
-    <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fS(agg.spend):'—'}</td>
-    <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fSV(agg.sv||0):'—'}</td>
     <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fC(agg.conv||0):'—'}</td>
+    <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fS(agg.spend):'—'}</td>
     <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${(h&&(agg.atc||0)>0)?fC(agg.atc):'—'}</td>
     <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fCPO(agg.cpo||0):'—'}</td>
+    <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${h?fSV(agg.sv||0):'—'}</td>
   </tr>`;
 }
 
@@ -3810,12 +4003,18 @@ function renderPlatMTD(pk){
 
   // KPI cards
   const totAtcMTD=active.reduce((s,r)=>s+(r.atc||0),0);
-  const kpis=[
+  const kpis=(pk==='meta'||pk==='tiktok'||pk==='snap')?[
+    {l:"SALES",      v:fC(totConv)},
+    {l:"SPEND",      v:fS(totSpend)},
+    {l:"ROAS",       v:fR(mtdRoas)},
+    {l:"ATC",        v:totAtcMTD>0?fC(totAtcMTD):'—'},
+    {l:"CPO",        v:fCPO(mtdCPO)},
+    {l:"SALES VALUE",v:fSV(totSV)},
+  ]:[
     {l:"ROAS",      v:fR(mtdRoas)},
     {l:"SPEND",     v:fS(totSpend)},
     {l:"SALES VALUE",v:fSV(totSV)},
     {l:"SALES",     v:fC(totConv)},
-    ...(pk!=='google'?[{l:"ATC",v:totAtcMTD>0?fC(totAtcMTD):'—'}]:[]),
     {l:"CPO",       v:fCPO(mtdCPO)},
   ];
 
@@ -3826,15 +4025,16 @@ function renderPlatMTD(pk){
     <div class="cc">
       <div class="clbl">MARKET BREAKDOWN — MTD Apr 1–${last}</div>
       <table class="gtbl">
-        <thead><tr><th>Market</th><th>ROAS</th><th>Spend</th><th>Sales Value</th><th>Sales</th><th>CPO</th></tr></thead>
-        <tbody>${gr.map(g=>`<tr>
+        <thead><tr><th>Market</th><th>ROAS</th><th>Sales</th><th>Spend</th>${pk!=='google'?'<th>ATC</th>':''}<th>CPO</th><th>Sales Value</th></tr></thead>
+        <tbody>${(()=>{const totAtcMTDGeo=totAtcMTD||0;const totSpendMTDGeo=gr.reduce((s,g)=>s+g.spend,0);return gr.map(g=>{const gAtc=pk!=='google'&&totSpendMTDGeo>0?Math.round(totAtcMTDGeo*(g.spend/totSpendMTDGeo)):0;return`<tr>
           <td><span class="gn"><span class="gs" style="background:${g.color}"></span>${g.label}</span></td>
           <td>${g.spend>0?fR(g.roas):"—"}</td>
-          <td>${g.spend>0?fS(g.spend):"—"}</td>
-          <td>${g.spend>0?fSV(g.sv):"—"}</td>
           <td>${g.spend>0?fC(g.conv):"—"}</td>
+          <td>${g.spend>0?fS(g.spend):"—"}</td>
+          ${pk!=='google'?`<td>${g.spend>0&&gAtc>0?fC(gAtc):"—"}</td>`:''}
           <td>${g.spend>0?fCPO(g.cpo):"—"}</td>
-        </tr>`).join("")}${(()=>{if(pk!=='meta')return'';const folRecs=(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>ds.includes(r.d));const folSpend=folRecs.reduce((s,r)=>s+(r.spend||0),0);const folConv=folRecs.reduce((s,r)=>s+(r.purchase_conv||0),0);const folSV=folRecs.reduce((s,r)=>s+(r.sv||0),0);if(folSpend<=0)return'';return'<tr><td><span class="gn"><span class="gs" style="background:#94a3b8"></span>Followers / Brand</span></td><td>—</td><td>'+fS(folSpend)+'</td><td>'+(folSV>0?fSV(folSV):'—')+'</td><td>'+(folConv>0?fC(folConv):'—')+'</td><td>—</td></tr>';})()}${(()=>{const folRecs2=(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>ds.includes(r.d));const fSp=folRecs2.reduce((s,r)=>s+(r.spend||0),0);const fCv=folRecs2.reduce((s,r)=>s+(r.purchase_conv||0),0);const fSv=folRecs2.reduce((s,r)=>s+(r.sv||0),0);const tSp=gr.reduce((s,g)=>s+g.spend,0)+fSp;const tSv=gr.reduce((s,g)=>s+g.sv,0)+fSv;const tCv=gr.reduce((s,g)=>s+g.conv,0)+fCv;const tWr=gr.reduce((s,g)=>s+(g.roas*g.spend),0);const tRoas=tSp>0?tWr/tSp:0;const tCpo=tCv>0?tSp/tCv:0;const tS='padding:9px 0;border-bottom:1px solid #f4f4ef;font-family:monospace;font-size:12px;font-weight:700;background:#f4f4ef';return'<tr style="border-top:2px solid #1a1a1a"><td style="padding:9px 0;background:#f4f4ef;font-size:12px;font-weight:700;color:#1a1a1a">Total</td><td style="'+tS+'">'+(tRoas>0?fR(tRoas):'—')+'</td><td style="'+tS+'">'+fS(tSp)+'</td><td style="'+tS+'">'+(tSv>0?fSV(tSv):'—')+'</td><td style="'+tS+'">'+(tCv>0?fC(tCv):'—')+'</td><td style="'+tS+'">'+(tCpo>0?fCPO(tCpo):'—')+'</td></tr>';})()}</tbody>
+          <td>${g.spend>0?fSV(g.sv):"—"}</td>
+        </tr>`;}).join('');})()}${(()=>{if(pk!=='meta')return'';const folRecs=(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>ds.includes(r.d));const folSpend=folRecs.reduce((s,r)=>s+(r.spend||0),0);const folConv=folRecs.reduce((s,r)=>s+(r.purchase_conv||0),0);const folSV=folRecs.reduce((s,r)=>s+(r.sv||0),0);if(folSpend<=0)return'';return'<tr><td><span class="gn"><span class="gs" style="background:#94a3b8"></span>Followers / Brand</span></td><td>'+(folConv>0?fC(folConv):'—')+'</td><td>'+fS(folSpend)+'</td><td>—</td><td>—</td><td>—</td><td>'+(folSV>0?fSV(folSV):'—')+'</td></tr>';})()}${(()=>{const folRecs2=(GRANULAR.meta?.adsets?.[META_FOLLOWERS_KEY]||[]).filter(r=>ds.includes(r.d));const fSp=folRecs2.reduce((s,r)=>s+(r.spend||0),0);const fCv=folRecs2.reduce((s,r)=>s+(r.purchase_conv||0),0);const fSv=folRecs2.reduce((s,r)=>s+(r.sv||0),0);const tSp=gr.reduce((s,g)=>s+g.spend,0)+fSp;const tSv=gr.reduce((s,g)=>s+g.sv,0)+fSv;const tCv=gr.reduce((s,g)=>s+g.conv,0)+fCv;const tWr=gr.reduce((s,g)=>s+(g.roas*g.spend),0);const tRoas=tSp>0?tWr/tSp:0;const tCpo=tCv>0?tSp/tCv:0;const tS='padding:9px 0;border-bottom:1px solid #f4f4ef;font-family:monospace;font-size:12px;font-weight:700;background:#f4f4ef';return'<tr style="border-top:2px solid #1a1a1a"><td style="padding:9px 0;background:#f4f4ef;font-size:12px;font-weight:700;color:#1a1a1a">Total</td><td style="'+tS+'">'+(tCv>0?fC(tCv):'—')+'</td><td style="'+tS+'">'+fS(tSp)+'</td><td style="'+tS+'">'+(tRoas>0?fR(tRoas):'—')+'</td>'+(pk!=='google'?'<td style="'+tS+'">'+(totAtcMTD>0?fC(totAtcMTD):'—')+'</td>':'')+'<td style="'+tS+'">'+(tCpo>0?fCPO(tCpo):'—')+'</td><td style="'+tS+'">'+(tSv>0?fSV(tSv):'—')+'</td></tr>';})()}</tbody>
       </table>
     </div>
     <div class="cc"><div class="clbl">ROAS TREND — ${p.label} MTD</div><div class="cw" style="height:200px"><canvas id="m-pt"></canvas></div></div>
