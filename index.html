@@ -1213,7 +1213,7 @@ function reRenderMetaAds(){
 
   Object.keys(ads).forEach(name=>{
     // Skip inactive ads using status from last export
-    const baseName=name.replace(/_mar\d+(_v\d+)?$/i,'').replace(/_apr\d+(_v\d+)?$/i,'').replace(/_v\d+$/i,'').replace(/\s*[-–]\s*Copy\s*\d*$/i,'').trim();
+    const baseName=name.replace(/_(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\d+(_v\d+)?$/i,'').replace(/_v\d+$/i,'').replace(/\s*[-–]\s*Copy\s*\d*$/i,'').trim();
     if(!isAdActive(baseName)) return;
     const geo=detectGeo2(name); if(!geo) return;
     const ct = (geo==='Catalogue') ? 'Catalogue' : detectCampType(name);
@@ -1221,7 +1221,7 @@ function reRenderMetaAds(){
     // This makes 499_..._Meta_KSA_Sales_ASC and 499_..._Meta_KSA_Sales_ASC_v1 → same dn
     // while 499_..._Meta_KSA and 499_..._Meta_Ku&Qat remain DIFFERENT (handled by geo grouping)
     let dn = name
-      .replace(/_mar\d+(_v\d+)?$/i,'')
+      .replace(/_(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\d+(_v\d+)?$/i,'')
       .replace(/_v\d+$/i,'')
       .replace(/\s*[-–]\s*Copy\s*\d*$/i,'')
       .trim();
@@ -1292,7 +1292,7 @@ function reRenderMetaAds(){
           // Day sub-rows
           [...adsDates].reverse().forEach(day=>{
             const dayRecs=Object.keys(ads).filter(name=>{
-              let dn=name.replace(/_mar\d+(_v\d+)?$/i,'').replace(/_apr\d+(_v\d+)?$/i,'').replace(/_v\d+$/i,'').replace(/\s*[-–]\s*Copy\s*\d*$/i,'').trim();
+              let dn=name.replace(/_(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\d+(_v\d+)?$/i,'').replace(/_v\d+$/i,'').replace(/\s*[-–]\s*Copy\s*\d*$/i,'').trim();
               dn=dn.replace(/_Meta_(UAE|KSA|Ku[^_]*|GCC[^_]*)_Sales_ASC.*$/i,'').trim();
               dn=dn.replace(/_Sales_ASC.*$/i,'').trim();
               dn=dn.replace(/[_ ]Prospecting[_ ]Catalogue$/i,'').replace(/_Catalogue$/i,'').replace(/[_ ]Catalogue$/i,'').replace(/[_ ]Prospecting$/i,'').trim();
@@ -1386,9 +1386,7 @@ function renderOverviewRange(rd){
       pointRadius:4,pointBackgroundColor:p.color,tension:0.3,spanGaps:false};
   });
   _atcDates = rd;
-  document.getElementById("view").innerHTML=`<div class="g6">${cardHTML}</div>${buildSpendChart()}${buildCampaignTable(rd, selStart+" – "+selEnd)}${buildAdsetTable(rd, selStart+" – "+selEnd)}${buildMarketTable(rd, selStart+" – "+selEnd)}<div class="cc"><div class="clbl">ROAS TREND — ALL PLATFORMS (${selStart} – ${selEnd})</div><div class="cw" style="height:200px"><canvas id="rng-trend"></canvas></div></div>`;
-  dc("rng-trend");CR["rng-trend"]=new Chart(document.getElementById("rng-trend"),{type:"line",data:{labels:rd,datasets:trendDS},options:{...bc,plugins:{legend:{position:"top",labels:{boxWidth:8,font:{size:10}}}},scales:ax(v=>`${v}x`)}});
-
+  document.getElementById("view").innerHTML=`<div class="g6">${cardHTML}</div>${buildSpendChart()}${buildCampaignTable(rd, selStart+" – "+selEnd)}${buildAdsetTable(rd, selStart+" – "+selEnd)}${buildMarketTable(rd, selStart+" – "+selEnd)}`;
   requestAnimationFrame(()=>renderSpendChart(rd));
 }
 
@@ -2071,9 +2069,12 @@ function renderTopAdsInner(baseDates, baseLabel, N, marketFilter, periodFilter){
     Object.entries(platAds).forEach(([name, arr]) => {
       const baseName = name
         .replace(/_En_GLO.*$/i,'')
-        .replace(/_mar\d+(_v\d+)?$/i,'')
+        .replace(/_(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\d+(?:_v\d+)?$/i,'')
         .replace(/_v\d+$/i,'')
         .replace(/\s*[-–]\s*Copy\s*\d*$/i,'')
+        .replace(/_Prospecting Catalogue$/i,'')
+        .replace(/_Prospecting$/i,'')
+        .replace(/_Catalogue$/i,'')
         .trim().substring(0,50);
       if(!platMerged[baseName]) platMerged[baseName]={recs:[],market:'other'};
       let mkt='other';
@@ -2509,27 +2510,7 @@ function renderOverview(d){
     ${buildCampaignTable(d, d)}
     ${buildAdsetTable(d, d)}
     ${buildMarketTable(d, d)}
-    <div class="cc">
-      <div class="clbl">ROAS TREND — ALL PLATFORMS</div>
-      <div class="cw" style="height:200px"><canvas id="ov-trend"></canvas></div>
-    </div>
-    <div class="g2">
-      ${PL.map(p=>{
-        const r=row(p.key,d),h=r&&r.spend>0;
-        return`<div class="pcard" onclick="st('${p.key}')">
-          <div class="pcard-name" style="color:${p.color}">${p.label}</div>
-          ${[["ROAS",h?fR(r.roas):"—"],["Spend",h?fS(r.spend):"—"],["Sales Value",h?fSV(r.sv):"—"],["Sales",h?fC(r.conv):"—"],["CPO",h?fCPO(r.cpo):"—"]].map(([l,v])=>`
-          <div class="pcard-row"><span>${l}</span><span class="pcard-val">${v}</span></div>`).join("")}
-        </div>`;
-      }).join("")}
-    </div>`;
-
-  dc("ov-trend");
-  CR["ov-trend"]=new Chart(document.getElementById("ov-trend"),{
-    type:"line",
-    data:{labels:allDates,datasets:trendDatasets},
-    options:{...bc,plugins:{legend:{position:"top",labels:{boxWidth:8,font:{size:10}}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y!=null?c.parsed.y.toFixed(2)+"x":"—"}`}}},scales:ax(v=>`${v}x`)}
-  });
+    `;
 
   requestAnimationFrame(()=>renderSpendChart(allDates));
 }
@@ -2606,17 +2587,7 @@ function renderOverviewMTD(){
     ${buildCampaignTable(ds, "MTD Apr 1–"+last)}
     ${buildAdsetTable(ds, "MTD Apr 1–"+last)}
     ${buildMarketTable(ds, "MTD Apr 1–"+last)}
-    <div class="cc">
-      <div class="clbl">ROAS TREND — CUMULATIVE MTD</div>
-      <div class="cw" style="height:200px"><canvas id="mtd-trend"></canvas></div>
-    </div>`;
-
-  dc("mtd-trend");
-  CR["mtd-trend"]=new Chart(document.getElementById("mtd-trend"),{
-    type:"line",
-    data:{labels:ds,datasets:trendDS},
-    options:{...bc,plugins:{legend:{position:"top",labels:{boxWidth:8,font:{size:10}}}},scales:ax(v=>`${v}x`)}
-  });
+    `;
 
   requestAnimationFrame(()=>renderSpendChart(ds));
 }
@@ -3530,9 +3501,16 @@ function renderGranular(pk, dates) {
     const geo = detectGeo(name);
     if (!geo) return;
     const displayName = name
-      .replace(/_mar\d+(_v\d+)?$/i, '')
+      // Strip dated suffixes: _marN, _aprN, _mayN, _marN_vN, _aprN_vN, etc.
+      .replace(/_(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\d+(?:_v\d+)?$/i, '')
+      // Strip version suffix
       .replace(/_v\d+$/i, '')
+      // Strip " - Copy N" suffix
       .replace(/\s*[-–]\s*Copy\s*\d*$/i, '')
+      // Strip campaign-label suffixes that differ across duplicates of same ad
+      .replace(/_Prospecting Catalogue$/i, '')
+      .replace(/_Prospecting$/i, '')
+      .replace(/_Catalogue$/i, '')
       .trim()
       .substring(0, 45);
     if (!adsByGeoMergedG[geo][displayName]) {
