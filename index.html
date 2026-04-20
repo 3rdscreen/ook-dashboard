@@ -155,6 +155,21 @@ body{font-family:'Inter',-apple-system,sans-serif;background:#f4f4ef;color:#1a1a
 .ahc-kpi-val.bad{color:#dc2626}
 #ad-hover-chart canvas{display:block;padding:10px 14px 4px}
 #ahc-insight{font-size:10px;color:#666;padding:6px 14px 10px;line-height:1.5;border-top:1px solid #f8f8f4}
+
+/* ── Meta budget trend range buttons ── */
+.mbt-range-btn{
+  font-size:11px;
+  font-weight:500;
+  padding:4px 10px;
+  border-radius:14px;
+  border:1px solid #d0d0c8;
+  background:#fff;
+  color:#666;
+  cursor:pointer;
+  transition:all .15s;
+}
+.mbt-range-btn:hover{ border-color:#999; color:#333 }
+.mbt-range-btn.active{ background:#1a1a1a; color:#fff; border-color:#1a1a1a }
 </style>
 </head>
 <body>
@@ -2328,6 +2343,386 @@ function _switchSpendMetric(metric){
   renderSpendChart(_spendChartDates || ALL_DATES.slice(), metric);
 }
 
+// ── PLATFORM BUDGET TREND CHART — per-campaign daily trend ────────────
+// Generalized chart used by Meta/TikTok/Snap/Google tabs.
+// State is keyed by platform key (pk).
+const _budgetTrend = {
+  instance: {},   // pk → Chart instance
+  metric:   { meta:'spend', tiktok:'spend', snap:'spend', google:'spend' },
+  range:    { meta:'all',   tiktok:'all',   snap:'all',   google:'all'   },
+  from:     {},
+  to:       {},
+  canvasId: {},
+};
+
+// Hard-anchored manual shift annotations per platform.
+// Extend by adding more entries with { date, label } — date must match ALL_DATES strings.
+const BUDGET_TREND_MANUAL_SHIFTS = {
+  meta: [
+    { date: 'Apr 6',  label: 'Manual shift' },
+    { date: 'Apr 16', label: 'Manual shift' },
+  ],
+  tiktok: [],
+  snap:   [],
+  google: [],
+};
+
+// Per-platform series config: which keys to plot, their color, label, and line style.
+// Meta/TikTok/Snap read from GRANULAR[pk].adsets. Google reads from GRANULAR.google.campaigns.
+const BUDGET_TREND_CONFIG = {
+  meta: {
+    source: 'adsets',
+    series: [
+      { key: 'UAE Abaya - ASC',                           label: 'UAE · Abaya',      color: '#1877F2', dash: []     },
+      { key: 'UAE Pyjama - ASC',                          label: 'UAE · Pyjama',     color: '#1877F2', dash: [5,4]  },
+      { key: 'KSA Abaya - ASC',                           label: 'KSA · Abaya',      color: '#16a34a', dash: []     },
+      { key: 'KSA Pyjama - ASC',                          label: 'KSA · Pyjama',     color: '#16a34a', dash: [5,4]  },
+      { key: 'KU Abaya - ASC',                            label: 'KU · Abaya',       color: '#ea580c', dash: []     },
+      { key: 'KU Pyjama - ASC',                           label: 'KU · Pyjama',      color: '#ea580c', dash: [5,4]  },
+      { key: 'Catalogue Retargeting / Prospecting - GCC', label: 'Catalogue · GCC',  color: '#64748b', dash: [2,3]  },
+    ],
+  },
+  tiktok: {
+    source: 'adsets',
+    series: [
+      { key: 'GCC Sales - All',        label: 'GCC · Retargeting', color: '#64748b', dash: [2,3] },
+      { key: 'UAE Interest - IOS',     label: 'UAE · Prospecting', color: '#1877F2', dash: []    },
+      { key: 'KSA Interest - IOS',     label: 'KSA · Prospecting', color: '#16a34a', dash: []    },
+      { key: 'KW/QA/BH Interest - IOS',label: 'KU · Prospecting',  color: '#ea580c', dash: []    },
+    ],
+  },
+  snap: {
+    source: 'adsets',
+    series: [
+      { key: 'UAE', label: 'UAE · Retargeting', color: '#1877F2', dash: [] },
+      { key: 'KSA', label: 'KSA · Retargeting', color: '#16a34a', dash: [] },
+      { key: 'KU',  label: 'KU · Retargeting',  color: '#ea580c', dash: [] },
+    ],
+  },
+  google: {
+    source: 'campaigns',  // GRANULAR.google.campaigns[name].days
+    series: [
+      { key: 'PMAX_UAE_Pyjama_EN_goog',          label: 'PMAX · UAE Pyjama',    color: '#1877F2', dash: []     },
+      { key: 'PMAX_KSA_Pyjama_EN_goog',          label: 'PMAX · KSA Pyjama',    color: '#16a34a', dash: []     },
+      { key: 'PMAX_UAE_KSA_KW_QA_Abaya_EN_goog', label: 'PMAX · GCC Abaya',     color: '#ea580c', dash: []     },
+      { key: 'SEM_UAE_Brand_EN_goog',            label: 'SEM · UAE Brand',      color: '#1877F2', dash: [5,4]  },
+      { key: 'SEM_UAE_Generic_EN_goog',          label: 'SEM · UAE Generic',    color: '#1877F2', dash: [2,3]  },
+      { key: 'SEM_UAE_Abaya_EN_goog',            label: 'SEM · UAE Abaya',      color: '#1877F2', dash: [1,3]  },
+      { key: 'SEM_KSA_Brand_EN_goog',            label: 'SEM · KSA Brand',      color: '#16a34a', dash: [5,4]  },
+      { key: 'SEM_KUW-QAT_Brand_EN_goog',        label: 'SEM · KU Brand',       color: '#ea580c', dash: [5,4]  },
+      { key: 'SEM_KUW-QAT_Generic_EN_goog',      label: 'SEM · KU Generic',     color: '#ea580c', dash: [2,3]  },
+    ],
+  },
+};
+
+// Platform display name
+const BT_PLAT_NAMES = { meta:'META', tiktok:'TIKTOK', snap:'SNAPCHAT', google:'GOOGLE' };
+
+// Resolve visible date window
+function _btDates(pk){
+  const all = ALL_DATES.slice();
+  const range = _budgetTrend.range[pk] || 'all';
+  const from = _budgetTrend.from[pk], to = _budgetTrend.to[pk];
+  if(range === 'custom' && from && to){
+    const i = all.indexOf(from), j = all.indexOf(to);
+    if(i >= 0 && j >= 0 && i <= j) return all.slice(i, j+1);
+    return all;
+  }
+  if(range === '7')  return all.slice(-7);
+  if(range === '14') return all.slice(-14);
+  if(range === '30') return all.slice(-30);
+  return all;
+}
+
+// Get records for a platform/key based on source type
+function _btGetRecords(pk, key){
+  const gran = GRANULAR[pk]; if(!gran) return [];
+  const source = BUDGET_TREND_CONFIG[pk].source;
+  if(source === 'adsets')    return (gran.adsets && gran.adsets[key]) || [];
+  if(source === 'campaigns') return (gran.campaigns && gran.campaigns[key] && gran.campaigns[key].days) || [];
+  return [];
+}
+
+function renderBudgetTrendChart(pk, canvasId, metric, range, from, to){
+  const el = document.getElementById(canvasId);
+  if(!el) return;
+  metric = metric || _budgetTrend.metric[pk] || 'spend';
+  range  = range  || _budgetTrend.range[pk]  || 'all';
+  _budgetTrend.metric[pk]   = metric;
+  _budgetTrend.range[pk]    = range;
+  _budgetTrend.from[pk]     = from || _budgetTrend.from[pk];
+  _budgetTrend.to[pk]       = to   || _budgetTrend.to[pk];
+  _budgetTrend.canvasId[pk] = canvasId;
+
+  if(_budgetTrend.instance[pk]){
+    _budgetTrend.instance[pk].destroy();
+    _budgetTrend.instance[pk] = null;
+  }
+
+  const cfg   = BUDGET_TREND_CONFIG[pk];
+  const dates = _btDates(pk);
+
+  // Section label
+  const platName = BT_PLAT_NAMES[pk] || pk.toUpperCase();
+  const metricName = metric === 'sv' ? 'SALES VALUE' : (metric === 'roas' ? 'ROAS' : 'SPEND');
+  const lblEl = document.getElementById(canvasId + '-label');
+  if(lblEl) lblEl.textContent = 'BUDGET TREND — DAILY ' + metricName + ' BY CAMPAIGN';
+
+  // Sync toggles
+  document.querySelectorAll('#' + canvasId + '-toggle .mt-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.metric === metric);
+  });
+  document.querySelectorAll('#' + canvasId + '-range .mbt-range-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.range === range);
+  });
+
+  // Populate custom range dropdowns once, reset on each render
+  const fromSel = document.getElementById(canvasId + '-from');
+  const toSel   = document.getElementById(canvasId + '-to');
+  if(fromSel && toSel){
+    if(!fromSel.options.length){
+      ALL_DATES.forEach(d => {
+        const o1 = document.createElement('option'); o1.value = d; o1.textContent = d; fromSel.appendChild(o1);
+        const o2 = document.createElement('option'); o2.value = d; o2.textContent = d; toSel.appendChild(o2);
+      });
+      fromSel.value = ALL_DATES[Math.max(0, ALL_DATES.length - 14)];
+      toSel.value   = ALL_DATES[ALL_DATES.length - 1];
+    }
+    if(range === 'custom' && _budgetTrend.from[pk] && _budgetTrend.to[pk]){
+      fromSel.value = _budgetTrend.from[pk];
+      toSel.value   = _budgetTrend.to[pk];
+    }
+  }
+  const rangeLbl = document.getElementById(canvasId + '-range-label');
+  if(rangeLbl) rangeLbl.textContent = dates.length > 0 ? (dates[0] + ' → ' + dates[dates.length-1] + '  ·  ' + dates.length + ' days') : '';
+
+  // Extract value per metric
+  function extract(r){
+    if(!r || !(r.spend > 0)) return null;
+    if(metric === 'sv')   return r.sv   != null ? +(+r.sv).toFixed(2)   : null;
+    if(metric === 'roas') return r.roas != null ? +(+r.roas).toFixed(2) : null;
+    return +(+r.spend).toFixed(2);
+  }
+
+  const datasets = cfg.series.map(s => {
+    const recs = _btGetRecords(pk, s.key);
+    const byDate = {};
+    recs.forEach(r => { if(r && r.d != null) byDate[r.d] = r; });
+    const data = dates.map(d => extract(byDate[d]));
+    return {
+      label: s.label,
+      data,
+      borderColor: s.color,
+      backgroundColor: s.color + '18',
+      borderWidth: 2,
+      borderDash: s.dash,
+      tension: 0.25,
+      spanGaps: false,
+      fill: false,
+      pointRadius: 2.5,
+      pointHoverRadius: 5,
+      pointBackgroundColor: s.color,
+      pointBorderColor: '#fff',
+      pointBorderWidth: 1,
+      _baseColor: s.color,
+      _baseDash: s.dash,
+    };
+  });
+
+  // Manual-shift annotation plugin — draws vertical dotted lines + pill labels
+  const manualShifts = BUDGET_TREND_MANUAL_SHIFTS[pk] || [];
+  // Also surface BUDGET_MARKERS for this platform as small up/down triangles at top
+  const autoMarkers = (typeof BUDGET_MARKERS !== 'undefined' ? BUDGET_MARKERS : [])
+    .filter(m => m.platform === pk);
+
+  const annotPlugin = {
+    id: 'btAnnotations-' + pk,
+    afterDatasetsDraw(chart) {
+      const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
+      if(!x) return;
+      ctx.save();
+      ctx.font = '600 9px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+
+      // Auto markers (triangles at very top)
+      autoMarkers.forEach(m => {
+        const idx = dates.indexOf(m.date);
+        if(idx < 0) return;
+        const xp = x.getPixelForValue(idx);
+        const up = m.direction === 'up';
+        ctx.fillStyle = up ? '#22c55e' : '#ef4444';
+        ctx.beginPath();
+        if(up){
+          ctx.moveTo(xp, top - 6);
+          ctx.lineTo(xp - 3.5, top - 1);
+          ctx.lineTo(xp + 3.5, top - 1);
+        } else {
+          ctx.moveTo(xp, top - 1);
+          ctx.lineTo(xp - 3.5, top - 6);
+          ctx.lineTo(xp + 3.5, top - 6);
+        }
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      // Manual shifts (dotted line + pill)
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 1;
+      manualShifts.forEach(shift => {
+        const idx = dates.indexOf(shift.date);
+        if(idx < 0) return;
+        const xp = x.getPixelForValue(idx);
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(xp, top);
+        ctx.lineTo(xp, bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        const labelText = shift.date + ' ' + shift.label;
+        const textWidth = ctx.measureText(labelText).width;
+        const padX = 5, padY = 2, pillH = 14;
+        const pillW = textWidth + padX * 2;
+        let pillX = xp - pillW / 2;
+        pillX = Math.max(left, Math.min(pillX, right - pillW));
+        const pillY = top + 2;
+        ctx.fillStyle = '#dbeafe';
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(pillX, pillY, pillW, pillH, 7);
+        else ctx.rect(pillX, pillY, pillW, pillH);
+        ctx.fill();
+        ctx.fillStyle = '#2563eb';
+        ctx.fillText(labelText, pillX + pillW / 2, pillY + padY);
+      });
+      ctx.restore();
+    }
+  };
+
+  const yFmt = metric === 'roas'
+    ? (v => (+v).toFixed(2) + 'x')
+    : (v => '$' + Math.round(v).toLocaleString());
+
+  _budgetTrend.instance[pk] = new Chart(el, {
+    type: 'line',
+    data: { labels: dates, datasets },
+    plugins: [annotPlugin],
+    options: {
+      ...bc,
+      layout: { padding: { top: 22 } },
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'start',
+          labels: { boxWidth: 10, boxHeight: 2, padding: 10, font: { size: 10 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const y = ctx.parsed.y;
+              let valStr;
+              if(metric === 'roas')  valStr = y != null ? (+y).toFixed(2) + 'x' : '—';
+              else                   valStr = y != null ? '$' + (+y).toLocaleString() : '—';
+              return ctx.dataset.label + ': ' + valStr;
+            }
+          }
+        }
+      },
+      interaction: { mode: 'index', intersect: false },
+      onHover: (e, elements) => {
+        const chart = _budgetTrend.instance[pk]; if(!chart) return;
+        if(elements && elements.length > 0){
+          const hovered = elements[0].datasetIndex;
+          chart.data.datasets.forEach((ds, i) => {
+            if(i === hovered){ ds.borderColor = ds._baseColor; ds.borderWidth = 3; }
+            else              { ds.borderColor = ds._baseColor + '28'; ds.borderWidth = 1; }
+          });
+        } else {
+          chart.data.datasets.forEach(ds => {
+            ds.borderColor = ds._baseColor; ds.borderWidth = 2;
+          });
+        }
+        chart.update('none');
+      },
+      scales: ax(yFmt)
+    }
+  });
+}
+
+function _switchBudgetTrendMetric(pk, canvasId, metric){
+  if(_budgetTrend.metric[pk] === metric) return;
+  renderBudgetTrendChart(pk, canvasId, metric, _budgetTrend.range[pk], _budgetTrend.from[pk], _budgetTrend.to[pk]);
+}
+
+function _switchBudgetTrendRange(pk, canvasId, range){
+  const panel = document.getElementById(canvasId + '-custom-panel');
+  if(panel) panel.style.display = (range === 'custom') ? 'flex' : 'none';
+  if(range === 'custom'){
+    const fromSel = document.getElementById(canvasId + '-from');
+    const toSel   = document.getElementById(canvasId + '-to');
+    const from = (fromSel && fromSel.value) || ALL_DATES[Math.max(0, ALL_DATES.length - 14)];
+    const to   = (toSel   && toSel.value)   || ALL_DATES[ALL_DATES.length - 1];
+    renderBudgetTrendChart(pk, canvasId, _budgetTrend.metric[pk], 'custom', from, to);
+  } else {
+    renderBudgetTrendChart(pk, canvasId, _budgetTrend.metric[pk], range, null, null);
+  }
+}
+
+function _toggleBudgetTrendCustom(pk, canvasId, ev){
+  if(ev) ev.stopPropagation();
+  const panel = document.getElementById(canvasId + '-custom-panel');
+  if(!panel) return;
+  const opening = panel.style.display !== 'flex';
+  panel.style.display = opening ? 'flex' : 'none';
+  if(opening) _switchBudgetTrendRange(pk, canvasId, 'custom');
+}
+
+function _applyBudgetTrendCustom(pk, canvasId){
+  const fromSel = document.getElementById(canvasId + '-from');
+  const toSel   = document.getElementById(canvasId + '-to');
+  if(!fromSel || !toSel) return;
+  const iF = ALL_DATES.indexOf(fromSel.value), iT = ALL_DATES.indexOf(toSel.value);
+  if(iF < 0 || iT < 0) return;
+  if(iF > iT){ const tmp = fromSel.value; fromSel.value = toSel.value; toSel.value = tmp; }
+  renderBudgetTrendChart(pk, canvasId, _budgetTrend.metric[pk], 'custom', fromSel.value, toSel.value);
+}
+
+// Build the container HTML for any platform
+function buildBudgetTrendCard(pk){
+  const canvasId = 'budget-trend-' + pk + '-' + Math.random().toString(36).slice(2,7);
+  return {
+    canvasId,
+    html: `<div class="cc" style="margin-top:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+        <div class="clbl" id="${canvasId}-label" style="margin-bottom:0">BUDGET TREND — DAILY SPEND BY CAMPAIGN</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <div id="${canvasId}-range" style="display:flex;gap:4px;align-items:center">
+            <button class="mbt-range-btn" data-range="7"   onclick="_switchBudgetTrendRange('${pk}','${canvasId}','7')">7d</button>
+            <button class="mbt-range-btn" data-range="14"  onclick="_switchBudgetTrendRange('${pk}','${canvasId}','14')">14d</button>
+            <button class="mbt-range-btn" data-range="30"  onclick="_switchBudgetTrendRange('${pk}','${canvasId}','30')">30d</button>
+            <button class="mbt-range-btn active" data-range="all" onclick="_switchBudgetTrendRange('${pk}','${canvasId}','all')">All</button>
+            <button class="mbt-range-btn" data-range="custom" onclick="_toggleBudgetTrendCustom('${pk}','${canvasId}',event)">Custom</button>
+          </div>
+          <div class="metric-toggle" id="${canvasId}-toggle">
+            <button class="mt-btn active" data-metric="spend" onclick="_switchBudgetTrendMetric('${pk}','${canvasId}','spend')">Spend</button>
+            <button class="mt-btn"        data-metric="sv"    onclick="_switchBudgetTrendMetric('${pk}','${canvasId}','sv')">Sales Value</button>
+            <button class="mt-btn"        data-metric="roas"  onclick="_switchBudgetTrendMetric('${pk}','${canvasId}','roas')">ROAS</button>
+          </div>
+        </div>
+      </div>
+      <div id="${canvasId}-custom-panel" style="display:none;margin-bottom:10px;padding:10px 12px;background:#f8f8f4;border-radius:8px;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:10px;font-weight:700;color:#888;letter-spacing:.06em">FROM</span>
+        <select id="${canvasId}-from" onchange="_applyBudgetTrendCustom('${pk}','${canvasId}')" style="font-size:11px;padding:4px 8px;border:1px solid #d0d0c8;border-radius:6px;background:#fff"></select>
+        <span style="font-size:10px;font-weight:700;color:#888;letter-spacing:.06em">TO</span>
+        <select id="${canvasId}-to" onchange="_applyBudgetTrendCustom('${pk}','${canvasId}')" style="font-size:11px;padding:4px 8px;border:1px solid #d0d0c8;border-radius:6px;background:#fff"></select>
+        <span id="${canvasId}-range-label" style="font-size:10px;color:#999;margin-left:auto"></span>
+      </div>
+      <div style="font-size:10px;color:#bbb;letter-spacing:.04em;margin:-4px 0 8px">Hover a line to isolate · dotted lines mark manual shifts · triangles mark auto-detected shifts</div>
+      <div class="cw" style="height:280px"><canvas id="${canvasId}"></canvas></div>
+    </div>`
+  };
+}
+
+
 
 // ── BUDGET BY PLATFORM & MARKET TABLE ───────────────────────────────
 function buildBudgetByMarket(dateArg){
@@ -3500,206 +3895,11 @@ function renderGranular(pk, dates) {
   // ── BUDGET CHANGE DETECTION — rolling 3-day average step-change detection
   // Logic: compare 3-day avg BEFORE vs 3-day avg AFTER each date.
   // Flag only when: both windows stable (CV < 20%) AND differ by >15%. Debounced.
+  // ── BUDGET TREND CHART — per-campaign daily trend (via shared builder)
   (()=>{
-    const STEP_THRESHOLD = 0.15;
-    const WINDOW = 3;
-
-    const adsetGroups = [
-      ...META_CAMPS,
-      { label:'Followers / Brand', adsets:[META_FOLLOWERS_KEY], prefix:'Brand ·' }
-    ];
-
-    function avg(arr){ return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0; }
-    function isStable(arr){
-      if(arr.length < 2) return true;
-      const m = avg(arr);
-      if(m === 0) return true;
-      const sd = Math.sqrt(arr.map(v=>(v-m)**2).reduce((s,v)=>s+v,0)/arr.length);
-      return (sd/m) < 0.20;
-    }
-
-    const events = [];
-    adsetGroups.forEach(camp => {
-      camp.adsets.forEach(key => {
-        const recs = (adsets[key]||[]);
-        const spendByDate = {};
-        recs.forEach(r=>{ if(r.spend>0) spendByDate[r.d] = r.spend; });
-
-        let lastEventIdx = -99;
-        for(let i=WINDOW; i<ALL_DATES.length-1; i++){
-          const today = ALL_DATES[i];
-          const beforeVals = ALL_DATES.slice(i-WINDOW, i).map(d=>spendByDate[d]).filter(v=>v!=null);
-          const afterVals  = ALL_DATES.slice(i, i+WINDOW).map(d=>spendByDate[d]).filter(v=>v!=null);
-
-          if(beforeVals.length < 2 || afterVals.length < 2) continue;
-
-          const beforeAvg = avg(beforeVals);
-          const afterAvg  = avg(afterVals);
-          if(beforeAvg === 0) continue;
-
-          const pct = (afterAvg - beforeAvg) / beforeAvg;
-          if(Math.abs(pct) < STEP_THRESHOLD) continue;
-          if(!isStable(beforeVals) || !isStable(afterVals)) continue;
-          if(i - lastEventIdx < WINDOW) continue;
-
-          lastEventIdx = i;
-          events.push({
-            date: today,
-            camp: camp.label,
-            adset: key.replace(' - ASC','').replace(' Retargeting / Prospecting - GCC','').replace('Followers GCC - Brand','Followers / Brand').trim(),
-            prev: Math.round(beforeAvg),
-            curr: Math.round(afterAvg),
-            pct,
-            dir: pct > 0 ? 'up' : 'down'
-          });
-        }
-      });
-    });
-
-    if(!events.length){ html += ''; return; }
-
-    // Group by date, newest first
-    const byDate = {};
-    events.forEach(e=>{ if(!byDate[e.date]) byDate[e.date]=[]; byDate[e.date].push(e); });
-    const sortedDates = [...ALL_DATES].reverse().filter(d=>byDate[d]);
-    if(!sortedDates.length){ html += ''; return; }
-
-    const rows = sortedDates.flatMap(date => {
-      const dateEvents = byDate[date];
-      const ups   = dateEvents.filter(e=>e.dir==='up').length;
-      const downs = dateEvents.filter(e=>e.dir==='down').length;
-      const summary = [
-        ups   ? `<span style="color:#16a34a;font-weight:600">&#9650; ${ups}</span>`   : '',
-        downs ? `<span style="color:#dc2626;font-weight:600">&#9660; ${downs}</span>` : '',
-      ].filter(Boolean).join('&ensp;');
-
-      const headerRow = `<tr style="background:#f6f6f2">
-        <td colspan="5" style="padding:6px 10px;font-size:10px;font-weight:700;color:#888;letter-spacing:.07em;text-transform:uppercase;border-top:1px solid #e8e8e2">
-          ${date}&ensp;${summary}
-        </td>
-      </tr>`;
-
-      const eventRows = dateEvents.map(e => {
-        const isUp = e.dir === 'up';
-        const arrowColor = isUp ? '#16a34a' : '#dc2626';
-        const arrow      = isUp ? '&#9650;' : '&#9660;';
-        const pctStr     = (isUp ? '+' : '') + Math.round(e.pct*100) + '%';
-        return `<tr style="border-bottom:1px solid #f0ede8">
-          <td style="font-size:11px;color:#1a1a1a;padding:7px 8px 7px 20px;font-weight:500">${e.camp}</td>
-          <td style="font-size:11px;color:#666;padding:7px 8px;max-width:180px">${e.adset}</td>
-          <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px;white-space:nowrap">${fS(e.prev)}</td>
-          <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px;white-space:nowrap">${fS(e.curr)}</td>
-          <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:${arrowColor};text-align:right;padding:7px 12px 7px 8px;white-space:nowrap">${arrow}&nbsp;${pctStr}</td>
-        </tr>`;
-      });
-
-      return [headerRow, ...eventRows];
-    });
-
-
-    // ── Pinned manual budget shift — Apr 16 2026
-    const pinnedApr16Rows = `
-      <tr style="background:#f0f7ff">
-        <td colspan="5" style="padding:6px 10px;font-size:10px;font-weight:700;color:#888;letter-spacing:.07em;text-transform:uppercase;border-top:1px solid #e8e8e2">
-          Apr 16&ensp;<span style="color:#2563eb;font-weight:700;font-size:10px;padding:1px 7px;background:#dbeafe;border-radius:10px;letter-spacing:.03em">MANUAL SHIFT</span>
-        </td>
-      </tr>
-      <tr style="border-bottom:1px solid #f0ede8;background:#f8fbff">
-        <td style="font-size:11px;color:#1a1a1a;padding:7px 8px 7px 20px;font-weight:500">UAE</td>
-        <td style="font-size:11px;color:#666;padding:7px 8px">Abaya</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px">$600/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px">$500/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:#dc2626;text-align:right;padding:7px 12px 7px 8px">&#9660;&nbsp;&#x2212;$100</td>
-      </tr>
-      <tr style="border-bottom:1px solid #f0ede8;background:#f8fbff">
-        <td style="font-size:11px;color:#1a1a1a;padding:7px 8px 7px 20px;font-weight:500">UAE</td>
-        <td style="font-size:11px;color:#666;padding:7px 8px">Pyjama</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px">$400/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px">$500/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:#16a34a;text-align:right;padding:7px 12px 7px 8px">&#9650;&nbsp;+$100</td>
-      </tr>
-      <tr style="border-bottom:1px solid #f0ede8;background:#f8fbff">
-        <td style="font-size:11px;color:#1a1a1a;padding:7px 8px 7px 20px;font-weight:500">KSA</td>
-        <td style="font-size:11px;color:#666;padding:7px 8px">Abaya</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px">$700/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px">$600/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:#dc2626;text-align:right;padding:7px 12px 7px 8px">&#9660;&nbsp;&#x2212;$100</td>
-      </tr>
-      <tr style="border-bottom:1px solid #f0ede8;background:#f8fbff">
-        <td style="font-size:11px;color:#1a1a1a;padding:7px 8px 7px 20px;font-weight:500">KSA</td>
-        <td style="font-size:11px;color:#666;padding:7px 8px">Pyjama</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px">$200/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px">$300/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:#16a34a;text-align:right;padding:7px 12px 7px 8px">&#9650;&nbsp;+$100</td>
-      </tr>
-      <tr style="border-bottom:1px solid #f0ede8;background:#f8fbff">
-        <td style="font-size:11px;color:#1a1a1a;padding:7px 8px 7px 20px;font-weight:500">KU / QA / BH</td>
-        <td style="font-size:11px;color:#666;padding:7px 8px">Abaya</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px">$250/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px">$200/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:#dc2626;text-align:right;padding:7px 12px 7px 8px">&#9660;&nbsp;&#x2212;$50</td>
-      </tr>
-      <tr style="border-bottom:1px solid #f0ede8;background:#f8fbff">
-        <td style="font-size:11px;color:#1a1a1a;padding:7px 8px 7px 20px;font-weight:500">KU / QA / BH</td>
-        <td style="font-size:11px;color:#666;padding:7px 8px">Pyjama</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px">$400/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px">$450/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:#16a34a;text-align:right;padding:7px 12px 7px 8px">&#9650;&nbsp;+$50</td>
-      </tr>`;
-    // ── Pinned manual budget shift — Apr 6 2026
-    const pinnedApr6Rows = `
-      <tr style="background:#f0f7ff">
-        <td colspan="5" style="padding:6px 10px;font-size:10px;font-weight:700;color:#888;letter-spacing:.07em;text-transform:uppercase;border-top:1px solid #e8e8e2">
-          Apr 6&ensp;<span style="color:#2563eb;font-weight:700;font-size:10px;padding:1px 7px;background:#dbeafe;border-radius:10px;letter-spacing:.03em">MANUAL SHIFT</span>
-        </td>
-      </tr>
-      <tr style="border-bottom:1px solid #f0ede8;background:#f8fbff">
-        <td style="font-size:11px;color:#1a1a1a;padding:7px 8px 7px 20px;font-weight:500">UAE</td>
-        <td style="font-size:11px;color:#666;padding:7px 8px">Abaya</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px">$700/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px">$600/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:#dc2626;text-align:right;padding:7px 12px 7px 8px">&#9660;&nbsp;&#x2212;$100</td>
-      </tr>
-      <tr style="border-bottom:1px solid #f0ede8;background:#f8fbff">
-        <td style="font-size:11px;color:#1a1a1a;padding:7px 8px 7px 20px;font-weight:500">UAE</td>
-        <td style="font-size:11px;color:#666;padding:7px 8px">Pyjama</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px">$300/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px">$400/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:#16a34a;text-align:right;padding:7px 12px 7px 8px">&#9650;&nbsp;+$100</td>
-      </tr>
-      <tr style="border-bottom:1px solid #f0ede8;background:#f8fbff">
-        <td style="font-size:11px;color:#1a1a1a;padding:7px 8px 7px 20px;font-weight:500">KU / QA / BH</td>
-        <td style="font-size:11px;color:#666;padding:7px 8px">Abaya</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px">$350/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px">$250/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:#dc2626;text-align:right;padding:7px 12px 7px 8px">&#9660;&nbsp;&#x2212;$100</td>
-      </tr>
-      <tr style="border-bottom:1px solid #f0ede8;background:#f8fbff">
-        <td style="font-size:11px;color:#1a1a1a;padding:7px 8px 7px 20px;font-weight:500">KU / QA / BH</td>
-        <td style="font-size:11px;color:#666;padding:7px 8px">Pyjama</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px">$300/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px">$400/day</td>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:#16a34a;text-align:right;padding:7px 12px 7px 8px">&#9650;&nbsp;+$100</td>
-      </tr>`;
-
-    html += `<div class="cc" style="margin-top:4px">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-        <div class="clbl" style="margin-bottom:0">BUDGET SHIFTS</div>
-        <span style="font-size:10px;color:#bbb;letter-spacing:.04em">${events.length} detected · 3-day rolling avg</span>
-      </div>
-      <table style="width:100%;border-collapse:collapse">
-        <thead>
-          <tr style="border-bottom:2px solid #f0ede8">
-            <th style="text-align:left;font-size:10px;font-weight:700;letter-spacing:.06em;color:#bbb;padding:4px 8px 6px 20px">CAMPAIGN</th>
-            <th style="text-align:left;font-size:10px;font-weight:700;letter-spacing:.06em;color:#bbb;padding:4px 8px 6px">ADSET</th>
-            <th style="text-align:right;font-size:10px;font-weight:700;letter-spacing:.06em;color:#bbb;padding:4px 8px 6px">BEFORE</th>
-            <th style="text-align:right;font-size:10px;font-weight:700;letter-spacing:.06em;color:#bbb;padding:4px 8px 6px">AFTER</th>
-            <th style="text-align:right;font-size:10px;font-weight:700;letter-spacing:.06em;color:#bbb;padding:4px 12px 6px 8px">SHIFT</th>
-          </tr>
-        </thead>
-        <tbody>${pinnedApr16Rows}${pinnedApr6Rows}${rows.join('')}</tbody>
-      </table>
-    </div>`;
+    const card = buildBudgetTrendCard('meta');
+    html += card.html;
+    requestAnimationFrame(()=>renderBudgetTrendChart('meta', card.canvasId, 'spend', 'all', null, null));
   })();
 
   // ── FOLLOWERS widget always last
@@ -3826,6 +4026,14 @@ function renderGranularOther(pk, ds, label) {
   if (!gran) return '';
   let html = '';
 
+  // ── BUDGET TREND CHART — per-campaign daily trend (shared)
+  if (BUDGET_TREND_CONFIG[pk]) {
+    const _btCard = buildBudgetTrendCard(pk);
+    html += _btCard.html;
+    requestAnimationFrame(()=>renderBudgetTrendChart(pk, _btCard.canvasId, 'spend', 'all', null, null));
+  }
+
+
   // ── CAMPAIGNS table — Google MTD with signal highlighting + period buttons
   if (pk === 'google' && GRANULAR.google.campaigns && Object.keys(GRANULAR.google.campaigns).length > 0) {
     const campRowsHTML = `<table class="gtbl">${tblHdr(["Campaign",...GOOGLE_HDR])}<tbody>${buildGoogleCampsHTML(GRANULAR.google.campaigns,null)}</tbody></table>`;
@@ -3922,106 +4130,7 @@ function renderGranularOther(pk, ds, label) {
     }
   }
 
-  // ── BUDGET SHIFTS — same rolling-avg logic as Meta tab
-  html += buildBudgetShifts(gran.adsets || {});
-
   return html;
-}
-
-// ── Shared budget-shift detector (used by all platform tabs)
-// Compares 3-day rolling avg before vs after each date.
-// Flags only when both windows are stable (CV < 20%) and differ by > 15%. Debounced.
-function buildBudgetShifts(adsets) {
-  const STEP = 0.15, WIN = 3;
-
-  function avg(a){ return a.length ? a.reduce((s,v)=>s+v,0)/a.length : 0; }
-  function stable(a){
-    if(a.length < 2) return true;
-    const m = avg(a); if(!m) return true;
-    const sd = Math.sqrt(a.map(v=>(v-m)**2).reduce((s,v)=>s+v,0)/a.length);
-    return sd/m < 0.20;
-  }
-
-  const events = [];
-  Object.entries(adsets).forEach(([key, recs]) => {
-    const byDate = {};
-    (recs||[]).forEach(r=>{ if(r.spend>0) byDate[r.d] = r.spend; });
-
-    let lastIdx = -99;
-    for(let i=WIN; i<ALL_DATES.length-1; i++){
-      const bVals = ALL_DATES.slice(i-WIN,i).map(d=>byDate[d]).filter(v=>v!=null);
-      const aVals = ALL_DATES.slice(i,i+WIN).map(d=>byDate[d]).filter(v=>v!=null);
-      if(bVals.length < 2 || aVals.length < 2) continue;
-
-      const bAvg = avg(bVals), aAvg = avg(aVals);
-      if(!bAvg) continue;
-      const pct = (aAvg - bAvg) / bAvg;
-      if(Math.abs(pct) < STEP) continue;
-      if(!stable(bVals) || !stable(aVals)) continue;
-      if(i - lastIdx < WIN) continue;
-
-      lastIdx = i;
-      // Clean up label — strip geo suffixes and platform tokens
-      const label = key
-        .replace(/[-_](UAE|KSA|KUW?|QA|BH|GCC|KU|Ku|ksa|uae)[-_]/gi, ' ')
-        .replace(/\s+/g,' ').replace(/(ASC|IOS|Sales|Retarge\w*|Prospecting|Interest)/gi,'').trim()
-        .replace(/\s{2,}/g,' ').trim() || key;
-
-      events.push({ date: ALL_DATES[i], label, key, prev: Math.round(bAvg), curr: Math.round(aAvg), pct, dir: pct>0?'up':'down' });
-    }
-  });
-
-  if(!events.length) return '';
-
-  // Group by date newest first
-  const byDate = {};
-  events.forEach(e=>{ if(!byDate[e.date]) byDate[e.date]=[]; byDate[e.date].push(e); });
-  const sortedDates = [...ALL_DATES].reverse().filter(d=>byDate[d]);
-  if(!sortedDates.length) return '';
-
-  const rows = sortedDates.flatMap(date => {
-    const evs = byDate[date];
-    const ups = evs.filter(e=>e.dir==='up').length, downs = evs.filter(e=>e.dir==='down').length;
-    const summary = [
-      ups   ? `<span style="color:#16a34a;font-weight:600">&#9650;&thinsp;${ups}</span>`   : '',
-      downs ? `<span style="color:#dc2626;font-weight:600">&#9660;&thinsp;${downs}</span>` : '',
-    ].filter(Boolean).join('&ensp;');
-
-    return [
-      `<tr style="background:#f6f6f2">
-        <td colspan="4" style="padding:6px 10px;font-size:10px;font-weight:700;color:#888;letter-spacing:.07em;text-transform:uppercase;border-top:1px solid #e8e8e2">
-          ${date}&ensp;${summary}
-        </td>
-      </tr>`,
-      ...evs.map(e => {
-        const up = e.dir==='up', col = up?'#16a34a':'#dc2626';
-        return `<tr style="border-bottom:1px solid #f0ede8">
-          <td style="font-size:11px;color:#666;padding:7px 8px 7px 20px;max-width:260px;word-break:break-word">${e.label}</td>
-          <td style="font-size:11px;font-family:'DM Mono',monospace;color:#999;text-align:right;padding:7px 8px;white-space:nowrap">${fS(e.prev)}</td>
-          <td style="font-size:11px;font-family:'DM Mono',monospace;color:#1a1a1a;font-weight:600;text-align:right;padding:7px 8px;white-space:nowrap">${fS(e.curr)}</td>
-          <td style="font-size:11px;font-family:'DM Mono',monospace;font-weight:600;color:${col};text-align:right;padding:7px 12px 7px 8px;white-space:nowrap">${up?'&#9650;':'&#9660;'}&nbsp;${(e.pct>0?'+':'')+Math.round(e.pct*100)}%</td>
-        </tr>`;
-      })
-    ];
-  });
-
-  return `<div class="cc" style="margin-top:4px">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-      <div class="clbl" style="margin-bottom:0">BUDGET SHIFTS</div>
-      <span style="font-size:10px;color:#bbb;letter-spacing:.04em">${events.length} detected &middot; 3-day rolling avg</span>
-    </div>
-    <table style="width:100%;border-collapse:collapse">
-      <thead>
-        <tr style="border-bottom:2px solid #f0ede8">
-          <th style="text-align:left;font-size:10px;font-weight:700;letter-spacing:.06em;color:#bbb;padding:4px 8px 6px 20px">ADSET</th>
-          <th style="text-align:right;font-size:10px;font-weight:700;letter-spacing:.06em;color:#bbb;padding:4px 8px 6px">BEFORE</th>
-          <th style="text-align:right;font-size:10px;font-weight:700;letter-spacing:.06em;color:#bbb;padding:4px 8px 6px">AFTER</th>
-          <th style="text-align:right;font-size:10px;font-weight:700;letter-spacing:.06em;color:#bbb;padding:4px 12px 6px 8px">SHIFT</th>
-        </tr>
-      </thead>
-      <tbody>${rows.join('')}</tbody>
-    </table>
-  </div>`;
 }
 
 // ═══════════════════════════════════════════════════════
