@@ -502,34 +502,40 @@ function renderCalGrid(){
   });
 
   // Range selection via delegation on the entire cal-months container
-  container.addEventListener("mouseover", e=>{
-    const el=e.target.closest("[data-d]");
-    if(!el) return;
-    if(calPickStart && !calPickEnd){
-      calHoverD=el.dataset.d; applyDayClasses();
-    }
-  });
-  container.addEventListener("mouseleave", ()=>{
-    if(calPickStart && !calPickEnd){
-      calHoverD=null; applyDayClasses();
-    }
-  });
-  container.addEventListener("click", e=>{
-    const el=e.target.closest("[data-d]");
-    if(!el) return;
-    const d=el.dataset.d;
-    if(!calPickStart || (calPickStart && calPickEnd)){
-      calPickStart=d; calPickEnd=null; calHoverD=null;
-    } else {
-      const si=dateIndex(calPickStart), ei=dateIndex(d);
-      if(ei>=si){ calPickEnd=d; }
-      else { calPickEnd=calPickStart; calPickStart=d; }
-      calHoverD=null;
-    }
-    document.querySelectorAll(".cal-preset").forEach(b=>b.classList.remove("active"));
-    applyDayClasses();
-    updateCalFooter();
-  });
+  // GUARD: attach listeners only ONCE per container (renderCalGrid is called on
+  // every month navigation, so without this guard we stacked duplicate handlers
+  // and each click fired 3+ times, effectively resetting the picker).
+  if(!container.dataset.listenersAttached){
+    container.dataset.listenersAttached = "1";
+    container.addEventListener("mouseover", e=>{
+      const el=e.target.closest("[data-d]");
+      if(!el) return;
+      if(calPickStart && !calPickEnd){
+        calHoverD=el.dataset.d; applyDayClasses();
+      }
+    });
+    container.addEventListener("mouseleave", ()=>{
+      if(calPickStart && !calPickEnd){
+        calHoverD=null; applyDayClasses();
+      }
+    });
+    container.addEventListener("click", e=>{
+      const el=e.target.closest("[data-d]");
+      if(!el) return;
+      const d=el.dataset.d;
+      if(!calPickStart || (calPickStart && calPickEnd)){
+        calPickStart=d; calPickEnd=null; calHoverD=null;
+      } else {
+        const si=dateIndex(calPickStart), ei=dateIndex(d);
+        if(ei>=si){ calPickEnd=d; }
+        else { calPickEnd=calPickStart; calPickStart=d; }
+        calHoverD=null;
+      }
+      document.querySelectorAll(".cal-preset").forEach(b=>b.classList.remove("active"));
+      applyDayClasses();
+      updateCalFooter();
+    });
+  }
 
   applyDayClasses();
   updateCalFooter();
