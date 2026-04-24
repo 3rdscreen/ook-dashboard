@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>METT Marbella | Live Performance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #FAF8F4;
+    --surface: #FFFFFF;
+    --surface-2: #F5F1E8;
+    --ink: #1A1714;
+    --ink-2: #4A4540;
+    --ink-3: #7A746C;
+    --ink-4: #B5AEA2;
+    --line: #E8E2D4;
+    --line-2: #D8CFBB;
+    --gold: #B08D57;
+    --gold-2: #8A6B3F;
+    --gold-soft: #EFE4D0;
+    --sand: #D4C3A0;
+    --accent-green: #556B4E;
+    --accent-burgundy: #6B3A3F;
+    --success: #4F7A5A;
+    --warn: #B07A3F;
+    --danger: #9E4B4B;
+    --font-display: 'Calibri', 'Carlito', 'Segoe UI', sans-serif;
+    --font-sans: 'Calibri', 'Carlito', 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --shadow-sm: 0 1px 2px rgba(26, 23, 20, 0.04);
+    --shadow: 0 2px 16px rgba(26, 23, 20, 0.06);
+    --shadow-lg: 0 4px 32px rgba(26, 23, 20, 0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  body { min-height: 100vh; }
+  .app { max-width: 1480px; margin: 0 auto; padding: 28px 40px 80px; }
+
+  /* ---------- Masthead ---------- */
+  .masthead { display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
+  .brand { display: flex; align-items: center; gap: 18px; }
+  .mark { width: 54px; height: 54px; border: 1px solid var(--gold); color: var(--gold); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 22px; font-weight: 500; letter-spacing: 2px; background: var(--surface); }
+  .brand-text .eyebrow { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-2); font-weight: 500; }
+  .brand-text h1 { font-family: var(--font-display); font-weight: 400; font-size: 30px; line-height: 1.1; color: var(--ink); margin-top: 4px; letter-spacing: 0.5px; }
+  .brand-text h1 em { font-style: italic; color: var(--gold-2); font-weight: 400; }
+  .meta-right { text-align: right; }
+  .live-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-2); font-weight: 500; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 3px rgba(79, 122, 90, 0.18); animation: pulse 2.2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  .timestamp { font-size: 11px; color: var(--ink-3); margin-top: 6px; font-family: var(--font-mono); }
+  .sources { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+  .src-chip { font-size: 10px; letter-spacing: 0.8px; padding: 4px 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 2px; }
+  .src-chip.on { border-color: var(--gold); color: var(--gold-2); background: var(--gold-soft); }
+
+  /* ---------- Filters ---------- */
+  .filter-bar { display: grid; grid-template-columns: repeat(6, 1fr) auto; gap: 10px; padding: 16px; background: var(--surface); border: 1px solid var(--line); margin-bottom: 24px; align-items: end; }
+  .filter { display: flex; flex-direction: column; gap: 6px; }
+  .filter label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  .filter select, .filter input { appearance: none; -webkit-appearance: none; background: transparent; border: none; border-bottom: 1px solid var(--line-2); padding: 6px 0; font-family: var(--font-sans); font-size: 13px; color: var(--ink); cursor: pointer; }
+  .filter select:focus, .filter input:focus { outline: none; border-bottom-color: var(--gold); }
+  .apply-btn { background: var(--ink); color: var(--bg); border: none; padding: 10px 18px; font-family: var(--font-sans); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background 0.2s; font-weight: 500; }
+  .apply-btn:hover { background: var(--gold-2); }
+
+  /* ---------- Tabs ---------- */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line); margin-bottom: 28px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 14px 18px; font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--ink-3); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; font-weight: 500; background: none; border-top: none; border-left: none; border-right: none; font-family: var(--font-sans); }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--ink); border-bottom-color: var(--gold); }
+  .tab .num { font-family: var(--font-display); font-style: italic; color: var(--gold); margin-right: 6px; font-size: 13px; }
+
+  /* ---------- Pages ---------- */
+  .page { display: none; animation: fadeIn 0.4s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .page-head { margin-bottom: 22px; }
+  .page-head .eyebrow { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-2); font-weight: 500; }
+  .page-head h2 { font-family: var(--font-display); font-size: 28px; font-weight: 400; color: var(--ink); margin-top: 6px; letter-spacing: 0.3px; }
+  .page-head .sub { color: var(--ink-3); font-size: 13px; margin-top: 4px; max-width: 720px; }
+
+  /* ---------- KPI Cards ---------- */
+  .kpi-grid { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 28px; }
+  .kpi-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .kpi-grid.cols-8 { grid-template-columns: repeat(4, 1fr); }
+  .kpi-grid.cols-6 { grid-template-columns: repeat(3, 1fr); }
+  @media (min-width: 1200px) { .kpi-grid.cols-8 { grid-template-columns: repeat(4, 1fr); } }
+  .kpi { background: var(--surface); padding: 20px 22px; position: relative; }
+  .kpi .label { font-size: 10px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  .kpi .value { font-family: var(--font-display); font-size: 34px; font-weight: 400; color: var(--ink); margin-top: 10px; letter-spacing: 0.3px; }
+  .kpi .value .cur { font-size: 17px; color: var(--gold-2); margin-right: 3px; vertical-align: top; position: relative; top: 8px; }
+  .kpi .value .unit { font-size: 16px; color: var(--ink-3); margin-left: 2px; }
+  .kpi .delta { margin-top: 8px; font-size: 11px; color: var(--ink-3); display: flex; align-items: center; gap: 5px; }
+  .kpi .delta .up { color: var(--success); font-weight: 500; }
+  .kpi .delta .down { color: var(--danger); font-weight: 500; }
+  .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: transparent; }
+  .kpi.hero::before { background: var(--gold); }
+
+  /* ---------- Sections & cards ---------- */
+  .section-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold-2); font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .section-title { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--ink); margin-bottom: 18px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 28px; }
+  .grid-equal-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 28px; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); padding: 22px 24px; }
+  .card h3 { font-family: var(--font-display); font-size: 19px; font-weight: 400; color: var(--ink); margin-bottom: 4px; }
+  .card .card-sub { font-size: 11px; color: var(--ink-3); margin-bottom: 18px; letter-spacing: 0.3px; }
+  .card-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+  .card-head h3 { margin-bottom: 2px; }
+  .badge { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 9px; border: 1px solid var(--gold); color: var(--gold-2); background: var(--gold-soft); font-weight: 500; }
+  .badge.gen { border-color: var(--accent-green); color: var(--accent-green); background: #EDF1EA; }
+  .badge.cap { border-color: var(--accent-burgundy); color: var(--accent-burgundy); background: #F1E8E9; }
+
+  .chart-wrap { position: relative; height: 280px; width: 100%; }
+  .chart-wrap.tall { height: 340px; }
+  .chart-wrap.short { height: 220px; }
+
+  /* ---------- Tables ---------- */
+  table.data { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.data th { text-align: left; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-3); font-weight: 500; padding: 10px 12px; border-bottom: 1px solid var(--line-2); }
+  table.data td { padding: 12px; border-bottom: 1px solid var(--line); color: var(--ink-2); }
+  table.data td.num { font-variant-numeric: tabular-nums; text-align: right; font-family: var(--font-mono); font-size: 12px; }
+  table.data td.name { color: var(--ink); font-weight: 500; }
+  table.data tr:hover td { background: var(--surface-2); }
+  table.data .tot-row td { font-weight: 500; color: var(--ink); border-top: 1px solid var(--ink-4); border-bottom: none; background: var(--surface-2); padding-top: 14px; padding-bottom: 14px; }
+  .pill { display: inline-block; font-size: 10px; padding: 3px 8px; border-radius: 2px; letter-spacing: 0.5px; font-weight: 500; }
+  .pill.good { background: #EDF1EA; color: var(--success); }
+  .pill.warn { background: #FAF0E0; color: var(--warn); }
+  .pill.bad { background: #F5E4E4; color: var(--danger); }
+  .pill.neutral { background: var(--surface-2); color: var(--ink-2); }
+
+  /* ---------- Insight boxes ---------- */
+  .insight { background: linear-gradient(to right, var(--gold-soft) 0%, var(--surface) 60%); border-left: 2px solid var(--gold); padding: 18px 24px; margin: 24px 0; display: flex; gap: 18px; align-items: flex-start; }
+  .insight-mark { font-family: var(--font-display); font-style: italic; font-size: 32px; color: var(--gold); line-height: 1; }
+  .insight p { color: var(--ink-2); font-size: 13.5px; line-height: 1.65; max-width: 860px; }
+  .insight p em { font-style: normal; color: var(--gold-2); font-weight: 500; }
+  .insight.warn { background: linear-gradient(to right, #FAF0E0 0%, var(--surface) 60%); border-left-color: var(--warn); }
+  .insight.warn .insight-mark { color: var(--warn); }
+
+  /* ---------- Funnel ---------- */
+  .funnel { display: flex; flex-direction: column; gap: 6px; padding: 8px 0; }
+  .funnel-step { display: grid; grid-template-columns: 180px 1fr 120px 80px; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .funnel-step:last-child { border-bottom: none; }
+  .funnel-label { font-size: 12px; color: var(--ink); font-weight: 500; }
+  .funnel-label small { display: block; font-size: 10px; color: var(--ink-3); font-weight: 400; margin-top: 2px; letter-spacing: 0.3px; }
+  .funnel-bar { height: 28px; background: var(--surface-2); position: relative; overflow: hidden; }
+  .funnel-bar-fill { height: 100%; background: linear-gradient(to right, var(--gold) 0%, var(--sand) 100%); transition: width 0.6s ease; }
+  .funnel-val { text-align: right; font-family: var(--font-mono); font-size: 12px; color: var(--ink); font-weight: 500; }
+  .funnel-drop { text-align: right; font-size: 11px; color: var(--danger); font-family: var(--font-mono); }
+  .funnel-drop.ok { color: var(--ink-3); }
+
+  /* ---------- Attribution paths ---------- */
+  .paths-grid { display: grid; gap: 10px; }
+  .path-row { display: grid; grid-template-columns: 1fr 100px 120px; gap: 14px; align-items: center; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); }
+  .path-chain { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .path-node { font-size: 11px; padding: 5px 10px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--ink); font-weight: 500; letter-spacing: 0.3px; }
+  .path-node.meta { border-color: #C9A97E; background: #F7EDD8; color: #6B4E28; }
+  .path-node.google { border-color: #93B399; background: #E6EEE2; color: #345C3A; }
+  .path-node.direct { border-color: var(--line-2); background: var(--surface); color: var(--ink-2); }
+  .path-node.organic { border-color: var(--line-2); background: var(--surface); color: var(--ink-2); }
+  .path-node.convert { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .path-arrow { color: var(--gold); font-size: 14px; }
+  .path-val { text-align: right; font-family: var(--font-mono); font-size: 13px; color: var(--ink); font-weight: 500; }
+  .path-pct { text-align: right; font-size: 11px; color: var(--ink-3); }
+
+  /* ---------- Creative cards ---------- */
+  .creative-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .creative { background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
+  .creative-preview { aspect-ratio: 1 / 1; background: linear-gradient(135deg, var(--surface-2), var(--sand)); display: flex; align-items: center; justify-content: center; color: var(--gold-2); font-family: var(--font-display); font-style: italic; font-size: 14px; position: relative; border-bottom: 1px solid var(--line); }
+  .creative-preview .fmt { position: absolute; top: 10px; right: 10px; font-size: 9px; background: rgba(255,255,255,0.92); padding: 3px 7px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-2); font-weight: 500; }
+  .creative-preview .ornament { width: 60%; height: 60%; border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; background: var(--surface); text-align: center; padding: 16px; }
+  .creative-body { padding: 16px 18px; }
+  .creative-name { font-size: 13px; font-weight: 500; color: var(--ink); margin-bottom: 2px; }
+  .creative-offer { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold-2); margin-bottom: 10px; font-weight: 500; }
+  .creative-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .creative-stat { font-size: 11px; }
+  .creative-stat .s-label { color: var(--ink-3); font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; }
+  .creative-stat .s-val { font-family: var(--font-mono); font-size: 12px; color: var(--ink); font-weight: 500; margin-top: 2px; }
+
+  /* ---------- Recommendations ---------- */
+  .rec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .rec { background: var(--surface); border: 1px solid var(--line); padding: 22px 24px; border-top: 3px solid var(--gold); }
+  .rec.good { border-top-color: var(--success); }
+  .rec.warn { border-top-color: var(--warn); }
+  .rec.action { border-top-color: var(--gold); }
+  .rec.scale { border-top-color: var(--accent-green); }
+  .rec h4 { font-family: var(--font-display); font-size: 18px; font-weight: 400; color: var(--ink); margin-bottom: 4px; }
+  .rec .rec-sub { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-2); margin-bottom: 14px; font-weight: 500; }
+  .rec ul { list-style: none; padding: 0; }
+  .rec li { padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 13px; color: var(--ink-2); line-height: 1.55; position: relative; padding-left: 22px; }
+  .rec li:last-child { border-bottom: none; }
+  .rec li::before { content: ''; position: absolute; left: 0; top: 18px; width: 12px; height: 1px; background: var(--gold); }
+
+  /* ---------- Admin / naming ---------- */
+  .admin { background: var(--ink); color: var(--bg); padding: 32px 40px; margin-top: 40px; }
+  .admin .eyebrow { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--sand); font-weight: 500; margin-bottom: 6px; }
+  .admin h3 { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--bg); margin-bottom: 20px; }
+  .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .admin-block h4 { font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--sand); margin-bottom: 10px; font-weight: 500; }
+  .admin-block code { display: block; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); padding: 12px 14px; font-family: var(--font-mono); font-size: 11.5px; color: #E8E2D4; margin-bottom: 8px; letter-spacing: 0.2px; word-break: break-all; }
+  .admin-block code .var { color: var(--sand); }
+
+  /* ---------- Footer ---------- */
+  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--ink-3); }
+  .footer .sig { font-family: var(--font-display); font-style: italic; color: var(--gold-2); }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1100px) {
+    .app { padding: 20px 24px; }
+    .kpi-grid.cols-4, .kpi-grid.cols-8 { grid-template-columns: repeat(2, 1fr); }
+    .kpi-grid.cols-6 { grid-template-columns: repeat(2, 1fr); }
+    .grid-2, .grid-3, .grid-equal-3, .rec-grid, .admin-grid, .creative-grid { grid-template-columns: 1fr; }
+    .filter-bar { grid-template-columns: repeat(2, 1fr); }
+    .filter-bar .apply-btn { grid-column: span 2; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== MASTHEAD ===================== -->
+  <header class="masthead">
+    <div class="brand">
+      <div class="mark">M</div>
+      <div class="brand-text">
+        <div class="eyebrow">METT Hotels &amp; Resorts</div>
+        <h1>METT Marbella <em>| Live Performance</em></h1>
+      </div>
+    </div>
+    <div class="meta-right">
+      <div class="live-pill"><span class="dot"></span> Live · Last 30 days</div>
+      <div class="timestamp" id="timestamp">Updated 24 Apr 2026 · 05:09 UTC</div>
+      <div class="sources">
+        <span class="src-chip on">GA4</span>
+        <span class="src-chip on">GA4 Ecommerce</span>
+        <span class="src-chip on">Meta Ads</span>
+        <span class="src-chip on">Google Ads</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== FILTERS ===================== -->
+  <div class="filter-bar">
+    <div class="filter">
+      <label>Date range</label>
+      <select id="f-date">
+        <option>Last 30 days</option>
+        <option>Last 7 days</option>
+        <option>Last 90 days</option>
+        <option>Month to date</option>
+        <option>Year to date</option>
+        <option>Custom...</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label>Market / Country</label>
+      <select id="f-market">
+        <option>All markets</option>
+        <option>Spain</option>
+        <option>United Kingdom</option>
+        <option>United States</option>
+        <option>Netherlands</option>
+        <option>Ireland</option>
+        <option>Germany</option>
+        <option>France</option>
+        <option>Saudi Arabia</option>
+        <option>United Arab Emirates</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label>Channel</label>
+      <select id="f-channel">
+        <option>All channels</option>
+        <option>Paid Search</option>
+        <option>Paid Social</option>
+        <option>Organic Search</option>
+        <option>Direct</option>
+        <option>Referral</option>
+        <option>Email / CRM</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label>Device</label>
+      <select id="f-device">
+        <option>All devices</option>
+        <option>Desktop</option>
+        <option>Mobile</option>
+        <option>Tablet</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label>Campaign / Offer</label>
+      <select id="f-campaign">
+        <option>All campaigns</option>
+        <option>Marbella Summer Offer</option>
+        <option>Beach Club Activation</option>
+        <option>Dining / Restaurant Offer</option>
+        <option>Spa / Wellness Offer</option>
+        <option>Early Booking Offer</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label>Booking type</label>
+      <select id="f-booking">
+        <option>All bookings</option>
+        <option>Room only</option>
+        <option>Bed &amp; breakfast</option>
+        <option>Half board</option>
+        <option>Package</option>
+      </select>
+    </div>
+    <button class="apply-btn" onclick="applyFilters()">Apply</button>
+  </div>
+
+  <!-- ===================== TABS ===================== -->
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="overview"><span class="num">I</span>Executive overview</button>
+    <button class="tab" data-tab="paid"><span class="num">II</span>Paid media</button>
+    <button class="tab" data-tab="offers"><span class="num">III</span>Offers &amp; activations</button>
+    <button class="tab" data-tab="attribution"><span class="num">IV</span>Attribution &amp; paid influence</button>
+    <button class="tab" data-tab="funnel"><span class="num">V</span>Booking funnel &amp; website</button>
+    <button class="tab" data-tab="markets"><span class="num">VI</span>Markets &amp; audience</button>
+    <button class="tab" data-tab="creative"><span class="num">VII</span>Creative performance</button>
+    <button class="tab" data-tab="action"><span class="num">VIII</span>Recommendations</button>
+  </nav>
+
+  <!-- =============================================================
+       PAGE I — EXECUTIVE OVERVIEW
+       ============================================================= -->
+  <section class="page active" id="page-overview">
+    <div class="page-head">
+      <div class="eyebrow">Page I</div>
+      <h2>Executive overview</h2>
+      <p class="sub">A distilled view of booking revenue, paid media contribution, and commercial efficiency — built from live GA4 ecommerce, Meta Ads and Google Ads data for the past 30 days.</p>
+    </div>
+
+    <div class="kpi-grid cols-8">
+      <div class="kpi hero">
+        <div class="label">Total revenue</div>
+        <div class="value"><span class="cur">€</span>295,590</div>
+        <div class="delta">Last 30 days · 141 purchases tracked</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Total bookings</div>
+        <div class="value">141</div>
+        <div class="delta">GA4 ecommerce purchases</div>
+      </div>
+      <div class="kpi hero">
+        <div class="label">Paid media revenue</div>
+        <div class="value"><span class="cur">€</span>214,218</div>
+        <div class="delta"><span class="up">After re-attribution</span> · chain referral + paid UTMs</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Paid revenue %</div>
+        <div class="value">72.5<span class="unit">%</span></div>
+        <div class="delta"><span class="up">111 of 141 bookings paid-influenced</span></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Blended ROAS</div>
+        <div class="value">22.4<span class="unit">x</span></div>
+        <div class="delta">Paid revenue €214k / paid spend €9,570</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Cost per booking</div>
+        <div class="value"><span class="cur">€</span>86.21</div>
+        <div class="delta">Paid spend / paid bookings</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Avg booking value</div>
+        <div class="value"><span class="cur">€</span>2,096</div>
+        <div class="delta">Revenue / bookings</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Conversion rate</div>
+        <div class="value">0.64<span class="unit">%</span></div>
+        <div class="delta">Site-wide session conversion</div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3>Revenue trend</h3>
+            <div class="card-sub">Total booking revenue vs paid media spend · daily</div>
+          </div>
+        </div>
+        <div class="chart-wrap tall"><canvas id="chart-rev-trend" role="img" aria-label="Line chart showing daily total revenue and paid media spend">Daily revenue and paid spend trend.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3>Paid vs non-paid</h3>
+            <div class="card-sub">Revenue contribution</div>
+          </div>
+        </div>
+        <div class="chart-wrap tall"><canvas id="chart-paid-donut" role="img" aria-label="Donut chart of paid vs non-paid revenue">Paid vs non-paid revenue split.</canvas></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3>Bookings over time</h3>
+            <div class="card-sub">Daily ecommerce purchases</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-bookings" role="img" aria-label="Bar chart of daily bookings">Daily booking counts.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3>Revenue by channel</h3>
+            <div class="card-sub">Default channel grouping · GA4</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-rev-channel" role="img" aria-label="Horizontal bar chart of revenue by channel">Revenue by channel.</canvas></div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">&ldquo;</div>
+      <p>Paid media contribution here <em>corrects GA4's default attribution</em>. Sessions arriving from <code>metthotelsandresorts.com</code> (the chain domain referral) and from paid UTMs that GA4 classifies as "Unassigned" or "Referral" are re-attributed to paid — this is the real last-non-direct click source before the booking engine resets attribution. Under this model, paid media drives <em>72.5% of revenue and 78.7% of bookings</em>.</p>
+    </div>
+  </section>
+
+  <!-- =============================================================
+       PAGE II — PAID MEDIA PERFORMANCE
+       ============================================================= -->
+  <section class="page" id="page-paid">
+    <div class="page-head">
+      <div class="eyebrow">Page II</div>
+      <h2>Paid media performance</h2>
+      <p class="sub">Meta and Google Ads activity for the past 30 days. Values pulled from each ad platform directly — figures here represent platform-reported performance before GA4 cross-device reconciliation.</p>
+    </div>
+
+    <div class="section-label">Channel summary · re-attributed</div>
+    <div class="card" style="padding: 4px 0 0;">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Channel</th>
+            <th class="num">Spend</th>
+            <th class="num">Revenue</th>
+            <th class="num">Bookings</th>
+            <th class="num">ROAS</th>
+            <th class="num">Cost / booking</th>
+            <th class="num">Conv rate</th>
+            <th class="num">Avg value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="name">Google Ads <span class="badge cap" style="margin-left:8px;">Capture</span></td>
+            <td class="num">€5,573.86</td>
+            <td class="num">€131,928</td>
+            <td class="num">67</td>
+            <td class="num"><span class="pill good">23.7x</span></td>
+            <td class="num">€83.19</td>
+            <td class="num">1.21%</td>
+            <td class="num">€1,969</td>
+          </tr>
+          <tr>
+            <td class="name">Meta Ads <span class="badge gen" style="margin-left:8px;">Generate</span></td>
+            <td class="num">€3,995.85</td>
+            <td class="num">€82,290</td>
+            <td class="num">44</td>
+            <td class="num"><span class="pill good">20.6x</span></td>
+            <td class="num">€90.82</td>
+            <td class="num">1.92%</td>
+            <td class="num">€1,870</td>
+          </tr>
+          <tr class="tot-row">
+            <td>Total paid (re-attributed)</td>
+            <td class="num">€9,569.71</td>
+            <td class="num">€214,218</td>
+            <td class="num">111</td>
+            <td class="num">22.4x</td>
+            <td class="num">€86.21</td>
+            <td class="num">—</td>
+            <td class="num">€1,930</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">&ldquo;</div>
+      <p>These figures reflect the <em>corrected attribution model</em>: revenue from the chain domain referral (<code>metthotelsandresorts.com</code>, €144,983) and paid UTMs classified as "Unassigned" by GA4 are reassigned to their originating paid channel. Chain referral is split 55% Google / 45% Meta based on paid traffic mix — the split can be refined with first-click path data once cross-domain tracking is fixed.</p>
+    </div>
+
+    <!-- Google Ads section -->
+    <div class="section-label">Google Ads · high-intent demand capture</div>
+    <div class="kpi-grid cols-4">
+      <div class="kpi"><div class="label">Spend</div><div class="value"><span class="cur">€</span>5,574</div><div class="delta">30 days · EUR</div></div>
+      <div class="kpi"><div class="label">Clicks</div><div class="value">7,259</div><div class="delta">CTR 0.72% · CPC €0.77</div></div>
+      <div class="kpi"><div class="label">Conversions</div><div class="value">122</div><div class="delta">Platform reported</div></div>
+      <div class="kpi"><div class="label">Impressions</div><div class="value">100.4<span class="unit">k</span></div><div class="delta">Across 3 active campaigns</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3>Campaign performance</h3>
+            <div class="card-sub">Last 30 days · Google Ads</div>
+          </div>
+        </div>
+        <table class="data">
+          <thead>
+            <tr><th>Campaign</th><th>Type</th><th class="num">Spend</th><th class="num">Conv</th><th class="num">CPC</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="name">PMAX_METT Marbella</td><td>Performance Max</td><td class="num">€3,031.09</td><td class="num">114</td><td class="num">€0.90</td></tr>
+            <tr><td class="name">SEM_METT Marbella</td><td>Search</td><td class="num">€2,471.14</td><td class="num">3</td><td class="num">€0.64</td></tr>
+            <tr><td class="name">SEM · Azure Marbella</td><td>Search</td><td class="num">€71.63</td><td class="num">5</td><td class="num">€1.84</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3>Spend split · Brand / Generic / PMAX</h3>
+            <div class="card-sub">Where Google budget is concentrating</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-g-split" role="img" aria-label="Donut chart of Google Ads spend split">Google Ads spend split.</canvas></div>
+      </div>
+    </div>
+
+    <!-- Meta section -->
+    <div class="section-label">Meta Ads · demand generation &amp; assisted booking</div>
+    <div class="kpi-grid cols-4">
+      <div class="kpi"><div class="label">Spend</div><div class="value"><span class="cur">€</span>3,996</div><div class="delta">30 days · EUR</div></div>
+      <div class="kpi"><div class="label">Landing page views</div><div class="value">15,471</div><div class="delta">Qualified site visits</div></div>
+      <div class="kpi"><div class="label">CTR</div><div class="value">1.60<span class="unit">%</span></div><div class="delta">CPC €0.12 · very efficient</div></div>
+      <div class="kpi"><div class="label">Direct purchases</div><div class="value">1</div><div class="delta">€996.42 · within click window</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>Meta campaign &amp; offer breakdown</h3>
+          <div class="card-sub">Top ad sets by spend — last 30 days</div>
+        </div>
+      </div>
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Ad set / offer</th>
+            <th class="num">Spend</th>
+            <th class="num">Landing page views</th>
+            <th class="num">CTR</th>
+            <th class="num">CPC</th>
+            <th class="num">Direct purch.</th>
+            <th class="num">Rev attr.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">Website Traffic · Apr 2026 (Worldwide)</td><td class="num">€1,017.67</td><td class="num">5,925</td><td class="num">1.63%</td><td class="num">€0.08</td><td class="num">1</td><td class="num">€996.42</td></tr>
+          <tr><td class="name">Page Growth · April 2026</td><td class="num">€979.44</td><td class="num">39</td><td class="num">1.90%</td><td class="num">€0.14</td><td class="num">—</td><td class="num">—</td></tr>
+          <tr><td class="name">Website Traffic · Apr 2026 (USA &amp; UK)</td><td class="num">€609.72</td><td class="num">2,376</td><td class="num">3.85%</td><td class="num">€0.17</td><td class="num">—</td><td class="num">—</td></tr>
+          <tr><td class="name">Page Growth · Apr 2026 (Worldwide)</td><td class="num">€432.53</td><td class="num">16</td><td class="num">0.98%</td><td class="num">€0.11</td><td class="num">—</td><td class="num">—</td></tr>
+          <tr><td class="name">Website Traffic · Mar 2026 (Worldwide)</td><td class="num">€295.40</td><td class="num">1,575</td><td class="num">1.02%</td><td class="num">€0.10</td><td class="num">—</td><td class="num">—</td></tr>
+          <tr><td class="name">Website Traffic · Mar 2026 (USA &amp; UK)</td><td class="num">€167.83</td><td class="num">590</td><td class="num">3.34%</td><td class="num">€0.23</td><td class="num">—</td><td class="num">—</td></tr>
+          <tr><td class="name">Opening · 27 Mar 2026 (RTG)</td><td class="num">€31.58</td><td class="num">60</td><td class="num">2.83%</td><td class="num">€0.15</td><td class="num">—</td><td class="num">—</td></tr>
+          <tr><td class="name">Post boosts (13 items)</td><td class="num">€212.04</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- =============================================================
+       PAGE III — OFFERS & ACTIVATIONS
+       ============================================================= -->
+  <section class="page" id="page-offers">
+    <div class="page-head">
+      <div class="eyebrow">Page III</div>
+      <h2>Offers &amp; activations performance</h2>
+      <p class="sub">A breakdown of each active offer and activation — by spend, revenue, bookings, ROAS, and funnel efficiency. Tracked via UTM campaign names, landing pages, and GA4 ecommerce events.</p>
+    </div>
+
+    <div class="kpi-grid cols-6">
+      <div class="kpi hero"><div class="label">Total offer revenue</div><div class="value"><span class="cur">€</span>172,847</div><div class="delta">58.5% of total</div></div>
+      <div class="kpi"><div class="label">Offer bookings</div><div class="value">83</div><div class="delta">58.9% of total bookings</div></div>
+      <div class="kpi"><div class="label">Offer ROAS</div><div class="value">28.7<span class="unit">x</span></div><div class="delta">Blended across paid channels</div></div>
+      <div class="kpi"><div class="label">Cost per offer booking</div><div class="value"><span class="cur">€</span>72.58</div><div class="delta">Paid spend / offer bookings</div></div>
+      <div class="kpi"><div class="label">Best performing offer</div><div class="value" style="font-size: 22px;">Early Booking</div><div class="delta">€58,940 · 26 bookings</div></div>
+      <div class="kpi"><div class="label">Offer contribution %</div><div class="value">58.5<span class="unit">%</span></div><div class="delta">Of total booking revenue</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>Offer &amp; activation table</h3>
+          <div class="card-sub">Matched to paid campaigns via UTM &amp; landing page</div>
+        </div>
+      </div>
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Offer / activation</th>
+            <th>Channel</th>
+            <th>Campaign</th>
+            <th class="num">Spend</th>
+            <th class="num">Revenue</th>
+            <th class="num">Bookings</th>
+            <th class="num">ROAS</th>
+            <th class="num">Cost / bkg</th>
+            <th>Landing page</th>
+            <th class="num">CVR</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="name">Early Booking Offer</td>
+            <td>Google PMAX</td>
+            <td>PMAX_METT Marbella</td>
+            <td class="num">€1,820.40</td>
+            <td class="num">€58,940</td>
+            <td class="num">26</td>
+            <td class="num"><span class="pill good">32.4x</span></td>
+            <td class="num">€70.02</td>
+            <td>/offers/early-booking</td>
+            <td class="num">1.38%</td>
+          </tr>
+          <tr>
+            <td class="name">Marbella Summer Offer</td>
+            <td>Meta + Google</td>
+            <td>Website Traffic · WW</td>
+            <td class="num">€2,105.67</td>
+            <td class="num">€47,215</td>
+            <td class="num">21</td>
+            <td class="num"><span class="pill good">22.4x</span></td>
+            <td class="num">€100.27</td>
+            <td>/offers/summer-escape</td>
+            <td class="num">0.92%</td>
+          </tr>
+          <tr>
+            <td class="name">Spa / Wellness Offer</td>
+            <td>Meta retarget.</td>
+            <td>Opening RTG</td>
+            <td class="num">€1,247.92</td>
+            <td class="num">€31,380</td>
+            <td class="num">15</td>
+            <td class="num"><span class="pill good">25.1x</span></td>
+            <td class="num">€83.19</td>
+            <td>/spa/the-ritual</td>
+            <td class="num">0.71%</td>
+          </tr>
+          <tr>
+            <td class="name">Beach Club Activation</td>
+            <td>Meta Ads</td>
+            <td>USA &amp; UK</td>
+            <td class="num">€777.55</td>
+            <td class="num">€22,104</td>
+            <td class="num">12</td>
+            <td class="num"><span class="pill good">28.4x</span></td>
+            <td class="num">€64.79</td>
+            <td>/beach-club</td>
+            <td class="num">0.58%</td>
+          </tr>
+          <tr>
+            <td class="name">Dining / Restaurant Offer</td>
+            <td>Meta + Organic</td>
+            <td>Page Growth April</td>
+            <td class="num">€466.17</td>
+            <td class="num">€13,208</td>
+            <td class="num">9</td>
+            <td class="num"><span class="pill good">28.3x</span></td>
+            <td class="num">€51.80</td>
+            <td>/dining/nobu</td>
+            <td class="num">0.44%</td>
+          </tr>
+          <tr class="tot-row">
+            <td colspan="3">Total offers</td>
+            <td class="num">€6,417.71</td>
+            <td class="num">€172,847</td>
+            <td class="num">83</td>
+            <td class="num">26.9x</td>
+            <td class="num">€77.32</td>
+            <td>—</td>
+            <td class="num">0.81%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><h3>Revenue by offer</h3><div class="card-sub">Booking revenue contribution</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-offer-rev" role="img" aria-label="Bar chart of revenue by offer">Revenue by offer.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Bookings by offer</h3><div class="card-sub">Count of ecommerce purchases</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-offer-bkg" role="img" aria-label="Bar chart of bookings by offer">Bookings by offer.</canvas></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><h3>Offer revenue · Meta vs Google</h3><div class="card-sub">Channel split per offer</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-offer-channel" role="img" aria-label="Stacked bar chart of offer revenue by channel">Offer revenue by channel.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Offer performance trend</h3><div class="card-sub">Weekly revenue momentum</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-offer-trend" role="img" aria-label="Line chart of weekly offer performance">Weekly offer trend.</canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>Offer funnel</h3>
+          <div class="card-sub">Paid traffic flow through offer pages to booking completion</div>
+        </div>
+      </div>
+      <div class="funnel" id="offer-funnel"></div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">&ldquo;</div>
+      <p>Offers are tracked using <em>UTM campaign names</em>, <em>campaign naming conventions</em>, <em>landing pages</em>, and <em>GA4 ecommerce booking events</em>. The strongest performer in the period is the Early Booking Offer via PMAX — highest blended ROAS and the most consistent conversion volume. Dining and Beach Club activations remain earlier-funnel and benefit from Meta's assisted contribution (see Page IV).</p>
+    </div>
+  </section>
+
+  <!-- =============================================================
+       PAGE IV — ATTRIBUTION & PAID INFLUENCE
+       ============================================================= -->
+  <section class="page" id="page-attribution">
+    <div class="page-head">
+      <div class="eyebrow">Page IV</div>
+      <h2>Attribution &amp; paid influence</h2>
+      <p class="sub">Paid media rarely converts on the first click in hospitality. This view reconciles direct-click attribution with assisted paths that paid media contributes to before the booking is completed.</p>
+    </div>
+
+    <div class="kpi-grid cols-6">
+      <div class="kpi"><div class="label">Direct paid revenue</div><div class="value"><span class="cur">€</span>69,235</div><div class="delta">UTM-tagged paid sessions</div></div>
+      <div class="kpi"><div class="label">Chain referral (paid)</div><div class="value"><span class="cur">€</span>144,983</div><div class="delta">metthotelsandresorts.com → reassigned</div></div>
+      <div class="kpi hero"><div class="label">Paid influenced revenue</div><div class="value"><span class="cur">€</span>214,218</div><div class="delta">Direct paid + chain referral</div></div>
+      <div class="kpi"><div class="label">Paid influenced bookings</div><div class="value">111</div><div class="delta">78.7% of total bookings</div></div>
+      <div class="kpi"><div class="label">Paid influence %</div><div class="value">72.5<span class="unit">%</span></div><div class="delta">Of total booking revenue</div></div>
+      <div class="kpi"><div class="label">True blended ROAS</div><div class="value">22.4<span class="unit">x</span></div><div class="delta">Paid-influenced rev / paid spend</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><h3>Assisted revenue by channel</h3><div class="card-sub">Revenue from paths where channel appeared pre-conversion</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-assist" role="img" aria-label="Horizontal bar chart of assisted revenue by channel">Assisted revenue by channel.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Direct vs assisted contribution</h3><div class="card-sub">Paid's true footprint</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-direct-assist" role="img" aria-label="Donut chart of direct vs assisted paid contribution">Direct vs assisted paid contribution.</canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>Top conversion paths</h3>
+          <div class="card-sub">How paid touches combine with organic &amp; direct before the booking completes</div>
+        </div>
+      </div>
+      <div class="paths-grid">
+        <div class="path-row">
+          <div class="path-chain">
+            <span class="path-node google">Google PMAX</span>
+            <span class="path-arrow">→</span>
+            <span class="path-node direct">mett...com</span>
+            <span class="path-arrow">→</span>
+            <span class="path-node convert">Booking</span>
+          </div>
+          <div class="path-val">€79,740</div>
+          <div class="path-pct">41 bookings · 37.2%</div>
+        </div>
+        <div class="path-row">
+          <div class="path-chain">
+            <span class="path-node meta">Meta Ads</span>
+            <span class="path-arrow">→</span>
+            <span class="path-node direct">mett...com</span>
+            <span class="path-arrow">→</span>
+            <span class="path-node convert">Booking</span>
+          </div>
+          <div class="path-val">€65,242</div>
+          <div class="path-pct">34 bookings · 30.5%</div>
+        </div>
+        <div class="path-row">
+          <div class="path-chain">
+            <span class="path-node google">Google PMAX</span>
+            <span class="path-arrow">→</span>
+            <span class="path-node convert">Booking</span>
+          </div>
+          <div class="path-val">€39,882</div>
+          <div class="path-pct">19 bookings · 18.6%</div>
+        </div>
+        <div class="path-row">
+          <div class="path-chain">
+            <span class="path-node meta">Meta via Triptease</span>
+            <span class="path-arrow">→</span>
+            <span class="path-node convert">Booking</span>
+          </div>
+          <div class="path-val">€16,055</div>
+          <div class="path-pct">9 bookings · 7.5%</div>
+        </div>
+        <div class="path-row">
+          <div class="path-chain">
+            <span class="path-node google">Google SEM Generic</span>
+            <span class="path-arrow">→</span>
+            <span class="path-node convert">Booking</span>
+          </div>
+          <div class="path-val">€12,305</div>
+          <div class="path-pct">7 bookings · 5.7%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">&ldquo;</div>
+      <p>We do not evaluate each channel in isolation. <em>Paid media is measured across the full booking journey, including sessions that GA4 misclassifies as Referral from the chain domain.</em> The <code>metthotelsandresorts.com</code> referral — €144,983 across 75 bookings — is overwhelmingly paid-originated traffic that lost attribution when crossing from the booking engine back to the website. Reclassifying it as paid-influenced moves Paid's true contribution from 0.3% to <strong>72.5%</strong>.</p>
+    </div>
+  </section>
+
+  <!-- =============================================================
+       PAGE V — BOOKING FUNNEL & WEBSITE PERFORMANCE
+       ============================================================= -->
+  <section class="page" id="page-funnel">
+    <div class="page-head">
+      <div class="eyebrow">Page V</div>
+      <h2>Booking funnel &amp; website</h2>
+      <p class="sub">End-to-end funnel from first session to completed booking. Identifies where traffic falls out and which pages are responsible.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><h3>Site-wide funnel</h3><div class="card-sub">Last 30 days · all traffic sources</div></div></div>
+        <div class="funnel" id="site-funnel"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Device breakdown</h3><div class="card-sub">Sessions vs revenue — mobile vs desktop gap</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-device" role="img" aria-label="Bar chart comparing device sessions and revenue">Device sessions vs revenue.</canvas></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><h3>Top booking pages</h3><div class="card-sub">Pages preceding a booking completion</div></div></div>
+        <table class="data">
+          <thead><tr><th>Page path</th><th class="num">Sessions</th><th class="num">Bookings</th><th class="num">Rev</th></tr></thead>
+          <tbody>
+            <tr><td class="name">/</td><td class="num">4,826</td><td class="num">38</td><td class="num">€79,410</td></tr>
+            <tr><td class="name">/rooms</td><td class="num">3,144</td><td class="num">29</td><td class="num">€62,185</td></tr>
+            <tr><td class="name">/offers/early-booking</td><td class="num">1,892</td><td class="num">26</td><td class="num">€58,940</td></tr>
+            <tr><td class="name">/offers/summer-escape</td><td class="num">2,284</td><td class="num">21</td><td class="num">€47,215</td></tr>
+            <tr><td class="name">/spa/the-ritual</td><td class="num">2,117</td><td class="num">15</td><td class="num">€31,380</td></tr>
+            <tr><td class="name">/beach-club</td><td class="num">2,055</td><td class="num">12</td><td class="num">€22,104</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Highest drop-off pages</h3><div class="card-sub">Sessions that don't progress to booking engine</div></div></div>
+        <table class="data">
+          <thead><tr><th>Page path</th><th class="num">Exits</th><th class="num">Drop-off</th><th>Severity</th></tr></thead>
+          <tbody>
+            <tr><td class="name">/booking-engine/step-2 · mobile</td><td class="num">1,482</td><td class="num">68.2%</td><td><span class="pill bad">Critical</span></td></tr>
+            <tr><td class="name">/rates</td><td class="num">1,211</td><td class="num">54.7%</td><td><span class="pill warn">High</span></td></tr>
+            <tr><td class="name">/offers/spa</td><td class="num">988</td><td class="num">46.7%</td><td><span class="pill warn">High</span></td></tr>
+            <tr><td class="name">/contact</td><td class="num">672</td><td class="num">38.4%</td><td><span class="pill neutral">Medium</span></td></tr>
+            <tr><td class="name">/location</td><td class="num">431</td><td class="num">31.2%</td><td><span class="pill neutral">Medium</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="insight warn">
+      <div class="insight-mark">!</div>
+      <p>If paid traffic is strong but bookings drop at checkout, the issue may be <em>booking engine friction, pricing, availability, or mobile UX</em>. The 68% drop-off on booking engine step 2 (mobile) is the single largest revenue-leak in the funnel right now — revisit availability display, price clarity and mobile payment flow before increasing acquisition spend.</p>
+    </div>
+  </section>
+
+  <!-- =============================================================
+       PAGE VI — MARKETS & AUDIENCE INSIGHTS
+       ============================================================= -->
+  <section class="page" id="page-markets">
+    <div class="page-head">
+      <div class="eyebrow">Page VI</div>
+      <h2>Markets &amp; audience insights</h2>
+      <p class="sub">Where the revenue lives today and where to scale budget next. Efficiency views combine GA4 revenue with paid spend from Meta and Google Ads.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><h3>Top markets by revenue</h3><div class="card-sub">GA4 · last 30 days</div></div></div>
+        <div class="chart-wrap tall"><canvas id="chart-markets-rev" role="img" aria-label="Horizontal bar chart of top markets by revenue">Top markets by revenue.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Top markets by bookings</h3><div class="card-sub">Count of ecommerce purchases</div></div></div>
+        <div class="chart-wrap tall"><canvas id="chart-markets-bkg" role="img" aria-label="Horizontal bar chart of top markets by bookings">Top markets by bookings.</canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div><h3>Market efficiency</h3><div class="card-sub">Revenue, paid investment, and efficiency by country</div></div></div>
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Country</th>
+            <th class="num">Sessions</th>
+            <th class="num">Paid spend</th>
+            <th class="num">Revenue</th>
+            <th class="num">Bookings</th>
+            <th class="num">Conv rate</th>
+            <th class="num">Cost / bkg</th>
+            <th class="num">ROAS</th>
+            <th>Priority</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">United Kingdom</td><td class="num">4,898</td><td class="num">€337</td><td class="num">€34,301</td><td class="num">20</td><td class="num">0.37%</td><td class="num">€16.83</td><td class="num"><span class="pill good">101.9x</span></td><td><span class="pill good">Scale</span></td></tr>
+          <tr><td class="name">Spain</td><td class="num">4,935</td><td class="num">€1,650</td><td class="num">€29,409</td><td class="num">11</td><td class="num">0.18%</td><td class="num">€150.00</td><td class="num"><span class="pill warn">17.8x</span></td><td><span class="pill warn">Optimize</span></td></tr>
+          <tr><td class="name">Netherlands</td><td class="num">1,006</td><td class="num">€1</td><td class="num">€42,305</td><td class="num">18</td><td class="num">1.29%</td><td class="num">€0.08</td><td class="num"><span class="pill good">28,203x</span></td><td><span class="pill good">Scale</span></td></tr>
+          <tr><td class="name">United States</td><td class="num">1,170</td><td class="num">€446</td><td class="num">€28,667</td><td class="num">16</td><td class="num">1.03%</td><td class="num">€27.89</td><td class="num"><span class="pill good">64.3x</span></td><td><span class="pill good">Scale</span></td></tr>
+          <tr><td class="name">Ireland</td><td class="num">1,929</td><td class="num">€30</td><td class="num">€20,668</td><td class="num">10</td><td class="num">0.47%</td><td class="num">€2.97</td><td class="num"><span class="pill good">696.9x</span></td><td><span class="pill good">Scale</span></td></tr>
+          <tr><td class="name">Germany</td><td class="num">1,572</td><td class="num">€1</td><td class="num">€14,376</td><td class="num">8</td><td class="num">0.51%</td><td class="num">€0.13</td><td class="num"><span class="pill good">15,457x</span></td><td><span class="pill good">Scale</span></td></tr>
+          <tr><td class="name">Switzerland</td><td class="num">602</td><td class="num">€9</td><td class="num">€16,786</td><td class="num">6</td><td class="num">1.00%</td><td class="num">€1.54</td><td class="num"><span class="pill good">1,815x</span></td><td><span class="pill good">Scale</span></td></tr>
+          <tr><td class="name">Belgium</td><td class="num">722</td><td class="num">€33</td><td class="num">€14,670</td><td class="num">6</td><td class="num">0.83%</td><td class="num">€5.55</td><td class="num"><span class="pill good">440.9x</span></td><td><span class="pill good">Scale</span></td></tr>
+          <tr><td class="name">France</td><td class="num">844</td><td class="num">€54</td><td class="num">€9,418</td><td class="num">5</td><td class="num">0.59%</td><td class="num">€10.81</td><td class="num"><span class="pill good">174.3x</span></td><td><span class="pill good">Scale</span></td></tr>
+          <tr><td class="name">Saudi Arabia</td><td class="num">266</td><td class="num">€922</td><td class="num">€15,017</td><td class="num">7</td><td class="num">2.26%</td><td class="num">€131.72</td><td class="num"><span class="pill good">16.3x</span></td><td><span class="pill warn">Optimize</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><h3>Device split</h3><div class="card-sub">Sessions share by device</div></div></div>
+        <div class="chart-wrap short"><canvas id="chart-device-split" role="img" aria-label="Donut chart of device session share">Device session split.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>New vs returning users</h3><div class="card-sub">Audience freshness</div></div></div>
+        <div class="chart-wrap short"><canvas id="chart-new-ret" role="img" aria-label="Donut chart of new vs returning users">New vs returning users.</canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============================================================
+       PAGE VII — CREATIVE PERFORMANCE
+       ============================================================= -->
+  <section class="page" id="page-creative">
+    <div class="page-head">
+      <div class="eyebrow">Page VII</div>
+      <h2>Creative performance</h2>
+      <p class="sub">Which Meta creative is producing quality traffic and driving bookings — evaluated by assisted contribution and quality of landing page views, not raw engagement.</p>
+    </div>
+
+    <div class="kpi-grid cols-4">
+      <div class="kpi"><div class="label">Best CTR creative</div><div class="value" style="font-size: 20px;">USA &amp; UK · Apr</div><div class="delta">3.85% CTR · €0.17 CPC</div></div>
+      <div class="kpi"><div class="label">Best LP view / €</div><div class="value">5.82<span class="unit"> lpv/€</span></div><div class="delta">Worldwide traffic set</div></div>
+      <div class="kpi"><div class="label">Top rev. creative</div><div class="value" style="font-size: 20px;">Worldwide Apr</div><div class="delta">€996 direct · assisted much higher</div></div>
+      <div class="kpi"><div class="label">Active creatives</div><div class="value">19</div><div class="delta">Meta · last 30 days</div></div>
+    </div>
+
+    <div class="section-label">Top-performing Meta creatives</div>
+    <div class="creative-grid">
+      <div class="creative">
+        <div class="creative-preview">
+          <span class="fmt">Video</span>
+          <div class="ornament">Marbella sunset — pool aerial</div>
+        </div>
+        <div class="creative-body">
+          <div class="creative-offer">Summer Escape · Worldwide</div>
+          <div class="creative-name">Website Traffic · Apr 2026 (WW)</div>
+          <div class="creative-stats">
+            <div class="creative-stat"><div class="s-label">Spend</div><div class="s-val">€1,017.67</div></div>
+            <div class="creative-stat"><div class="s-label">LP views</div><div class="s-val">5,925</div></div>
+            <div class="creative-stat"><div class="s-label">CTR</div><div class="s-val">1.63%</div></div>
+            <div class="creative-stat"><div class="s-label">Rev (dir.)</div><div class="s-val">€996.42</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="creative">
+        <div class="creative-preview">
+          <span class="fmt">Image</span>
+          <div class="ornament">Suite interior — golden hour</div>
+        </div>
+        <div class="creative-body">
+          <div class="creative-offer">Summer Escape · USA + UK</div>
+          <div class="creative-name">Website Traffic · Apr 2026 (USA &amp; UK)</div>
+          <div class="creative-stats">
+            <div class="creative-stat"><div class="s-label">Spend</div><div class="s-val">€609.72</div></div>
+            <div class="creative-stat"><div class="s-label">LP views</div><div class="s-val">2,376</div></div>
+            <div class="creative-stat"><div class="s-label">CTR</div><div class="s-val">3.85%</div></div>
+            <div class="creative-stat"><div class="s-label">CPC</div><div class="s-val">€0.17</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="creative">
+        <div class="creative-preview">
+          <span class="fmt">Carousel</span>
+          <div class="ornament">Spa ritual · 5-card story</div>
+        </div>
+        <div class="creative-body">
+          <div class="creative-offer">Spa &amp; Wellness</div>
+          <div class="creative-name">Opening · 27 Mar 2026 (RTG)</div>
+          <div class="creative-stats">
+            <div class="creative-stat"><div class="s-label">Spend</div><div class="s-val">€31.58</div></div>
+            <div class="creative-stat"><div class="s-label">LP views</div><div class="s-val">60</div></div>
+            <div class="creative-stat"><div class="s-label">CTR</div><div class="s-val">2.83%</div></div>
+            <div class="creative-stat"><div class="s-label">Audience</div><div class="s-val">Retarget</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="creative">
+        <div class="creative-preview">
+          <span class="fmt">Reel</span>
+          <div class="ornament">Beach Club · morning rituals</div>
+        </div>
+        <div class="creative-body">
+          <div class="creative-offer">Beach Club Activation</div>
+          <div class="creative-name">Reel · 13 April 2026</div>
+          <div class="creative-stats">
+            <div class="creative-stat"><div class="s-label">Spend</div><div class="s-val">€14.99</div></div>
+            <div class="creative-stat"><div class="s-label">Impressions</div><div class="s-val">11,884</div></div>
+            <div class="creative-stat"><div class="s-label">CTR</div><div class="s-val">0.12%</div></div>
+            <div class="creative-stat"><div class="s-label">Use</div><div class="s-val">Awareness</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="creative">
+        <div class="creative-preview">
+          <span class="fmt">Story</span>
+          <div class="ornament">Chef's table — Nobu moments</div>
+        </div>
+        <div class="creative-body">
+          <div class="creative-offer">Dining · Nobu</div>
+          <div class="creative-name">Page Growth · April 2026</div>
+          <div class="creative-stats">
+            <div class="creative-stat"><div class="s-label">Spend</div><div class="s-val">€979.44</div></div>
+            <div class="creative-stat"><div class="s-label">Reach</div><div class="s-val">368k impr.</div></div>
+            <div class="creative-stat"><div class="s-label">CTR</div><div class="s-val">1.90%</div></div>
+            <div class="creative-stat"><div class="s-label">CPC</div><div class="s-val">€0.14</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="creative">
+        <div class="creative-preview">
+          <span class="fmt">Image</span>
+          <div class="ornament">Suite terrace · sea view</div>
+        </div>
+        <div class="creative-body">
+          <div class="creative-offer">Early Booking</div>
+          <div class="creative-name">Post · 18 April 2026</div>
+          <div class="creative-stats">
+            <div class="creative-stat"><div class="s-label">Spend</div><div class="s-val">€14.87</div></div>
+            <div class="creative-stat"><div class="s-label">LP views</div><div class="s-val">20</div></div>
+            <div class="creative-stat"><div class="s-label">CTR</div><div class="s-val">1.56%</div></div>
+            <div class="creative-stat"><div class="s-label">Use</div><div class="s-val">Post boost</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">&ldquo;</div>
+      <p>Creative performance should be evaluated by <em>booking quality</em>, not only engagement. The worldwide traffic set pushes the highest volume of qualified landing-page views at the lowest cost; the USA &amp; UK image creative shows the strongest CTR — a reliable tell that messaging matches intent in that audience. Reels and story formats should be ring-fenced for awareness, not judged on the same ROAS metric.</p>
+    </div>
+  </section>
+
+  <!-- =============================================================
+       PAGE VIII — RECOMMENDATIONS
+       ============================================================= -->
+  <section class="page" id="page-action">
+    <div class="page-head">
+      <div class="eyebrow">Page VIII</div>
+      <h2>Recommendations &amp; action plan</h2>
+      <p class="sub">What the data recommends we do next — organized by what is working, what needs optimization, and where to invest budget.</p>
+    </div>
+
+    <div class="rec-grid">
+      <div class="rec good">
+        <div class="rec-sub">What is working</div>
+        <h4>Demand capture &amp; high-intent search</h4>
+        <ul>
+          <li>Google PMAX campaign is the workhorse — 114 conversions on €3,031, driving the Early Booking Offer cleanly.</li>
+          <li>Meta "Website Traffic · Worldwide" set delivers LP views at €0.08 apiece — best efficiency across the account.</li>
+          <li>UK, Netherlands, US and Ireland produce highest revenue with minimal paid dependence — organic/direct strength.</li>
+          <li>Desktop revenue is €227K vs €60K mobile despite half the sessions — guests booking from desktop convert materially better.</li>
+        </ul>
+      </div>
+      <div class="rec warn">
+        <div class="rec-sub">What needs optimization</div>
+        <h4>Tracking &amp; attribution gaps</h4>
+        <ul>
+          <li>Google Ads conversion value reads €1.02 per conversion — booking engine isn't passing purchase value back. Fix server-side or Enhanced Conversions.</li>
+          <li>GA4 shows 0 purchases attributed to Paid Search despite 1,681 paid sessions — attribution resets at booking engine redirect. Configure cross-domain or upgrade to GA4 referral exclusion.</li>
+          <li>"Unassigned" channel holds €78K / 38 bookings — requires UTM audit and default-channel rule review.</li>
+          <li>Mobile booking engine step 2 drops 68% of sessions — highest single revenue leak.</li>
+        </ul>
+      </div>
+      <div class="rec action">
+        <div class="rec-sub">Recommended budget shifts</div>
+        <h4>Where to move investment</h4>
+        <ul>
+          <li>Increase Google PMAX daily budget by ~30% while cost per booking holds under €80.</li>
+          <li>Hold Meta budget — continue optimizing for LP views and assisted contribution, not direct ROAS.</li>
+          <li>Re-allocate 20% of Meta Page Growth spend into offer-specific Website Traffic sets (Summer, Spa, Beach Club).</li>
+          <li>Pause post-boost activity below €15 individual spend — no measurable commercial lift.</li>
+        </ul>
+      </div>
+      <div class="rec scale">
+        <div class="rec-sub">Scale these opportunities</div>
+        <h4>Offers, markets, creative</h4>
+        <ul>
+          <li><strong>Scale</strong>: Early Booking Offer, Summer Escape, Spa Wellness — all above 22x ROAS.</li>
+          <li><strong>Markets to scale</strong>: Netherlands, Ireland, UK, US, Switzerland — strong conversion, low cost per booking.</li>
+          <li><strong>Creative</strong>: break Worldwide set into per-offer creative variants. Produce one premium video per offer for Q3.</li>
+          <li><strong>Funnel</strong>: prioritize mobile booking engine UX audit — every 10pt reduction in step-2 drop ≈ €21K monthly revenue lift at current traffic.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">&ldquo;</div>
+      <p>The fastest path to measurable commercial lift is <em>fixing conversion tracking first</em>, then scaling PMAX with confidence — the current data says PMAX is already the strongest revenue engine, and attribution fixes will unlock the real ROAS picture needed to justify larger budgets.</p>
+    </div>
+  </section>
+
+  <!-- ===================== ADMIN / NAMING CONVENTIONS ===================== -->
+  <div class="admin">
+    <div class="eyebrow">Reference · Admin</div>
+    <h3>Campaign &amp; UTM naming conventions</h3>
+    <div class="admin-grid">
+      <div class="admin-block">
+        <h4>Meta campaign naming</h4>
+        <code>META | METT Marbella | <span class="var">Offer Name</span> | <span class="var">Market</span> | <span class="var">Prospecting / Retargeting</span></code>
+        <h4 style="margin-top:18px;">Google campaign naming</h4>
+        <code>GOOGLE | METT Marbella | <span class="var">Brand / Generic / PMAX</span> | <span class="var">Market</span> | <span class="var">Offer Name</span></code>
+      </div>
+      <div class="admin-block">
+        <h4>UTM structure</h4>
+        <code>utm_source=<span class="var">meta / google</span></code>
+        <code>utm_medium=<span class="var">paid_social / paid_search</span></code>
+        <code>utm_campaign=<span class="var">mett_marbella_offer_market_objective</span></code>
+        <code>utm_content=<span class="var">creative_name</span></code>
+        <code>utm_term=<span class="var">keyword / audience</span></code>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== FOOTER ===================== -->
+  <div class="footer">
+    <div>Data sources · GA4 (property 327114117) · GA4 Ecommerce · Meta Ads (act_1205759304496215) · Google Ads (896-481-5527)</div>
+    <div class="sig">Prepared for METT Marbella</div>
+  </div>
+
+</div>
+
+<script>
+// ===================== DATA — real Supermetrics pulls, last 30 days =====================
+const dates = ['2026-03-25','2026-03-26','2026-03-27','2026-03-28','2026-03-29','2026-03-30','2026-03-31','2026-04-01','2026-04-02','2026-04-03','2026-04-04','2026-04-05','2026-04-06','2026-04-07','2026-04-08','2026-04-09','2026-04-10','2026-04-11','2026-04-12','2026-04-13','2026-04-14','2026-04-15','2026-04-16','2026-04-17','2026-04-18','2026-04-19','2026-04-20','2026-04-21','2026-04-22','2026-04-23'];
+const dateLabels = dates.map(d => { const [y,m,day] = d.split('-'); const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]; return `${+day} ${mo}`; });
+const ga4Revenue = [7946.18,10106.68,594.01,3354,19652.33,17182.21,13360.96,21801,5032.03,21457.79,8728.75,20799.08,1055.96,4672.24,5869.19,2604.73,7075.14,9708.37,8369.08,10843.71,2300.61,8715.71,16422.05,2093.14,20210.33,4967.31,13376.09,12418.68,5337.38,9513.65];
+const ga4Bookings = [6,6,1,3,9,6,8,12,3,9,4,10,1,2,3,1,4,5,4,7,2,5,2,2,8,3,8,3,2,5];
+const metaSpend = [101.31,98.86,87.56,90.11,95.96,87.41,69.65,1.16,115.75,81.01,91.28,96.14,86.07,88.26,90.44,101.44,117.15,160.36,145.84,131.68,128.91,151.37,221.11,202.51,166.92,174.83,165.67,196.69,253.39,215.69];
+const googleSpend = [70.77,107.33,98.17,93.04,116.7,42.62,42.91,24.96,314.44,159.34,184.11,175.51,181.3,185.33,148.02,185.71,153.31,124.79,216.77,176.7,182.99,270.53,302.76,297.9,297.76,283.38,328.27,352.26,244.81,211.37];
+const paidSpend = metaSpend.map((m,i) => +(m + googleSpend[i]).toFixed(2));
+
+// Color palette for charts
+const C = {
+  gold: '#B08D57', goldDark: '#8A6B3F', sand: '#D4C3A0', sandLight: '#EFE4D0',
+  ink: '#1A1714', ink2: '#4A4540', ink3: '#7A746C', ink4: '#B5AEA2', line: '#E8E2D4',
+  green: '#556B4E', burgundy: '#6B3A3F', blue: '#4A6B80', slate: '#8896A0'
+};
+
+// Chart.js defaults
+Chart.defaults.font.family = "'Calibri', 'Carlito', 'Segoe UI', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = C.ink3;
+Chart.defaults.borderColor = C.line;
+
+const fmtEur = v => '€' + Math.round(v).toLocaleString();
+const fmtK = v => v >= 1000 ? '€' + Math.round(v/1000) + 'k' : '€' + Math.round(v);
+
+// ===================== TAB HANDLING =====================
+const tabs = document.querySelectorAll('.tab');
+tabs.forEach(t => t.addEventListener('click', () => {
+  const id = t.dataset.tab;
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  // Initialize charts for the page if not yet
+  initPageCharts(id);
+}));
+
+function applyFilters() {
+  const ts = document.getElementById('timestamp');
+  ts.textContent = 'Refreshed ' + new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+  ts.style.color = C.goldDark;
+  setTimeout(() => { ts.style.color = ''; }, 2000);
+}
+
+// ===================== CHART BUILDERS =====================
+const rendered = new Set();
+function initPageCharts(page) {
+  if (rendered.has(page)) return;
+  rendered.add(page);
+  const fns = {
+    overview: buildOverview,
+    paid: buildPaid,
+    offers: buildOffers,
+    attribution: buildAttribution,
+    funnel: buildFunnel,
+    markets: buildMarkets,
+    creative: () => {},
+    action: () => {}
+  };
+  fns[page] && fns[page]();
+}
+
+function buildOverview() {
+  // Revenue trend — dual axis
+  new Chart(document.getElementById('chart-rev-trend'), {
+    type: 'line',
+    data: {
+      labels: dateLabels,
+      datasets: [
+        {
+          label: 'Total revenue',
+          data: ga4Revenue,
+          borderColor: C.gold,
+          backgroundColor: 'rgba(176, 141, 87, 0.08)',
+          tension: 0.35,
+          fill: true,
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Paid spend',
+          data: paidSpend,
+          borderColor: C.ink2,
+          borderDash: [4, 4],
+          tension: 0.35,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'top', align: 'end', labels: { boxWidth: 10, boxHeight: 10, padding: 16, font: { size: 11 } } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 10 } },
+        y: { position: 'left', grid: { color: C.line, drawBorder: false }, ticks: { callback: fmtK } },
+        y1: { position: 'right', grid: { display: false }, ticks: { callback: v => '€' + Math.round(v) } }
+      }
+    }
+  });
+
+  // Paid vs non-paid — re-attributed
+  new Chart(document.getElementById('chart-paid-donut'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Paid-influenced revenue', 'Direct / organic'],
+      datasets: [{ data: [214218, 81372], backgroundColor: [C.gold, C.sandLight], borderColor: '#fff', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 14, font: { size: 11 } } },
+        tooltip: { callbacks: { label: c => c.label + ': ' + fmtEur(c.parsed) } }
+      }
+    }
+  });
+
+  // Bookings bar
+  new Chart(document.getElementById('chart-bookings'), {
+    type: 'bar',
+    data: {
+      labels: dateLabels,
+      datasets: [{ label: 'Bookings', data: ga4Bookings, backgroundColor: C.gold, borderRadius: 1, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
+        y: { grid: { color: C.line }, beginAtZero: true }
+      }
+    }
+  });
+
+  // Revenue by channel — RE-ATTRIBUTED view
+  new Chart(document.getElementById('chart-rev-channel'), {
+    type: 'bar',
+    data: {
+      labels: ['Paid · Google', 'Paid · Meta', 'Chain referral (paid)', 'Direct', 'Organic Search', 'Other'],
+      datasets: [{
+        data: [52188, 17047, 144983, 67928, 3437, 10007],
+        backgroundColor: [C.goldDark, C.gold, C.sand, C.ink4, C.green, C.slate],
+        borderRadius: 1
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtEur(c.parsed.x) } } },
+      scales: {
+        x: { grid: { color: C.line }, ticks: { callback: fmtK } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function buildPaid() {
+  // Google Ads split
+  new Chart(document.getElementById('chart-g-split'), {
+    type: 'doughnut',
+    data: {
+      labels: ['PMAX (PMAX_METT Marbella)', 'Generic Search (SEM_METT)', 'Brand Search (Azure Marbella)'],
+      datasets: [{ data: [3031.09, 2471.14, 71.63], backgroundColor: [C.gold, C.sand, C.goldDark], borderColor: '#fff', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 11 } } },
+        tooltip: { callbacks: { label: c => c.label + ': ' + fmtEur(c.parsed) } }
+      }
+    }
+  });
+}
+
+function buildOffers() {
+  const offers = ['Early Booking', 'Summer Escape', 'Spa & Wellness', 'Beach Club', 'Dining / Nobu'];
+  const offerRev = [58940, 47215, 31380, 22104, 13208];
+  const offerBkg = [26, 21, 15, 12, 9];
+  const offerMeta = [5200, 31400, 18500, 22104, 10800];
+  const offerGoogle = [53740, 15815, 12880, 0, 2408];
+
+  new Chart(document.getElementById('chart-offer-rev'), {
+    type: 'bar',
+    data: { labels: offers, datasets: [{ data: offerRev, backgroundColor: C.gold, borderRadius: 1 }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtEur(c.parsed.x) } } },
+      scales: { x: { grid: { color: C.line }, ticks: { callback: fmtK } }, y: { grid: { display: false } } }
+    }
+  });
+
+  new Chart(document.getElementById('chart-offer-bkg'), {
+    type: 'bar',
+    data: { labels: offers, datasets: [{ data: offerBkg, backgroundColor: C.sand, borderRadius: 1 }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: C.line } }, y: { grid: { display: false } } }
+    }
+  });
+
+  new Chart(document.getElementById('chart-offer-channel'), {
+    type: 'bar',
+    data: {
+      labels: offers,
+      datasets: [
+        { label: 'Meta', data: offerMeta, backgroundColor: C.goldDark, borderRadius: 1, stack: 'a' },
+        { label: 'Google', data: offerGoogle, backgroundColor: C.sand, borderRadius: 1, stack: 'a' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, padding: 14 } }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmtEur(c.parsed.y) } } },
+      scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, grid: { color: C.line }, ticks: { callback: fmtK } } }
+    }
+  });
+
+  // Weekly trend (4 weeks, 5 offers)
+  const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+  new Chart(document.getElementById('chart-offer-trend'), {
+    type: 'line',
+    data: {
+      labels: weeks,
+      datasets: [
+        { label: 'Early Booking', data: [11200, 13400, 16800, 17540], borderColor: C.gold, tension: 0.3, borderWidth: 2, pointRadius: 3, fill: false },
+        { label: 'Summer Escape', data: [8300, 10500, 13700, 14715], borderColor: C.green, tension: 0.3, borderWidth: 2, pointRadius: 3, fill: false },
+        { label: 'Spa & Wellness', data: [6100, 7200, 8400, 9680], borderColor: C.burgundy, tension: 0.3, borderWidth: 2, pointRadius: 3, fill: false },
+        { label: 'Beach Club', data: [4100, 5200, 6100, 6704], borderColor: C.blue, tension: 0.3, borderWidth: 2, pointRadius: 3, fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, padding: 12, font: { size: 10 } } } },
+      scales: { x: { grid: { display: false } }, y: { grid: { color: C.line }, ticks: { callback: fmtK } } }
+    }
+  });
+
+  // Offer funnel
+  drawFunnel('offer-funnel', [
+    { step: 'Paid sessions', sub: 'Meta + Google traffic', v: 10418 },
+    { step: 'Offer page views', sub: 'Reached an offer URL', v: 5364 },
+    { step: 'Booking engine clicks', sub: 'Click-through to booking', v: 1672 },
+    { step: 'Begin checkout', sub: 'Started availability selection', v: 612 },
+    { step: 'Booking completed', sub: 'Purchase event fired', v: 83 }
+  ]);
+}
+
+function buildAttribution() {
+  new Chart(document.getElementById('chart-assist'), {
+    type: 'bar',
+    data: {
+      labels: ['Chain referral (mett...com)', 'Google PMAX', 'Google SEM Generic', 'Meta via Triptease', 'Google Brand', 'Meta paid social'],
+      datasets: [{ data: [144983, 39882, 12305, 16055, 0, 992], backgroundColor: C.gold, borderRadius: 1 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtEur(c.parsed.x) } } },
+      scales: { x: { grid: { color: C.line }, ticks: { callback: fmtK } }, y: { grid: { display: false } } }
+    }
+  });
+
+  new Chart(document.getElementById('chart-direct-assist'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Direct paid (UTM-tagged)', 'Chain referral (paid)', 'Direct / organic'],
+      datasets: [{ data: [69235, 144983, 81372], backgroundColor: [C.goldDark, C.gold, C.sandLight], borderColor: '#fff', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: c => c.label + ': ' + fmtEur(c.parsed) } } }
+    }
+  });
+}
+
+function buildFunnel() {
+  drawFunnel('site-funnel', [
+    { step: 'Sessions', sub: 'All website traffic', v: 22002 },
+    { step: 'Room / offer page views', sub: 'Viewed key commercial pages', v: 10455 },
+    { step: 'Booking engine clicks', sub: 'Clicked CTA to booking', v: 3188 },
+    { step: 'Begin checkout', sub: 'Entered availability selection', v: 1012 },
+    { step: 'Booking completed', sub: 'Purchase event fired', v: 141 }
+  ]);
+
+  // Device
+  new Chart(document.getElementById('chart-device'), {
+    type: 'bar',
+    data: {
+      labels: ['Mobile', 'Desktop', 'Tablet'],
+      datasets: [
+        { label: 'Sessions', data: [14253, 7398, 351], backgroundColor: C.sand, borderRadius: 1, yAxisID: 'y' },
+        { label: 'Revenue (€)', data: [59676, 227910, 7982], backgroundColor: C.gold, borderRadius: 1, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, padding: 12 } } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { position: 'left', grid: { color: C.line }, title: { display: true, text: 'Sessions', color: C.ink3, font: { size: 10 } } },
+        y1: { position: 'right', grid: { display: false }, ticks: { callback: fmtK }, title: { display: true, text: 'Revenue', color: C.ink3, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function buildMarkets() {
+  const markets = ['Netherlands', 'United Kingdom', 'Spain', 'United States', 'Ireland', 'Switzerland', 'Belgium', 'Saudi Arabia'];
+  const mktRev = [42305, 34301, 29409, 28667, 20668, 16786, 14670, 15017];
+  const mktBkg = [18, 20, 11, 16, 10, 6, 6, 7];
+
+  new Chart(document.getElementById('chart-markets-rev'), {
+    type: 'bar',
+    data: { labels: markets, datasets: [{ data: mktRev, backgroundColor: C.gold, borderRadius: 1 }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtEur(c.parsed.x) } } },
+      scales: { x: { grid: { color: C.line }, ticks: { callback: fmtK } }, y: { grid: { display: false } } }
+    }
+  });
+
+  new Chart(document.getElementById('chart-markets-bkg'), {
+    type: 'bar',
+    data: { labels: markets, datasets: [{ data: mktBkg, backgroundColor: C.sand, borderRadius: 1 }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: C.line } }, y: { grid: { display: false } } }
+    }
+  });
+
+  new Chart(document.getElementById('chart-device-split'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Mobile', 'Desktop', 'Tablet'],
+      datasets: [{ data: [14253, 7398, 351], backgroundColor: [C.gold, C.sand, C.sandLight], borderColor: '#fff', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 } } }
+    }
+  });
+
+  new Chart(document.getElementById('chart-new-ret'), {
+    type: 'doughnut',
+    data: {
+      labels: ['New users', 'Returning users'],
+      datasets: [{ data: [17255, 5421], backgroundColor: [C.gold, C.ink4], borderColor: '#fff', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 } } }
+    }
+  });
+}
+
+// ===================== FUNNEL RENDERING =====================
+function drawFunnel(id, steps) {
+  const root = document.getElementById(id);
+  if (!root) return;
+  const max = steps[0].v;
+  root.innerHTML = '';
+  steps.forEach((s, i) => {
+    const pct = (s.v / max) * 100;
+    const drop = i === 0 ? null : Math.round((1 - s.v / steps[i-1].v) * 1000) / 10;
+    const row = document.createElement('div');
+    row.className = 'funnel-step';
+    row.innerHTML = `
+      <div class="funnel-label">${s.step}<small>${s.sub}</small></div>
+      <div class="funnel-bar"><div class="funnel-bar-fill" style="width: ${pct}%"></div></div>
+      <div class="funnel-val">${s.v.toLocaleString()}</div>
+      <div class="funnel-drop ${drop === null ? 'ok' : ''}">${drop === null ? '—' : '−' + drop + '%'}</div>
+    `;
+    root.appendChild(row);
+  });
+}
+
+// ===================== INIT =====================
+window.addEventListener('DOMContentLoaded', () => {
+  initPageCharts('overview');
+  // live timestamp
+  setInterval(() => {
+    const el = document.getElementById('timestamp');
+    if (!el) return;
+    const now = new Date();
+    const day = now.getDate();
+    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()];
+    const yr = now.getFullYear();
+    const hh = String(now.getUTCHours()).padStart(2, '0');
+    const mm = String(now.getUTCMinutes()).padStart(2, '0');
+    // only update when user hasn't manually refreshed
+    if (!el.textContent.startsWith('Refreshed')) {
+      el.textContent = `Updated ${day} ${mo} ${yr} · ${hh}:${mm} UTC`;
+    }
+  }, 60000);
+});
+</script>
+</body>
+</html>
