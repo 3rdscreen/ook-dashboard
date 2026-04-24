@@ -214,19 +214,28 @@
   .path-pct { text-align: right; font-size: 11px; color: var(--ink-3); }
 
   /* ================ CREATIVE CARDS ================ */
-  .creative-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .creative { background: var(--surface); border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; }
-  .creative-preview { aspect-ratio: 4 / 3; background: var(--surface-2); position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
-  .creative-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .creative-preview .fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 12px; }
-  .creative-preview .fallback svg { width: 100%; height: 100%; }
-  .creative-preview .fmt { position: absolute; top: 8px; right: 8px; font-size: 9px; background: rgba(255,255,255,0.94); padding: 3px 7px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-2); font-weight: 700; z-index: 2; }
-  .creative-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; }
-  .creative-offer { font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold-2); margin-bottom: 4px; font-weight: 700; }
-  .creative-name { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 10px; line-height: 1.3; }
-  .creative-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
-  .creative-stat .s-label { color: var(--ink-3); font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; font-weight: 600; }
-  .creative-stat .s-val { font-family: var(--font-mono); font-size: 12px; color: var(--ink); font-weight: 700; margin-top: 2px; }
+  .creative-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .creative { background: var(--surface); border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; transition: border-color 0.2s, transform 0.2s; position: relative; }
+  .creative:hover { border-color: var(--line-2); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .creative-head { background: var(--navy); color: #fff; padding: 18px 18px 16px; position: relative; }
+  .creative-rank { position: absolute; top: 14px; right: 14px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.55); font-weight: 600; }
+  .creative-rank strong { color: var(--gold); font-weight: 700; font-size: 11px; }
+  .creative-fmt { display: inline-flex; align-items: center; gap: 6px; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.75); font-weight: 700; padding-bottom: 8px; }
+  .creative-fmt::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .creative-offer-head { font-size: 17px; font-weight: 600; line-height: 1.2; color: #fff; margin-bottom: 4px; letter-spacing: 0.2px; }
+  .creative-meta { font-size: 11px; color: rgba(255,255,255,0.55); font-weight: 500; letter-spacing: 0.3px; }
+  .creative-body { padding: 16px 18px; flex: 1; display: flex; flex-direction: column; }
+  .creative-primary { display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+  .creative-primary-val { font-size: 24px; font-weight: 700; color: var(--ink); line-height: 1; letter-spacing: -0.3px; }
+  .creative-primary-val .cur { font-size: 14px; color: var(--gold-2); margin-right: 2px; font-weight: 600; }
+  .creative-primary-label { font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-3); font-weight: 700; margin-top: 6px; }
+  .creative-roas { text-align: right; }
+  .creative-roas-val { font-size: 20px; font-weight: 700; color: var(--success); line-height: 1; letter-spacing: -0.3px; }
+  .creative-roas-label { font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-3); font-weight: 700; margin-top: 6px; }
+  .creative-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: auto; }
+  .creative-stat .s-label { color: var(--ink-3); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+  .creative-stat .s-val { font-size: 13px; color: var(--ink); font-weight: 700; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .creative-stat.positive .s-val { color: var(--success); }
 
   /* ================ RECOMMENDATIONS ================ */
   .rec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
@@ -893,7 +902,7 @@
       <div class="kpi"><div class="label">Active creatives</div><div class="value">19</div><div class="delta">Meta &middot; last 30 days</div></div>
     </div>
 
-    <div class="section-label">Top performing creatives &middot; live from Meta</div>
+    <div class="section-label">Top performing creatives &middot; ranked by attributed revenue</div>
     <div class="creative-grid" id="creative-grid">
       <!-- populated by JS with real Meta thumbnail URLs + SVG fallbacks -->
     </div>
@@ -1422,24 +1431,15 @@
     }));
   }
 
-  // ===== CREATIVE CARDS (live Meta thumbnails) =====
+  // ===== CREATIVE CARDS (metrics-forward, no image loading) =====
   var creatives = [
-    { img: 'https://scontent-fra3-1.xx.fbcdn.net/v/t45.1600-4/666161896_26662393640057099_7488382031950761820_n.png?_nc_cat=101&ccb=1-7&_nc_ohc=3CkxNKj3sYUQ7kNvwHjXoNx&_nc_oc=AdoukDmcryWPLl5oICgiy-ekRhc0Zuv5mbORqQneNPsFp6B6k5l5BekQg_I4OOgVgtE&_nc_zt=1&_nc_ht=scontent-fra3-1.xx&oh=00_Af0QT4nFQdZwzBTZijbs49ERluJjiUsANKf6XmGtW_bZBA&oe=69F0DE70', fmt: 'Carousel', offer: 'Plan Ahead', name: 'Carousel \u00B7 10 Apr 2026', spend: '\u20AC501', bookings: '5', ctr: '1.74%', roas: '21.3x', fallback: 'sunset' },
-    { img: 'https://scontent-fra3-2.xx.fbcdn.net/v/t45.1600-4/629333694_26073003298996139_2993238569612926130_n.jpg?_nc_cat=104&ccb=1-7&_nc_ohc=NIg2WW69iFIQ7kNvwH0IxQo&_nc_oc=AdplsWo3HG8eArRAYwAaiZp-jxx7NsnJLMuow5H0k7IuEUgJ5T0M8phrui05LKD0l88&_nc_zt=1&_nc_ht=scontent-fra3-2.xx&oh=00_Af3GG_yUF8w6UZz17mAiq3QlEHRBYMWHvuJIj-xxPEpjPg&oe=69F0CED7', fmt: 'Carousel', offer: 'One More Night', name: 'Carousel \u00B7 19 Feb 2026', spend: '\u20AC381', bookings: '3', ctr: '0.86%', roas: '17.5x', fallback: 'suite' },
-    { img: 'https://scontent-fra3-2.xx.fbcdn.net/v/t15.5256-10/659591018_1610225073610758_1665123312444083350_n.jpg?_nc_cat=104&ccb=1-7&_nc_ohc=qnXq-DZCgd0Q7kNvwHcVepy&_nc_oc=AdqgV2uhZcZgwGhnstgQzIurCovYZC-jLs3h_jCwwDOFhThzwWInUahXHT5_3DyAGs0&_nc_zt=23&_nc_ht=scontent-fra3-2.xx&oh=00_Af1GR8F2YFgMFOnCTQby0NqJC5JlmYP3FDlmqX0SgCipGg&oe=69F0C5C0', fmt: 'Reel', offer: 'Opening', name: 'Reel \u00B7 27 Mar 2026', spend: '\u20AC355', bookings: '3', ctr: '1.01%', roas: '17.7x', fallback: 'poolside' },
-    { img: 'https://scontent-fra5-2.xx.fbcdn.net/v/t15.5256-10/667898722_1430815444934699_3719924907489667529_n.jpg?_nc_cat=106&ccb=1-7&_nc_ohc=cx5_NYxp3zsQ7kNvwHcLdDr&_nc_oc=AdpXF5hUzpzgkJHFnpte0WDPLe158CYwI5FBq32omM-tHxV7NOBM8OgPbBkO9SdfC7s&_nc_zt=23&_nc_ht=scontent-fra5-2.xx&oh=00_Af00RS6L2m9uIYngU0GwlCbHreA7mEahb1i5vP-WEQ8XwA&oe=69F0C10D', fmt: 'Reel', offer: 'Summer Escape', name: 'Reel \u00B7 10 Aug 2025', spend: '\u20AC327', bookings: '3', ctr: '1.48%', roas: '18.9x', fallback: 'beach' },
-    { img: 'https://scontent-fra5-1.xx.fbcdn.net/v/t15.5256-10/669221574_1878993596240688_4408952992639129984_n.jpg?_nc_cat=102&ccb=1-7&_nc_ohc=Bkxt7NDQB-EQ7kNvwG2hlIn&_nc_oc=AdpqXqENFh_N96BgQnM3CJcuKmDKpEaqBHvvbnPdjqLSQDBhwVCwFu_gsDg2nt0qots&_nc_zt=23&_nc_ht=scontent-fra5-1.xx&oh=00_Af3E1bH_FsSWmRM52ogARgGPnR7Ccp58CChTRrZtj81Q0Q&oe=69F0E4AF', fmt: 'Image', offer: 'Brand', name: 'Ghost \u00B7 10 Apr 2026', spend: '\u20AC267', bookings: '2', ctr: '1.51%', roas: '16.1x', fallback: 'terrace' },
-    { img: 'https://scontent-fra5-2.xx.fbcdn.net/v/t15.5256-10/668515754_1636626684330646_626471188375902914_n.jpg?_nc_cat=106&ccb=1-7&_nc_ohc=dKQKtyjjvzMQ7kNvwHbipZO&_nc_oc=AdqvXrtWFZumBg1KnRZjAHh6MrZnqShcn-21B4bp23hEPGw31D809I5RxED6XjdZ6Mo&_nc_zt=23&_nc_ht=scontent-fra5-2.xx&oh=00_Af2tIZGzKEVISR6gkF7f-YGoxoJ-CBqmdgH_o-8hDUocjw&oe=69F0C2E2', fmt: 'Reel', offer: 'Spa & Wellness', name: 'Reel \u00B7 15 Oct 2025', spend: '\u20AC211', bookings: '2', ctr: '2.27%', roas: '19.8x', fallback: 'spa' }
+    { fmt: 'Carousel', offer: 'Plan Ahead', name: 'Carousel \u00B7 10 Apr 2026', revenue: '10,665', spend: '501',  bookings: '5', ctr: '1.74%', roas: '21.3x', lpv: '1,284' },
+    { fmt: 'Carousel', offer: 'One More Night', name: 'Carousel \u00B7 19 Feb 2026', revenue: '6,668',  spend: '381',  bookings: '3', ctr: '0.86%', roas: '17.5x', lpv: '942' },
+    { fmt: 'Reel',     offer: 'Opening RTG', name: 'Reel \u00B7 27 Mar 2026', revenue: '6,284',       spend: '355',  bookings: '3', ctr: '1.01%', roas: '17.7x', lpv: '780' },
+    { fmt: 'Reel',     offer: 'Summer Escape', name: 'Reel \u00B7 10 Aug 2025', revenue: '6,180',     spend: '327',  bookings: '3', ctr: '1.48%', roas: '18.9x', lpv: '1,056' },
+    { fmt: 'Image',    offer: 'Brand Awareness', name: 'Ghost \u00B7 10 Apr 2026', revenue: '4,299',  spend: '267',  bookings: '2', ctr: '1.51%', roas: '16.1x', lpv: '612' },
+    { fmt: 'Reel',     offer: 'Spa & Wellness', name: 'Reel \u00B7 15 Oct 2025', revenue: '4,178',    spend: '211',  bookings: '2', ctr: '2.27%', roas: '19.8x', lpv: '488' }
   ];
-
-  var FALLBACK_SVGS = {
-    sunset: '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B08D57"/><stop offset="0.5" stop-color="#D4C3A0"/><stop offset="1" stop-color="#EFE4D0"/></linearGradient></defs><rect width="400" height="300" fill="url(#sky)"/><circle cx="200" cy="170" r="38" fill="#FAF8F4"/><rect x="0" y="200" width="400" height="100" fill="#8A6B3F" opacity="0.6"/><path d="M0 210 Q100 200 200 210 T400 210 L400 300 L0 300 Z" fill="#1A1714" opacity="0.3"/></svg>',
-    suite: '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#F5F1E8"/><rect x="30" y="40" width="340" height="180" fill="#EFE4D0" stroke="#B08D57" stroke-width="0.8"/><rect x="50" y="140" width="300" height="60" fill="#D4C3A0"/><rect x="160" y="100" width="80" height="50" fill="#B08D57" opacity="0.6"/><circle cx="80" cy="120" r="12" fill="#8A6B3F" opacity="0.4"/><circle cx="320" cy="120" r="12" fill="#8A6B3F" opacity="0.4"/><rect x="30" y="220" width="340" height="60" fill="#B08D57" opacity="0.3"/></svg>',
-    poolside: '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="pool" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A6B80"/><stop offset="1" stop-color="#8896A0"/></linearGradient></defs><rect width="400" height="300" fill="#EFE4D0"/><rect x="0" y="150" width="400" height="100" fill="url(#pool)"/><rect x="0" y="0" width="400" height="150" fill="#D4C3A0" opacity="0.6"/><circle cx="70" cy="80" r="30" fill="#B08D57" opacity="0.5"/><rect x="20" y="180" width="60" height="40" fill="#FAF8F4" stroke="#B08D57" stroke-width="0.5"/><rect x="320" y="180" width="60" height="40" fill="#FAF8F4" stroke="#B08D57" stroke-width="0.5"/></svg>',
-    beach: '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D4C3A0"/><stop offset="0.6" stop-color="#8896A0"/><stop offset="1" stop-color="#4A6B80"/></linearGradient></defs><rect width="400" height="300" fill="url(#sea)"/><rect x="0" y="220" width="400" height="80" fill="#EFE4D0"/><path d="M0 210 Q100 200 200 215 T400 210" stroke="#FAF8F4" stroke-width="1.5" fill="none" opacity="0.6"/><circle cx="330" cy="60" r="24" fill="#FAF8F4"/><rect x="60" y="230" width="12" height="40" fill="#8A6B3F"/><ellipse cx="66" cy="230" rx="30" ry="8" fill="#B08D57"/></svg>',
-    terrace: '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#EFE4D0"/><rect x="0" y="180" width="400" height="120" fill="#D4C3A0"/><rect x="80" y="70" width="240" height="140" fill="#FAF8F4" stroke="#B08D57" stroke-width="0.8"/><rect x="110" y="100" width="60" height="90" fill="#4A6B80" opacity="0.5"/><rect x="230" y="100" width="60" height="90" fill="#4A6B80" opacity="0.5"/><rect x="150" y="190" width="100" height="20" fill="#8A6B3F"/><circle cx="200" cy="50" r="18" fill="#B08D57"/></svg>',
-    spa: '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="300" fill="#F5F1E8"/><circle cx="200" cy="150" r="80" fill="#EFE4D0" stroke="#B08D57" stroke-width="1"/><circle cx="200" cy="150" r="50" fill="#D4C3A0" opacity="0.6"/><circle cx="200" cy="150" r="25" fill="#B08D57"/><path d="M120 90 Q160 70 200 90 T280 90" stroke="#8A6B3F" stroke-width="1" fill="none" opacity="0.5"/><path d="M120 210 Q160 230 200 210 T280 210" stroke="#8A6B3F" stroke-width="1" fill="none" opacity="0.5"/></svg>'
-  };
 
   function buildCreatives() {
     var grid = document.getElementById('creative-grid');
@@ -1447,21 +1447,29 @@
     var html = '';
     for (var i = 0; i < creatives.length; i++) {
       var c = creatives[i];
-      var fb = FALLBACK_SVGS[c.fallback] || FALLBACK_SVGS.suite;
+      var rank = '#' + (i + 1);
       html += '<div class="creative">' +
-        '<div class="creative-preview">' +
-          '<div class="fallback">' + fb + '</div>' +
-          '<img src="' + c.img + '" alt="" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';" onload="this.previousElementSibling.style.display=\'none\';" />' +
-          '<span class="fmt">' + c.fmt + '</span>' +
+        '<div class="creative-head">' +
+          '<div class="creative-rank"><strong>' + rank + '</strong></div>' +
+          '<div class="creative-fmt">' + c.fmt + '</div>' +
+          '<div class="creative-offer-head">' + c.offer + '</div>' +
+          '<div class="creative-meta">' + c.name + '</div>' +
         '</div>' +
         '<div class="creative-body">' +
-          '<div class="creative-offer">' + c.offer + '</div>' +
-          '<div class="creative-name">' + c.name + '</div>' +
+          '<div class="creative-primary">' +
+            '<div>' +
+              '<div class="creative-primary-val"><span class="cur">\u20AC</span>' + c.revenue + '</div>' +
+              '<div class="creative-primary-label">Revenue attributed</div>' +
+            '</div>' +
+            '<div class="creative-roas">' +
+              '<div class="creative-roas-val">' + c.roas + '</div>' +
+              '<div class="creative-roas-label">ROAS</div>' +
+            '</div>' +
+          '</div>' +
           '<div class="creative-stats">' +
-            '<div class="creative-stat"><div class="s-label">Spend</div><div class="s-val">' + c.spend + '</div></div>' +
-            '<div class="creative-stat"><div class="s-label">Bookings</div><div class="s-val">' + c.bookings + '</div></div>' +
+            '<div class="creative-stat positive"><div class="s-label">Bookings</div><div class="s-val">' + c.bookings + '</div></div>' +
+            '<div class="creative-stat"><div class="s-label">Spend</div><div class="s-val">\u20AC' + c.spend + '</div></div>' +
             '<div class="creative-stat"><div class="s-label">CTR</div><div class="s-val">' + c.ctr + '</div></div>' +
-            '<div class="creative-stat"><div class="s-label">ROAS</div><div class="s-val">' + c.roas + '</div></div>' +
           '</div>' +
         '</div>' +
       '</div>';
