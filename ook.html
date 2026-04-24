@@ -1133,7 +1133,7 @@ function buildTTAdsHTML(ads, adNames, ds, label, periodOverride){
   // or treat all as active since we have no separate TikTok status export yet
   function isTTAdActive(name) {
     // Use TikTok-specific status map built from TikTok export — independent of Meta
-    const baseName = name.replace(/_mar\d+(_v\d+)?$/i,'').replace(/_v\d+$/i,'').trim();
+    const baseName = name.replace(/_mar\d+(_v\d+)?$/i,'').replace(/_apr\d+(_v\d+)?$/i,'').replace(/_v\d+$/i,'').trim();
     if (TIKTOK_AD_STATUS.hasOwnProperty(baseName)) {
       return TIKTOK_AD_STATUS[baseName] === 'active';
     }
