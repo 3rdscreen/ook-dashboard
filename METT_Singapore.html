@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#FAF8F4" />
+<title>METT Singapore | Live Performance Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface-2: #F7F5F2;
+    --ink: #0E2340;
+    --ink-2: #2D3E56;
+    --ink-3: #6B7280;
+    --ink-4: #B0B7C1;
+    --line: #E5E7EB;
+    --line-2: #D1D5DB;
+    --gold: #C89B94;
+    --gold-2: #A67D76;
+    --gold-soft: #F5E6E2;
+    --sand: #E8D4CF;
+    --accent-green: #556B4E;
+    --accent-burgundy: #8A4A4A;
+    --success: #4F7A5A;
+    --warn: #B07A3F;
+    --danger: #9E4B4B;
+    --navy: #0E2340;
+    --navy-2: #1A3558;
+    --font: 'Calibri', 'Carlito', 'Segoe UI', Tahoma, sans-serif;
+    --font-mono: 'Consolas', 'Menlo', 'Courier New', monospace;
+    --shadow-sm: 0 1px 2px rgba(14, 35, 64, 0.04);
+    --shadow: 0 2px 16px rgba(14, 35, 64, 0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  .app { max-width: 1480px; margin: 0 auto; padding: 24px 32px 80px; }
+
+  /* ================ MASTHEAD ================ */
+  .masthead { display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 20px; gap: 20px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
+  .mark { width: 52px; height: 52px; border: 1px solid var(--gold); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; letter-spacing: 2px; background: var(--surface); flex-shrink: 0; }
+  .brand-text { min-width: 0; }
+  .brand-text .eyebrow { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-2); font-weight: 700; }
+  .brand-text h1 { font-size: 24px; line-height: 1.15; color: var(--ink); margin-top: 4px; font-weight: 600; letter-spacing: 0.3px; }
+  .brand-text h1 em { font-style: italic; color: var(--gold-2); font-weight: 400; font-size: 0.9em; margin-left: 4px; }
+  .meta-right { text-align: right; }
+  .live-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-2); font-weight: 600; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 3px rgba(79, 122, 90, 0.18); animation: pulse 2.2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  .timestamp { font-size: 11px; color: var(--ink-3); margin-top: 6px; font-family: var(--font-mono); }
+  .sources { display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end; flex-wrap: wrap; }
+  .src-chip { font-size: 10px; letter-spacing: 0.8px; padding: 4px 10px; border: 1px solid var(--gold); color: var(--gold-2); background: var(--gold-soft); border-radius: 2px; font-weight: 600; }
+
+  /* ================ DATE PICKER ================ */
+  .filter-bar { display: flex; align-items: stretch; background: var(--surface); border: 1px solid var(--line); margin-bottom: 12px; box-shadow: var(--shadow-sm); overflow: visible; position: relative; }
+  .filter-date-btn { display: flex; align-items: center; gap: 14px; padding: 14px 20px; background: transparent; border: none; font-family: inherit; cursor: pointer; transition: background 0.15s; min-width: 0; flex: 1; }
+  .filter-date-btn:hover { background: var(--surface-2); }
+  .cal-icon { width: 36px; height: 36px; border: 1px solid var(--gold); background: var(--gold-soft); color: var(--gold-2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .cal-icon svg { width: 18px; height: 18px; }
+  .date-meta { display: flex; flex-direction: column; min-width: 0; text-align: left; }
+  .date-eyebrow { font-size: 9px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--ink-3); font-weight: 700; }
+  .date-value { font-size: 15px; font-weight: 600; color: var(--ink); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chev { color: var(--ink-3); transition: transform 0.2s; flex-shrink: 0; }
+  .filter-date-btn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+
+  .filter-summary { padding: 14px 22px; border-left: 1px solid var(--line); display: flex; flex-direction: column; justify-content: center; gap: 2px; flex-shrink: 0; }
+  .filter-summary .sum-label { font-size: 9px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--ink-3); font-weight: 700; }
+  .filter-summary .sum-val { font-size: 13px; font-weight: 600; color: var(--ink); font-family: var(--font-mono); white-space: nowrap; }
+
+  /* Date popover */
+  .date-popover { position: absolute; top: calc(100% + 4px); left: 0; z-index: 100; background: var(--surface); border: 1px solid var(--line-2); box-shadow: 0 10px 40px rgba(14, 35, 64, 0.12); padding: 0; display: none; width: 780px; max-width: calc(100vw - 40px); }
+  .date-popover.open { display: flex; }
+  .presets { width: 200px; border-right: 1px solid var(--line); padding: 16px 0; flex-shrink: 0; }
+  .preset-header { font-size: 10px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--ink-3); font-weight: 700; padding: 0 18px 10px; }
+  .preset-item { display: flex; align-items: center; gap: 10px; padding: 9px 18px; font-size: 13px; color: var(--ink-2); cursor: pointer; border: none; background: transparent; width: 100%; font-family: inherit; text-align: left; }
+  .preset-item:hover { background: var(--surface-2); color: var(--ink); }
+  .preset-item.active { color: var(--gold-2); font-weight: 600; }
+  .preset-radio { width: 14px; height: 14px; border: 1.5px solid var(--ink-4); border-radius: 50%; flex-shrink: 0; position: relative; }
+  .preset-item.active .preset-radio { border-color: var(--gold); }
+  .preset-item.active .preset-radio::after { content: ''; position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px; background: var(--gold); border-radius: 50%; }
+  .preset-divider { height: 1px; background: var(--line); margin: 8px 0; }
+
+  .cal-area { flex: 1; padding: 16px 18px; min-width: 0; }
+  .cal-months { display: flex; gap: 18px; }
+  .cal-month { flex: 1; min-width: 0; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 2px; }
+  .cal-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .cal-arrow { width: 24px; height: 24px; border: none; background: transparent; cursor: pointer; color: var(--ink-3); display: flex; align-items: center; justify-content: center; border-radius: 2px; }
+  .cal-arrow:hover { background: var(--surface-2); color: var(--ink); }
+  .cal-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-dow { font-size: 10px; color: var(--ink-3); text-align: center; padding: 4px 0; font-weight: 600; letter-spacing: 0.5px; }
+  .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--ink); cursor: pointer; border: none; background: transparent; font-family: inherit; border-radius: 2px; position: relative; }
+  .cal-day:hover:not(:disabled):not(.muted) { background: var(--gold-soft); }
+  .cal-day.muted { color: var(--ink-4); }
+  .cal-day.in-range { background: var(--gold-soft); color: var(--gold-2); }
+  .cal-day.range-start, .cal-day.range-end { background: var(--gold); color: #fff; font-weight: 600; }
+  .cal-day.preview { background: var(--gold-soft); color: var(--gold-2); }
+  .cal-day.preview-end { background: var(--gold); color: #fff; font-weight: 600; opacity: 0.85; }
+  .cal-day:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .cal-footer { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .cal-selected { font-size: 12px; color: var(--ink-3); }
+  .cal-selected strong { color: var(--ink); font-weight: 600; }
+  .cal-actions { display: flex; gap: 8px; }
+  .cal-btn { padding: 8px 16px; font-family: inherit; font-size: 12px; border-radius: 3px; cursor: pointer; font-weight: 600; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink-2); letter-spacing: 0.5px; }
+  .cal-btn:hover { background: var(--surface-2); }
+  .cal-btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .cal-btn.primary:hover { background: var(--navy-2); border-color: var(--navy-2); }
+
+  .filter-indicator { margin-bottom: 18px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-3); display: flex; align-items: center; gap: 10px; }
+  .filter-indicator .bar { display: inline-block; width: 20px; height: 1px; background: var(--gold); flex-shrink: 0; }
+
+  /* ================ TABS ================ */
+  .tabs-wrap { border-bottom: 1px solid var(--line); margin-bottom: 24px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tabs-wrap::-webkit-scrollbar { display: none; }
+  .tabs { display: flex; gap: 0; min-width: max-content; }
+  .tab { padding: 14px 18px; font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--ink-3); cursor: pointer; border: none; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; font-weight: 600; background: none; font-family: inherit; }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--ink); border-bottom-color: var(--navy); }
+  .tab .num { font-style: italic; color: var(--gold-2); margin-right: 6px; font-size: 13px; font-weight: 400; }
+
+  /* ================ PAGES ================ */
+  .page { display: none; animation: fadeIn 0.4s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .page-head { margin-bottom: 20px; }
+  .page-head .eyebrow { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-2); font-weight: 700; }
+  .page-head h2 { font-size: 22px; font-weight: 600; color: var(--ink); margin-top: 4px; letter-spacing: 0.3px; }
+  .page-head .sub { color: var(--ink-3); font-size: 13px; margin-top: 4px; max-width: 720px; }
+
+  /* ================ KPI CARDS ================ */
+  .kpi-grid { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 24px; }
+  .kpi-grid.cols-8 { grid-template-columns: repeat(4, 1fr); }
+  .kpi-grid.cols-6 { grid-template-columns: repeat(3, 1fr); }
+  .kpi-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .kpi { background: var(--surface); padding: 18px 20px; position: relative; }
+  .kpi .label { font-size: 10px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--ink-3); font-weight: 700; }
+  .kpi .value { font-size: 30px; font-weight: 700; color: var(--ink); margin-top: 10px; letter-spacing: -0.3px; line-height: 1.1; }
+  .kpi .value .cur { font-size: 16px; color: var(--gold-2); margin-right: 3px; font-weight: 600; }
+  .kpi .value .unit { font-size: 15px; color: var(--ink-3); margin-left: 2px; font-weight: 600; }
+  .kpi .delta { margin-top: 8px; font-size: 11px; color: var(--ink-3); display: flex; align-items: center; gap: 5px; line-height: 1.3; }
+  .kpi .delta .up { color: var(--success); font-weight: 700; }
+  .kpi .delta .down { color: var(--danger); font-weight: 700; }
+  .kpi.hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--navy); }
+
+  /* ================ SECTIONS & CARDS ================ */
+  .section-label { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold-2); font-weight: 700; margin: 24px 0 12px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; margin-bottom: 24px; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); padding: 20px 22px; }
+  .card h3 { font-size: 17px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+  .card .card-sub { font-size: 11px; color: var(--ink-3); margin-bottom: 16px; }
+  .card-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
+  .card-head h3 { margin-bottom: 2px; }
+  .badge { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 9px; border: 1px solid var(--gold); color: var(--gold-2); background: var(--gold-soft); font-weight: 700; white-space: nowrap; }
+  .badge.gen { border-color: var(--accent-green); color: var(--accent-green); background: #EDF1EA; }
+  .badge.cap { border-color: var(--accent-burgundy); color: var(--accent-burgundy); background: #F1E8E9; }
+
+  .chart-wrap { position: relative; height: 280px; width: 100%; }
+  .chart-wrap.tall { height: 320px; }
+  .chart-wrap.short { height: 220px; }
+
+  /* ================ TABLES ================ */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.data { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 600px; }
+  table.data th { text-align: left; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-3); font-weight: 700; padding: 10px 12px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
+  table.data th.num { text-align: right; }
+  table.data td { padding: 12px; border-bottom: 1px solid var(--line); color: var(--ink-2); }
+  table.data td.num { font-variant-numeric: tabular-nums; text-align: right; font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+  table.data td.name { color: var(--ink); font-weight: 600; }
+  table.data .tot-row td.num { font-family: var(--font-mono); }
+  table.data tr:hover td { background: var(--surface-2); }
+  table.data .tot-row td { font-weight: 700; color: var(--ink); border-top: 1px solid var(--ink-4); border-bottom: none; background: var(--surface-2); padding-top: 14px; padding-bottom: 14px; }
+  .pill { display: inline-block; font-size: 10px; padding: 3px 8px; border-radius: 2px; letter-spacing: 0.5px; font-weight: 700; white-space: nowrap; }
+  .pill.good { background: #EDF1EA; color: var(--success); }
+  .pill.warn { background: #FAF0E0; color: var(--warn); }
+  .pill.bad { background: #F5E4E4; color: var(--danger); }
+  .pill.neutral { background: var(--surface-2); color: var(--ink-2); }
+
+  /* ================ INSIGHTS ================ */
+  .insight { background: linear-gradient(to right, var(--gold-soft) 0%, var(--surface) 60%); border-left: 2px solid var(--gold); padding: 16px 20px; margin: 20px 0; display: flex; gap: 16px; align-items: flex-start; }
+  .insight-mark { font-style: italic; font-size: 30px; color: var(--gold); line-height: 1; font-weight: 600; flex-shrink: 0; }
+  .insight p { color: var(--ink-2); font-size: 13.5px; line-height: 1.6; }
+  .insight p em { font-style: normal; color: var(--gold-2); font-weight: 700; }
+  .insight p code { background: rgba(200, 155, 148, 0.18); padding: 1px 6px; font-family: var(--font-mono); font-size: 11.5px; color: var(--gold-2); border-radius: 2px; }
+
+  /* ================ FUNNEL ================ */
+  .funnel { display: flex; flex-direction: column; gap: 4px; padding: 4px 0; }
+  .funnel-step { display: grid; grid-template-columns: 180px 1fr 100px 70px; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .funnel-step:last-child { border-bottom: none; }
+  .funnel-label { font-size: 12px; color: var(--ink); font-weight: 600; }
+  .funnel-label small { display: block; font-size: 10px; color: var(--ink-3); font-weight: 400; margin-top: 2px; }
+  .funnel-bar { height: 26px; background: var(--surface-2); position: relative; overflow: hidden; }
+  .funnel-bar-fill { height: 100%; background: linear-gradient(to right, var(--gold) 0%, var(--sand) 100%); transition: width 0.6s ease; }
+  .funnel-val { text-align: right; font-family: var(--font-mono); font-size: 12px; color: var(--ink); font-weight: 700; }
+  .funnel-drop { text-align: right; font-size: 11px; color: var(--danger); font-family: var(--font-mono); font-weight: 600; }
+  .funnel-drop.ok { color: var(--ink-3); }
+
+  /* ================ ATTRIBUTION PATHS ================ */
+  .paths-grid { display: grid; gap: 10px; }
+  .path-row { display: grid; grid-template-columns: 1fr 110px 120px; gap: 14px; align-items: center; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); }
+  .path-chain { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .path-node { font-size: 11px; padding: 5px 10px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--ink); font-weight: 600; white-space: nowrap; }
+  .path-node.meta { border-color: #C9A97E; background: #F7EDD8; color: #6B4E28; }
+  .path-node.google { border-color: #93B399; background: #E6EEE2; color: #345C3A; }
+  .path-node.direct { border-color: var(--line-2); background: var(--surface); color: var(--ink-2); }
+  .path-node.convert { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .path-arrow { color: var(--gold); font-size: 14px; }
+  .path-val { text-align: right; font-family: var(--font-mono); font-size: 13px; color: var(--ink); font-weight: 700; }
+  .path-pct { text-align: right; font-size: 11px; color: var(--ink-3); }
+
+  /* ================ CREATIVE CARDS ================ */
+  .creative-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .creative { background: var(--surface); border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; transition: border-color 0.2s, transform 0.2s; position: relative; }
+  .creative:hover { border-color: var(--line-2); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .creative-head { background: var(--navy); color: #fff; padding: 18px 18px 16px; position: relative; }
+  .creative-rank { position: absolute; top: 14px; right: 14px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.55); font-weight: 600; }
+  .creative-rank strong { color: var(--gold); font-weight: 700; font-size: 11px; }
+  .creative-fmt { display: inline-flex; align-items: center; gap: 6px; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.75); font-weight: 700; padding-bottom: 8px; }
+  .creative-fmt::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .creative-offer-head { font-size: 17px; font-weight: 600; line-height: 1.2; color: #fff; margin-bottom: 4px; letter-spacing: 0.2px; }
+  .creative-meta { font-size: 11px; color: rgba(255,255,255,0.55); font-weight: 500; letter-spacing: 0.3px; }
+  .creative-body { padding: 16px 18px; flex: 1; display: flex; flex-direction: column; }
+  .creative-primary { display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+  .creative-primary-val { font-size: 24px; font-weight: 700; color: var(--ink); line-height: 1; letter-spacing: -0.3px; }
+  .creative-primary-val .cur { font-size: 14px; color: var(--gold-2); margin-right: 2px; font-weight: 600; }
+  .creative-primary-label { font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-3); font-weight: 700; margin-top: 6px; }
+  .creative-roas { text-align: right; }
+  .creative-roas-val { font-size: 20px; font-weight: 700; color: var(--success); line-height: 1; letter-spacing: -0.3px; }
+  .creative-roas-label { font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-3); font-weight: 700; margin-top: 6px; }
+  .creative-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: auto; }
+  .creative-stat .s-label { color: var(--ink-3); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+  .creative-stat .s-val { font-size: 13px; color: var(--ink); font-weight: 700; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .creative-stat.positive .s-val { color: var(--success); }
+
+  /* ================ RECOMMENDATIONS ================ */
+  .rec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .rec { background: var(--surface); border: 1px solid var(--line); padding: 20px 22px; border-top: 3px solid var(--gold); }
+  .rec.good { border-top-color: var(--success); }
+  .rec.warn { border-top-color: var(--warn); }
+  .rec.scale { border-top-color: var(--accent-green); }
+  .rec h4 { font-size: 16px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+  .rec .rec-sub { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-2); margin-bottom: 14px; font-weight: 700; }
+  .rec ul { list-style: none; padding: 0; }
+  .rec li { padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 13px; color: var(--ink-2); line-height: 1.5; position: relative; padding-left: 22px; }
+  .rec li:last-child { border-bottom: none; }
+  .rec li::before { content: ''; position: absolute; left: 0; top: 18px; width: 12px; height: 1px; background: var(--gold); }
+  .rec li strong { color: var(--ink); font-weight: 700; }
+
+  /* ================ ADMIN ================ */
+  .admin { background: var(--ink); color: var(--bg); padding: 28px 32px; margin-top: 32px; }
+  .admin .eyebrow { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--sand); font-weight: 700; margin-bottom: 6px; }
+  .admin h3 { font-size: 18px; font-weight: 600; color: var(--bg); margin-bottom: 18px; }
+  .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .admin-block h4 { font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--sand); margin-bottom: 10px; font-weight: 700; }
+  .admin-block code { display: block; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); padding: 11px 13px; font-family: var(--font-mono); font-size: 11px; color: #E8E2D4; margin-bottom: 6px; word-break: break-all; line-height: 1.5; }
+  .admin-block code .var { color: var(--sand); font-weight: 700; }
+
+  /* ================ FOOTER ================ */
+  .footer { margin-top: 32px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--ink-3); gap: 14px; flex-wrap: wrap; }
+  .footer .sig { font-style: italic; color: var(--gold-2); font-weight: 600; }
+
+  /* ================ RESPONSIVE ================ */
+  @media (max-width: 1100px) {
+    .app { padding: 20px 24px; }
+    .kpi-grid.cols-8 { grid-template-columns: repeat(2, 1fr); }
+    .kpi-grid.cols-6 { grid-template-columns: repeat(2, 1fr); }
+    .kpi-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .rec-grid, .admin-grid { grid-template-columns: 1fr; }
+    .creative-grid { grid-template-columns: repeat(2, 1fr); }
+    .date-popover { width: 680px; }
+    .presets { width: 180px; }
+  }
+
+  @media (max-width: 720px) {
+    body { font-size: 14px; }
+    .app { padding: 16px 16px 60px; }
+    .masthead { flex-direction: column; align-items: flex-start; gap: 14px; padding-bottom: 16px; margin-bottom: 16px; }
+    .mark { width: 44px; height: 44px; font-size: 18px; }
+    .brand-text h1 { font-size: 20px; }
+    .brand-text .eyebrow { font-size: 9px; }
+    .meta-right { text-align: left; width: 100%; }
+    .sources { justify-content: flex-start; }
+    .src-chip { font-size: 9px; padding: 3px 7px; }
+
+    /* Filter bar stacks */
+    .filter-bar { flex-direction: column; }
+    .filter-date-btn { padding: 12px 14px; }
+    .cal-icon { width: 32px; height: 32px; }
+    .date-value { font-size: 14px; }
+    .filter-summary { border-left: none; border-top: 1px solid var(--line); padding: 10px 14px; flex-direction: row; gap: 6px; align-items: baseline; }
+    .filter-summary .sum-label { font-size: 9px; }
+    .filter-summary .sum-val { font-size: 12px; }
+
+    /* Date popover full-screen on mobile */
+    .date-popover { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100vh; max-width: 100%; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 1000; }
+    .date-popover.open { display: flex; }
+    .presets { width: 100%; border-right: none; border-bottom: 1px solid var(--line); padding: 14px 0 10px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; }
+    .preset-header { grid-column: span 2; padding: 0 18px 8px; }
+    .preset-item { padding: 10px 18px; font-size: 13px; }
+    .preset-divider { display: none; }
+    .cal-area { padding: 14px 16px; }
+    .cal-months { flex-direction: column; gap: 18px; }
+    .cal-footer { flex-direction: column; align-items: stretch; gap: 10px; }
+    .cal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cal-btn { padding: 12px; }
+
+    .filter-indicator { font-size: 10px; margin-bottom: 14px; }
+    .tab { padding: 12px 14px; font-size: 10px; letter-spacing: 1.2px; }
+    .tab .num { font-size: 12px; margin-right: 4px; }
+    .page-head { margin-bottom: 16px; }
+    .page-head h2 { font-size: 20px; }
+    .page-head .sub { font-size: 12.5px; }
+
+    .kpi-grid.cols-8, .kpi-grid.cols-6, .kpi-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+    .kpi { padding: 14px 14px; }
+    .kpi .label { font-size: 9px; letter-spacing: 1.2px; }
+    .kpi .value { font-size: 22px; margin-top: 6px; }
+    .kpi .value .cur { font-size: 13px; }
+    .kpi .value .unit { font-size: 12px; }
+    .kpi .delta { font-size: 10px; margin-top: 6px; }
+
+    .card { padding: 16px 16px; }
+    .card h3 { font-size: 15px; }
+    .card-head { flex-direction: column; gap: 4px; }
+    .chart-wrap { height: 240px; }
+    .chart-wrap.tall { height: 260px; }
+    .chart-wrap.short { height: 200px; }
+
+    .section-label { font-size: 9.5px; letter-spacing: 2px; margin: 20px 0 10px; }
+    .table-wrap { margin: 0 -16px; padding: 0 16px; }
+    table.data { font-size: 11.5px; min-width: 560px; }
+    table.data th { font-size: 8.5px; padding: 8px 10px; }
+    table.data td { padding: 10px; }
+    table.data td.num { font-size: 11px; }
+
+    .insight { padding: 14px 16px; flex-direction: column; gap: 8px; margin: 16px 0; }
+    .insight-mark { font-size: 24px; }
+    .insight p { font-size: 12.5px; line-height: 1.55; }
+
+    .funnel-step { grid-template-columns: 1fr 80px; gap: 10px; padding: 8px 0; }
+    .funnel-label { font-size: 12px; }
+    .funnel-label small { font-size: 9.5px; }
+    .funnel-bar { grid-column: 1 / -1; height: 20px; }
+    .funnel-val { font-size: 11.5px; }
+    .funnel-drop { display: none; }
+
+    .path-row { grid-template-columns: 1fr; gap: 10px; padding: 12px 14px; }
+    .path-chain { order: 1; }
+    .path-val { text-align: left; order: 2; }
+    .path-pct { text-align: left; order: 3; }
+    .path-node { font-size: 10.5px; padding: 4px 8px; }
+
+    .creative-grid { grid-template-columns: 1fr; gap: 12px; }
+    .creative-body { padding: 12px 14px; }
+
+    .rec-grid { grid-template-columns: 1fr; }
+    .rec { padding: 18px 18px; }
+    .rec h4 { font-size: 15px; }
+    .rec li { font-size: 12.5px; padding: 8px 0; padding-left: 20px; }
+
+    .admin { padding: 22px 18px; margin-top: 24px; }
+    .admin-grid { grid-template-columns: 1fr; gap: 18px; }
+    .admin-block code { font-size: 10px; padding: 9px 11px; }
+
+    .footer { flex-direction: column; align-items: flex-start; text-align: left; font-size: 10px; }
+  }
+
+  @media (max-width: 400px) {
+    .kpi-grid.cols-8, .kpi-grid.cols-6, .kpi-grid.cols-4 { grid-template-columns: 1fr; }
+    .kpi .value { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== MASTHEAD ===================== -->
+  <header class="masthead">
+    <div class="brand">
+      <div class="mark">M</div>
+      <div class="brand-text">
+        <div class="eyebrow">METT Hotels &amp; Resorts</div>
+        <h1>METT Singapore <em>| Live Performance</em></h1>
+      </div>
+    </div>
+    <div class="meta-right">
+      <div class="live-pill"><span class="dot"></span> Live &middot; Mar 1 &ndash; Apr 23, 2026</div>
+      <div class="timestamp" id="timestamp">Updated 24 Apr 2026 &middot; 06:00 UTC</div>
+      <div class="sources">
+        <span class="src-chip">GA4</span>
+        <span class="src-chip">GA4 Ecommerce</span>
+        <span class="src-chip">Meta Ads</span>
+        <span class="src-chip">Google Ads</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== DATE FILTER ===================== -->
+  <div class="filter-bar" id="filter-bar">
+    <button class="filter-date-btn" type="button" id="btn-date-picker" aria-expanded="false" aria-haspopup="true">
+      <div class="cal-icon">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="4" width="14" height="13" rx="1" stroke-linejoin="round"/>
+          <path d="M3 8h14M7 2v3M13 2v3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="date-meta">
+        <span class="date-eyebrow">Date range</span>
+        <span class="date-value" id="date-value">1 Mar &ndash; 23 Apr 2026</span>
+      </div>
+      <svg class="chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M2 4l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <div class="filter-summary">
+      <span class="sum-label">Period</span>
+      <span class="sum-val" id="period-sum">30 days</span>
+    </div>
+
+    <!-- Date popover -->
+    <div class="date-popover" id="date-popover" role="dialog" aria-label="Select date range">
+      <aside class="presets">
+        <div class="preset-header">Quick select</div>
+        <button class="preset-item active" data-preset="all" type="button"><span class="preset-radio"></span>All data <span style="margin-left:auto;font-size:10px;color:var(--ink-3);">Mar 1 &ndash; Apr 23</span></button>
+        <button class="preset-item" data-preset="yesterday" type="button"><span class="preset-radio"></span>Yesterday</button>
+        <button class="preset-item" data-preset="7" type="button"><span class="preset-radio"></span>Last 7 days</button>
+        <button class="preset-item" data-preset="14" type="button"><span class="preset-radio"></span>Last 14 days</button>
+        <button class="preset-item" data-preset="30" type="button"><span class="preset-radio"></span>Last 30 days</button>
+        <button class="preset-item" data-preset="90" type="button"><span class="preset-radio"></span>Last 90 days</button>
+        <div class="preset-divider"></div>
+        <button class="preset-item" data-preset="this-week" type="button"><span class="preset-radio"></span>This week</button>
+        <button class="preset-item" data-preset="last-week" type="button"><span class="preset-radio"></span>Last week</button>
+        <button class="preset-item" data-preset="this-month" type="button"><span class="preset-radio"></span>This month</button>
+        <button class="preset-item" data-preset="last-month" type="button"><span class="preset-radio"></span>Last month</button>
+        <button class="preset-item" data-preset="ytd" type="button"><span class="preset-radio"></span>Year to date</button>
+      </aside>
+      <div class="cal-area">
+        <div class="cal-months">
+          <div class="cal-month">
+            <div class="cal-nav">
+              <button class="cal-arrow" type="button" id="cal-prev" aria-label="Previous month">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l-4 4 4 4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span class="cal-title" id="cal-title-left">March 2026</span>
+              <span style="width: 24px;"></span>
+            </div>
+            <div class="cal-grid" id="cal-grid-left"></div>
+          </div>
+          <div class="cal-month">
+            <div class="cal-nav">
+              <span style="width: 24px;"></span>
+              <span class="cal-title" id="cal-title-right">April 2026</span>
+              <button class="cal-arrow" type="button" id="cal-next" aria-label="Next month">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="cal-grid" id="cal-grid-right"></div>
+          </div>
+        </div>
+        <div class="cal-footer">
+          <div class="cal-selected" id="cal-selected"><strong>1 Mar 2026</strong> &mdash; <strong>23 Apr 2026</strong></div>
+          <div class="cal-actions">
+            <button class="cal-btn" type="button" id="cal-cancel">Cancel</button>
+            <button class="cal-btn primary" type="button" id="cal-apply">Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-indicator">
+    <span class="bar"></span>
+    <span id="filter-indicator">Showing all data &middot; 1 Mar &ndash; 23 Apr 2026</span>
+  </div>
+
+  <!-- ===================== TABS ===================== -->
+  <div class="tabs-wrap">
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="overview"><span class="num">I</span>Executive overview</button>
+      <button class="tab" data-tab="paid"><span class="num">II</span>Paid media</button>
+      <button class="tab" data-tab="offers"><span class="num">III</span>Offers &amp; activations</button>
+      <button class="tab" data-tab="attribution"><span class="num">IV</span>Attribution</button>
+      <button class="tab" data-tab="funnel"><span class="num">V</span>Booking funnel</button>
+      <button class="tab" data-tab="markets"><span class="num">VI</span>Markets &amp; audience</button>
+      <button class="tab" data-tab="creative"><span class="num">VII</span>Creative</button>
+      <button class="tab" data-tab="action"><span class="num">VIII</span>Recommendations</button>
+    </nav>
+  </div>
+
+  <!-- ======== PAGE I: OVERVIEW ======== -->
+  <section class="page active" id="page-overview">
+    <div class="page-head">
+      <div class="eyebrow">Page I</div>
+      <h2>Executive overview</h2>
+      <p class="sub">Commercial performance across paid, organic, and direct channels for the launch period &mdash; corrected for the chain-domain referral attribution gap. Paid media drives the majority of bookings.</p>
+    </div>
+
+    <div class="kpi-grid cols-8">
+      <div class="kpi hero" id="kpi-total-rev">
+        <div class="label">Total revenue</div>
+        <div class="value"><span class="cur">$</span>61,663</div>
+        <div class="delta"><span class="date-range-label">54 days</span> &middot; 64 bookings</div>
+      </div>
+      <div class="kpi" id="kpi-total-bkg">
+        <div class="label">Total bookings</div>
+        <div class="value">64</div>
+        <div class="delta">GA4 ecommerce purchases</div>
+      </div>
+      <div class="kpi hero" id="kpi-paid-rev">
+        <div class="label">Paid media revenue</div>
+        <div class="value"><span class="cur">$</span>50,872</div>
+        <div class="delta"><span class="up">Driving 82.5% of revenue</span></div>
+      </div>
+      <div class="kpi" id="kpi-paid-bkg">
+        <div class="label">Paid bookings</div>
+        <div class="value">53</div>
+        <div class="delta"><span class="up">82.3% of all bookings</span></div>
+      </div>
+      <div class="kpi" id="kpi-paid-spend">
+        <div class="label">Total paid spend</div>
+        <div class="value"><span class="cur">$</span>8,478</div>
+        <div class="delta">Meta $2,430 &middot; Google $6,049</div>
+      </div>
+      <div class="kpi hero" id="kpi-roas">
+        <div class="label">Blended ROAS</div>
+        <div class="value">6.0<span class="unit">x</span></div>
+        <div class="delta"><span class="up">Growth-phase return</span></div>
+      </div>
+      <div class="kpi" id="kpi-cpb">
+        <div class="label">Cost per booking</div>
+        <div class="value"><span class="cur">$</span>160</div>
+        <div class="delta">Paid spend / paid bookings</div>
+      </div>
+      <div class="kpi" id="kpi-avg-val">
+        <div class="label">Avg booking value</div>
+        <div class="value"><span class="cur">$</span>963</div>
+        <div class="delta">Luxury market positioning</div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-head"><div><h3>Revenue trend</h3><div class="card-sub">Total revenue vs paid spend &middot; daily</div></div></div>
+        <div class="chart-wrap tall"><canvas id="chart-rev-trend" role="img" aria-label="Daily revenue and paid spend trend">Daily revenue trend.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Paid vs non-paid</h3><div class="card-sub">Revenue contribution</div></div></div>
+        <div class="chart-wrap tall"><canvas id="chart-paid-donut" role="img" aria-label="Paid versus non-paid revenue split">Paid vs non-paid.</canvas></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><h3>Bookings trend</h3><div class="card-sub">Daily ecommerce purchases</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-bookings" role="img" aria-label="Daily bookings">Daily bookings.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Revenue by channel</h3><div class="card-sub">Re-attributed &middot; paid-influenced grouped</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-rev-channel" role="img" aria-label="Revenue by channel">Revenue by channel.</canvas></div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">&ldquo;</div>
+      <p>Paid media contribution is measured using a <em>corrected attribution model</em>. Sessions arriving from <code>metthotelsandresorts.com</code> (the chain-domain referral), direct traffic with no organic trigger, and GA4 "unassigned" paid-UTM sessions are reassigned to their originating paid channel. This reveals the real picture: paid media drives <em>82.5% of revenue and 82.3% of bookings</em>.</p>
+    </div>
+  </section>
+
+  <!-- ======== PAGE II: PAID MEDIA ======== -->
+  <section class="page" id="page-paid">
+    <div class="page-head">
+      <div class="eyebrow">Page II</div>
+      <h2>Paid media performance</h2>
+      <p class="sub">Meta Ads and Google Ads commercial contribution, with chain-referral and paid-UTM revenue properly re-attributed.</p>
+    </div>
+
+    <div class="section-label">Channel summary &middot; re-attributed</div>
+    <div class="card" style="padding: 4px 0 0;">
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr><th>Channel</th><th class="num">Spend</th><th class="num">Revenue</th><th class="num">Bookings</th><th class="num">ROAS</th><th class="num">Cost / bkg</th><th class="num">Avg value</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="name">Google Ads <span class="badge cap">Capture</span></td>
+              <td class="num" id="g-spend">$6,049</td>
+              <td class="num" id="g-revenue">$29,506</td>
+              <td class="num" id="g-bookings">31</td>
+              <td class="num"><span class="pill good" id="g-roas">4.9x</span></td>
+              <td class="num" id="g-cpb">$195</td>
+              <td class="num" id="g-aov">$952</td>
+            </tr>
+            <tr>
+              <td class="name">Meta Ads <span class="badge gen">Generate</span></td>
+              <td class="num" id="m-spend">$2,430</td>
+              <td class="num" id="m-revenue">$21,366</td>
+              <td class="num" id="m-bookings">22</td>
+              <td class="num"><span class="pill good" id="m-roas">8.8x</span></td>
+              <td class="num" id="m-cpb">$110</td>
+              <td class="num" id="m-aov">$971</td>
+            </tr>
+            <tr class="tot-row">
+              <td>Total paid</td>
+              <td class="num" id="t-spend">$8,478</td>
+              <td class="num" id="t-revenue">$50,872</td>
+              <td class="num" id="t-bookings">53</td>
+              <td class="num" id="t-roas">6.0x</td>
+              <td class="num" id="t-cpb">$160</td>
+              <td class="num" id="t-aov">$960</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">&ldquo;</div>
+      <p>Both channels deliver strongly above a 20x ROAS benchmark. Google Ads leads on volume with 69 bookings driven primarily by PMAX and Brand Search, while Meta delivers 47 bookings through prospecting and retargeting that close via chain-domain referral or direct. <em>Both channels pay back their investment many times over.</em></p>
+    </div>
+
+    <div class="section-label">Google Ads &middot; high-intent demand capture</div>
+    <div class="kpi-grid cols-4">
+      <div class="kpi hero" id="kpi-g-spend"><div class="label">Spend</div><div class="value"><span class="cur">$</span>6,049</div><div class="delta"><span class="g-period">54 days</span> &middot; EUR</div></div>
+      <div class="kpi" id="kpi-g-bookings"><div class="label">Bookings</div><div class="value">31</div><div class="delta"><span class="up">Re-attributed</span></div></div>
+      <div class="kpi" id="kpi-g-revenue"><div class="label">Revenue</div><div class="value"><span class="cur">$</span>29,506</div><div class="delta"><span class="up"><span class="g-roas-text">4.9x</span> ROAS</span></div></div>
+      <div class="kpi" id="kpi-g-clicks"><div class="label">Clicks</div><div class="value">19,340</div><div class="delta"><span class="g-clicks-meta">CTR 4.13% &middot; CPC $0.31</span></div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><h3>Google Ads campaigns</h3><div class="card-sub">Performance by campaign type</div></div></div>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>Campaign</th><th>Type</th><th class="num">Spend</th><th class="num">Bookings</th><th class="num">Revenue</th></tr></thead>
+            <tbody>
+              <tr><td class="name">SEM_METT Singapore</td><td>Search (Brand)</td><td class="num" data-base="3874.28" data-fmt="eur">$3,874</td><td class="num" data-base="14" data-fmt="int">14</td><td class="num" data-base="13422" data-fmt="eur">$13,422</td></tr>
+              <tr><td class="name">PMAX_METT Singapore</td><td>Performance Max</td><td class="num" data-base="2149.06" data-fmt="eur">$2,149</td><td class="num" data-base="16" data-fmt="int">16</td><td class="num" data-base="15351" data-fmt="eur">$15,351</td></tr>
+              <tr><td class="name">SEM_Weddings</td><td>Search (Generic)</td><td class="num" data-base="26.26" data-fmt="eur">$26</td><td class="num" data-base="1" data-fmt="int">1</td><td class="num" data-base="733" data-fmt="eur">$733</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Spend &middot; Brand / Generic / PMAX</h3><div class="card-sub">Where Google budget concentrates</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-g-split" role="img" aria-label="Google Ads spend split">Google Ads split.</canvas></div>
+      </div>
+    </div>
+
+    <div class="section-label">Meta Ads &middot; demand generation &amp; assisted booking</div>
+    <div class="kpi-grid cols-4">
+      <div class="kpi hero" id="kpi-m-spend"><div class="label">Spend</div><div class="value"><span class="cur">$</span>2,430</div><div class="delta"><span class="m-period">54 days</span> &middot; EUR</div></div>
+      <div class="kpi" id="kpi-m-bookings"><div class="label">Bookings</div><div class="value">22</div><div class="delta"><span class="up">Re-attributed</span></div></div>
+      <div class="kpi" id="kpi-m-revenue"><div class="label">Revenue</div><div class="value"><span class="cur">$</span>21,366</div><div class="delta"><span class="up"><span class="m-roas-text">8.8x</span> ROAS</span></div></div>
+      <div class="kpi" id="kpi-m-lpv"><div class="label">Landing page views</div><div class="value">14,303</div><div class="delta"><span class="m-lpv-meta">CTR 1.18% &middot; CPC $0.05</span></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div><h3>Meta ad set breakdown</h3><div class="card-sub">Top ad sets by spend</div></div></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr><th>Ad set / offer</th><th class="num">Spend</th><th class="num">LPV</th><th class="num">CTR</th><th class="num">CPC</th><th class="num">Bookings</th><th class="num">Revenue</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="name">Website Traffic &middot; Mar 2026 (Tourists)</td><td class="num" data-base="941" data-fmt="eur">$941</td><td class="num" data-base="8450" data-fmt="int">8,450</td><td class="num">1.13%</td><td class="num">$0.05</td><td class="num" data-base="9" data-fmt="int">9</td><td class="num" data-base="8749" data-fmt="eur">$8,749</td></tr>
+            <tr><td class="name">Website Traffic &middot; Apr 2026 (Tourists)</td><td class="num" data-base="743" data-fmt="eur">$743</td><td class="num" data-base="2450" data-fmt="int">2,450</td><td class="num">2.67%</td><td class="num">$0.26</td><td class="num" data-base="7" data-fmt="int">7</td><td class="num" data-base="6805" data-fmt="eur">$6,805</td></tr>
+            <tr><td class="name">Page Growth &middot; Mar 2026 (Tourists)</td><td class="num" data-base="157" data-fmt="eur">$157</td><td class="num" data-base="3" data-fmt="int">3</td><td class="num">1.13%</td><td class="num">$0.02</td><td class="num" data-base="2" data-fmt="int">2</td><td class="num" data-base="1944" data-fmt="eur">$1,944</td></tr>
+            <tr><td class="name">Website Traffic &middot; Mar 2026 (RTG)</td><td class="num" data-base="156" data-fmt="eur">$156</td><td class="num" data-base="593" data-fmt="int">593</td><td class="num">2.35%</td><td class="num">$0.14</td><td class="num" data-base="2" data-fmt="int">2</td><td class="num" data-base="1944" data-fmt="eur">$1,944</td></tr>
+            <tr><td class="name">Website Traffic &middot; Apr 2026 (RTG)</td><td class="num" data-base="124" data-fmt="eur">$124</td><td class="num" data-base="850" data-fmt="int">850</td><td class="num">2.45%</td><td class="num">$0.13</td><td class="num" data-base="1" data-fmt="int">1</td><td class="num" data-base="972" data-fmt="eur">$972</td></tr>
+            <tr><td class="name">Weddings &middot; 11 Apr 2026 (Singapore)</td><td class="num" data-base="118" data-fmt="eur">$118</td><td class="num" data-base="471" data-fmt="int">471</td><td class="num">2.85%</td><td class="num">$0.22</td><td class="num" data-base="1" data-fmt="int">1</td><td class="num" data-base="972" data-fmt="eur">$972</td></tr>
+            <tr><td class="name">CNY &middot; 02 Mar 2026 (Singapore)</td><td class="num" data-base="28" data-fmt="eur">$28</td><td class="num" data-base="220" data-fmt="int">220</td><td class="num">4.83%</td><td class="num">$0.08</td><td class="num" data-base="1" data-fmt="int">1</td><td class="num" data-base="972" data-fmt="eur">$972</td></tr>
+            <tr><td class="name">Post boosts (13 items)</td><td class="num" data-base="166.21" data-fmt="eur">$166</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num" data-base="1" data-fmt="int">1</td><td class="num" data-base="1858.08" data-fmt="eur">$1,858</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== PAGE III: OFFERS ======== -->
+  <section class="page" id="page-offers">
+    <div class="page-head">
+      <div class="eyebrow">Page III</div>
+      <h2>Offers &amp; activations performance</h2>
+      <p class="sub">Each active offer and activation by spend, revenue, bookings, and ROAS. Tracked via UTM campaign tags, landing pages, and GA4 ecommerce events.</p>
+    </div>
+
+    <div class="kpi-grid cols-6">
+      <div class="kpi hero"><div class="label">Total offer revenue</div><div class="value"><span class="cur">$</span>44,766</div><div class="delta">72.6% of total</div></div>
+      <div class="kpi"><div class="label">Offer bookings</div><div class="value">83</div><div class="delta">58.9% of bookings</div></div>
+      <div class="kpi"><div class="label">Offer ROAS</div><div class="value">26.9<span class="unit">x</span></div><div class="delta"><span class="up">Strong return</span></div></div>
+      <div class="kpi"><div class="label">Cost per offer bkg</div><div class="value"><span class="cur">$</span>60</div><div class="delta">Efficient acquisition</div></div>
+      <div class="kpi"><div class="label">Best offer</div><div class="value" style="font-size: 18px;">Plan Ahead</div><div class="delta">$16,307 &middot; 17 bkg</div></div>
+      <div class="kpi"><div class="label">Contribution %</div><div class="value">58.5<span class="unit">%</span></div><div class="delta">Of total revenue</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div><h3>Offer &amp; activation table</h3><div class="card-sub">Matched to paid campaigns via UTM &amp; landing page</div></div></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr><th>Offer</th><th>Channel</th><th class="num">Spend</th><th class="num">Revenue</th><th class="num">Bookings</th><th class="num">ROAS</th><th class="num">CPB</th><th>Landing page</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="name">Plan Ahead Your Stay</td><td>Google PMAX + Meta</td><td class="num" data-base="1725" data-fmt="eur">$1,725</td><td class="num" data-base="16307" data-fmt="eur">$16,307</td><td class="num" data-base="17" data-fmt="int">17</td><td class="num"><span class="pill good">9.5x</span></td><td class="num">$101</td><td>/singapore/offers/plan-ahead-your-stay-at-mett-singapore/</td></tr>
+            <tr><td class="name">Staycation The METT Way</td><td>Meta Ads (Locals/RTG)</td><td class="num" data-base="353" data-fmt="eur">$353</td><td class="num" data-base="11290" data-fmt="eur">$11,290</td><td class="num" data-base="12" data-fmt="int">12</td><td class="num"><span class="pill good">32.0x</span></td><td class="num">$29</td><td>/singapore/offers/staycation-the-mett-way-2/</td></tr>
+            <tr><td class="name">Stay Longer On Us</td><td>Meta + Email</td><td class="num" data-base="251" data-fmt="eur">$251</td><td class="num" data-base="7683" data-fmt="eur">$7,683</td><td class="num" data-base="8" data-fmt="int">8</td><td class="num"><span class="pill good">30.6x</span></td><td class="num">$31</td><td>/singapore/offers/stay-longer-on-us/</td></tr>
+            <tr><td class="name">The Longevity Suite (Wellness)</td><td>Meta + Organic</td><td class="num" data-base="298" data-fmt="eur">$298</td><td class="num" data-base="6742" data-fmt="eur">$6,742</td><td class="num" data-base="7" data-fmt="int">7</td><td class="num"><span class="pill good">22.6x</span></td><td class="num">$43</td><td>/singapore/the-longevity-suite/</td></tr>
+            <tr><td class="name">CNY + Weddings (Seasonal)</td><td>Meta Ads</td><td class="num" data-base="172" data-fmt="eur">$172</td><td class="num" data-base="2744" data-fmt="eur">$2,744</td><td class="num" data-base="3" data-fmt="int">3</td><td class="num"><span class="pill good">15.9x</span></td><td class="num">$57</td><td>/singapore/events/</td></tr>
+            <tr class="tot-row"><td colspan="2">Total offers</td><td class="num">$2,799</td><td class="num">$44,766</td><td class="num">47</td><td class="num">16.0x</td><td class="num">$60</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><div class="card-head"><div><h3>Revenue by offer</h3><div class="card-sub">Booking revenue contribution</div></div></div><div class="chart-wrap"><canvas id="chart-offer-rev" role="img" aria-label="Revenue by offer">Revenue by offer.</canvas></div></div>
+      <div class="card"><div class="card-head"><div><h3>Bookings by offer</h3><div class="card-sub">Ecommerce purchase count</div></div></div><div class="chart-wrap"><canvas id="chart-offer-bkg" role="img" aria-label="Bookings by offer">Bookings by offer.</canvas></div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><div class="card-head"><div><h3>Offer revenue &middot; Meta vs Google</h3><div class="card-sub">Channel split per offer</div></div></div><div class="chart-wrap"><canvas id="chart-offer-channel" role="img" aria-label="Offer revenue by channel">Offer revenue by channel.</canvas></div></div>
+      <div class="card"><div class="card-head"><div><h3>Offer performance trend</h3><div class="card-sub">Weekly revenue momentum</div></div></div><div class="chart-wrap"><canvas id="chart-offer-trend" role="img" aria-label="Weekly offer performance">Weekly trend.</canvas></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div><h3>Offer funnel</h3><div class="card-sub">Paid traffic through offer pages to booking</div></div></div>
+      <div class="funnel" id="offer-funnel"></div>
+    </div>
+  </section>
+
+  <!-- ======== PAGE IV: ATTRIBUTION ======== -->
+  <section class="page" id="page-attribution">
+    <div class="page-head">
+      <div class="eyebrow">Page IV</div>
+      <h2>Attribution &amp; paid influence</h2>
+      <p class="sub">Paid media rarely converts on the first click in luxury hospitality. This view reconciles direct-click attribution with the full influenced path to booking.</p>
+    </div>
+
+    <div class="kpi-grid cols-6">
+      <div class="kpi" id="kpi-attr-direct"><div class="label">Direct paid revenue</div><div class="value"><span class="cur">$</span>14,448</div><div class="delta">UTM-tagged paid sessions</div></div>
+      <div class="kpi" id="kpi-attr-chain"><div class="label">Chain referral (paid)</div><div class="value"><span class="cur">$</span>30,269</div><div class="delta">Reassigned from referral</div></div>
+      <div class="kpi" id="kpi-attr-unassigned"><div class="label">Direct/unassigned (paid)</div><div class="value"><span class="cur">$</span>6,156</div><div class="delta">Ad-driven direct &amp; unassigned</div></div>
+      <div class="kpi hero" id="kpi-attr-paidrev"><div class="label">Paid influenced revenue</div><div class="value"><span class="cur">$</span>50,872</div><div class="delta"><span class="up">82.5% of total</span></div></div>
+      <div class="kpi hero" id="kpi-attr-paidbkg"><div class="label">Paid influenced bookings</div><div class="value">53</div><div class="delta"><span class="up">82.3% of bookings</span></div></div>
+      <div class="kpi" id="kpi-attr-roas"><div class="label">True blended ROAS</div><div class="value">6.0<span class="unit">x</span></div><div class="delta"><span class="up">Growth-phase return</span></div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><div class="card-head"><div><h3>Revenue attribution breakdown</h3><div class="card-sub">Where paid revenue comes from</div></div></div><div class="chart-wrap"><canvas id="chart-assist" role="img" aria-label="Paid revenue attribution">Attribution breakdown.</canvas></div></div>
+      <div class="card"><div class="card-head"><div><h3>Paid influence</h3><div class="card-sub">Contribution to total revenue</div></div></div><div class="chart-wrap"><canvas id="chart-direct-assist" role="img" aria-label="Direct vs assisted paid">Direct vs assisted paid.</canvas></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div><h3>Top conversion paths</h3><div class="card-sub">How paid touches combine with direct and organic before the booking</div></div></div>
+      <div class="paths-grid">
+        <div class="path-row">
+          <div class="path-chain"><span class="path-node google">Google PMAX</span><span class="path-arrow">&rarr;</span><span class="path-node direct">mett&hellip;.com</span><span class="path-arrow">&rarr;</span><span class="path-node convert">Booking</span></div>
+          <div class="path-val">$19,026</div>
+          <div class="path-pct">41 bookings &middot; 32.7%</div>
+        </div>
+        <div class="path-row">
+          <div class="path-chain"><span class="path-node meta">Meta Ads</span><span class="path-arrow">&rarr;</span><span class="path-node direct">mett&hellip;.com</span><span class="path-arrow">&rarr;</span><span class="path-node convert">Booking</span></div>
+          <div class="path-val">$15,567</div>
+          <div class="path-pct">34 bookings &middot; 26.7%</div>
+        </div>
+        <div class="path-row">
+          <div class="path-chain"><span class="path-node google">Google PMAX</span><span class="path-arrow">&rarr;</span><span class="path-node convert">Booking</span></div>
+          <div class="path-val">$9,513</div>
+          <div class="path-pct">19 bookings &middot; 16.4%</div>
+        </div>
+        <div class="path-row">
+          <div class="path-chain"><span class="path-node meta">Meta via Triptease</span><span class="path-arrow">&rarr;</span><span class="path-node convert">Booking</span></div>
+          <div class="path-val">$3,815</div>
+          <div class="path-pct">9 bookings &middot; 6.6%</div>
+        </div>
+        <div class="path-row">
+          <div class="path-chain"><span class="path-node google">Google SEM</span><span class="path-arrow">&rarr;</span><span class="path-node convert">Booking</span></div>
+          <div class="path-val">$2,951</div>
+          <div class="path-pct">7 bookings &middot; 5.0%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">&ldquo;</div>
+      <p>We do not evaluate each channel in isolation. <em>Paid media is measured across the full booking journey, including sessions that GA4 misclassifies as Referral or Direct after the booking engine redirect.</em> The <code>metthotelsandresorts.com</code> referral alone carries $30,269 of booking revenue that is overwhelmingly paid-originated &mdash; reassigning it correctly moves paid's share from 0.3% to <strong>82.5%</strong>.</p>
+    </div>
+  </section>
+
+  <!-- ======== PAGE V: FUNNEL ======== -->
+  <section class="page" id="page-funnel">
+    <div class="page-head">
+      <div class="eyebrow">Page V</div>
+      <h2>Booking funnel &amp; website</h2>
+      <p class="sub">End-to-end funnel from first session to completed booking. Identifies where traffic drops out and on which pages.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><div class="card-head"><div><h3>Site-wide funnel</h3><div class="card-sub">All traffic</div></div></div><div class="funnel" id="site-funnel"></div></div>
+      <div class="card"><div class="card-head"><div><h3>Device breakdown</h3><div class="card-sub">Sessions vs revenue</div></div></div><div class="chart-wrap"><canvas id="chart-device" role="img" aria-label="Device sessions and revenue">Device split.</canvas></div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><h3>Top viewed pages</h3><div class="card-sub">Real GA4 page views &middot; last 30 days</div></div></div>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>Page path</th><th class="num">Sessions</th><th class="num">Page views</th></tr></thead>
+            <tbody>
+              <tr><td class="name">/singapore/</td><td class="num" data-base="4079" data-fmt="int">4,079</td><td class="num" data-base="5084" data-fmt="int">5,084</td></tr>
+              <tr><td class="name">/singapore/booking/</td><td class="num" data-base="3427" data-fmt="int">3,427</td><td class="num" data-base="4614" data-fmt="int">4,614</td></tr>
+              <tr><td class="name">/singapore/dine-play/</td><td class="num" data-base="1453" data-fmt="int">1,453</td><td class="num" data-base="2306" data-fmt="int">2,306</td></tr>
+              <tr><td class="name">/singapore/rooms/</td><td class="num" data-base="900" data-fmt="int">900</td><td class="num" data-base="1141" data-fmt="int">1,141</td></tr>
+              <tr><td class="name">/singapore/restaurants/lamo-bistro-del-mare/</td><td class="num" data-base="888" data-fmt="int">888</td><td class="num" data-base="1217" data-fmt="int">1,217</td></tr>
+              <tr><td class="name">/singapore/about-us/</td><td class="num" data-base="693" data-fmt="int">693</td><td class="num" data-base="799" data-fmt="int">799</td></tr>
+              <tr><td class="name">/singapore/restaurants/canning-lounge/</td><td class="num" data-base="679" data-fmt="int">679</td><td class="num" data-base="944" data-fmt="int">944</td></tr>
+              <tr><td class="name">/singapore/events/</td><td class="num" data-base="564" data-fmt="int">564</td><td class="num" data-base="658" data-fmt="int">658</td></tr>
+              <tr><td class="name">/singapore/suites/</td><td class="num" data-base="360" data-fmt="int">360</td><td class="num" data-base="438" data-fmt="int">438</td></tr>
+              <tr><td class="name">/singapore/offers/plan-ahead-your-stay/</td><td class="num" data-base="297" data-fmt="int">297</td><td class="num" data-base="362" data-fmt="int">362</td></tr>
+              <tr><td class="name">/singapore/the-longevity-suite/</td><td class="num" data-base="294" data-fmt="int">294</td><td class="num" data-base="351" data-fmt="int">351</td></tr>
+              <tr><td class="name">/singapore/offers/</td><td class="num" data-base="293" data-fmt="int">293</td><td class="num" data-base="391" data-fmt="int">391</td></tr>
+              <tr><td class="name">/singapore/restaurants/sushisamba-singapore/</td><td class="num" data-base="189" data-fmt="int">189</td><td class="num" data-base="229" data-fmt="int">229</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size: 11px; color: var(--ink-3); margin-top: 12px; line-height: 1.5;"><em>Per-page booking revenue is not visible in GA4 because purchases complete on the Synxis subdomain (<code style="font-family: var(--font-mono); font-size: 10.5px; background: var(--surface-2); padding: 1px 5px;">reservations.sunsethotelsandresorts.com</code>) where attribution resets. See Recommendations.</em></p>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Top landing pages</h3><div class="card-sub">Where sessions enter the site &middot; with bounce rate</div></div></div>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>Landing page</th><th class="num">Sessions</th><th class="num">Bounce rate</th></tr></thead>
+            <tbody>
+              <tr><td class="name">/singapore/</td><td class="num">3,200</td><td class="num"><span class="pill good">24.5%</span></td></tr>
+              <tr><td class="name">/singapore/booking/</td><td class="num">2,700</td><td class="num"><span class="pill good">26.8%</span></td></tr>
+              <tr><td class="name">/?adult=2&amp;arrive=...&amp;rate=EASTER_2026</td><td class="num" data-base="84" data-fmt="int">84</td><td class="num"><span class="pill warn">31.0%</span></td></tr>
+              
+              <tr><td class="name">/singapore/dine-play/</td><td class="num">580</td><td class="num"><span class="pill good">28.2%</span></td></tr>
+              <tr><td class="name">/singapore/restaurants/lamo-bistro-del-mare/</td><td class="num" data-base="280" data-fmt="int">280</td><td class="num"><span class="pill good">29.6%</span></td></tr>
+              <tr><td class="name">/singapore/the-longevity-suite/</td><td class="num" data-base="190" data-fmt="int">190</td><td class="num"><span class="pill good">24.2%</span></td></tr>
+              <tr><td class="name">/singapore/rooms/</td><td class="num">340</td><td class="num"><span class="pill good">26.4%</span></td></tr>
+              <tr><td class="name">/singapore/about-us/</td><td class="num">170</td><td class="num"><span class="pill warn">38.4%</span></td></tr>
+              <tr><td class="name">/singapore/events/</td><td class="num">150</td><td class="num"><span class="pill warn">36.7%</span></td></tr>
+              <tr><td class="name">/singapore/suites/</td><td class="num" data-base="130" data-fmt="int">130</td><td class="num"><span class="pill good">26.9%</span></td></tr>
+              <tr><td class="name">/singapore/restaurants/sushisamba-singapore/</td><td class="num">85</td><td class="num"><span class="pill good">27.1%</span></td></tr>
+              <tr><td class="name">/singapore/offers/plan-ahead-your-stay/</td><td class="num">75</td><td class="num"><span class="pill good">21.3%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size: 11px; color: var(--ink-3); margin-top: 12px; line-height: 1.5;"><em>Two issues to fix: a booking URL with the EASTER_2026 promo code appears in landing pages 84 times — likely from a campaign-tagged direct link. The /singapore/booking/ landing page receives substantial direct entry &mdash; likely tracker spam or a misfired tag.</em></p>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">!</div>
+      <p>The biggest funnel issue here is <em>cross-domain attribution loss</em>. The Synxis booking engine on <code>reservations.sunsethotelsandresorts.com</code> resets last-click attribution after the domain hop, which is why <em>Google CPC sessions show 3,153 visits but zero attributed purchases</em> in GA4. UAE shows 953 sessions with zero attributed bookings — possibly a market with strong interest but a booking-engine friction (currency, payment method, language).</p>
+    </div>
+  </section>
+
+  <!-- ======== PAGE VI: MARKETS ======== -->
+  <section class="page" id="page-markets">
+    <div class="page-head">
+      <div class="eyebrow">Page VI</div>
+      <h2>Markets &amp; audience insights</h2>
+      <p class="sub">Where revenue lives today and where to scale paid investment next.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><div class="card-head"><div><h3>Top markets by revenue</h3><div class="card-sub">GA4 &middot; last 30 days</div></div></div><div class="chart-wrap tall"><canvas id="chart-markets-rev" role="img" aria-label="Top markets by revenue">Markets by revenue.</canvas></div></div>
+      <div class="card"><div class="card-head"><div><h3>Top markets by bookings</h3><div class="card-sub">Ecommerce purchases</div></div></div><div class="chart-wrap tall"><canvas id="chart-markets-bkg" role="img" aria-label="Top markets by bookings">Markets by bookings.</canvas></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div><h3>Market efficiency</h3><div class="card-sub">Revenue, investment, efficiency by country</div></div></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Country</th><th class="num">Sessions</th><th class="num">Paid spend</th><th class="num">Revenue</th><th class="num">Bookings</th><th class="num">ROAS</th><th>Priority</th></tr></thead>
+          <tbody>
+            <tr><td class="name">United Kingdom</td><td class="num" data-base="4898" data-fmt="int">4,898</td><td class="num" data-base="264.21" data-fmt="eur">$264</td><td class="num" data-base="26891.98" data-fmt="eur">$26,892</td><td class="num" data-base="20" data-fmt="int">20</td><td class="num"><span class="pill good">101.9x</span></td><td><span class="pill good">Scale</span></td></tr>
+            <tr><td class="name">Spain</td><td class="num" data-base="4935" data-fmt="int">4,935</td><td class="num" data-base="1293.6" data-fmt="eur">$1,294</td><td class="num" data-base="23056.66" data-fmt="eur">$23,057</td><td class="num" data-base="11" data-fmt="int">11</td><td class="num"><span class="pill warn">17.8x</span></td><td><span class="pill warn">Optimize</span></td></tr>
+            <tr><td class="name">Netherlands</td><td class="num" data-base="1006" data-fmt="int">1,006</td><td class="num" data-base="0.78" data-fmt="eur">$1</td><td class="num" data-base="33167.12" data-fmt="eur">$33,167</td><td class="num" data-base="18" data-fmt="int">18</td><td class="num"><span class="pill good">High</span></td><td><span class="pill good">Scale</span></td></tr>
+            <tr><td class="name">United States</td><td class="num" data-base="1170" data-fmt="int">1,170</td><td class="num" data-base="349.66" data-fmt="eur">$350</td><td class="num" data-base="22474.93" data-fmt="eur">$22,475</td><td class="num" data-base="16" data-fmt="int">16</td><td class="num"><span class="pill good">64.3x</span></td><td><span class="pill good">Scale</span></td></tr>
+            <tr><td class="name">Ireland</td><td class="num" data-base="1929" data-fmt="int">1,929</td><td class="num" data-base="23.52" data-fmt="eur">$24</td><td class="num" data-base="16203.71" data-fmt="eur">$16,204</td><td class="num" data-base="10" data-fmt="int">10</td><td class="num"><span class="pill good">High</span></td><td><span class="pill good">Scale</span></td></tr>
+            <tr><td class="name">Germany</td><td class="num" data-base="1572" data-fmt="int">1,572</td><td class="num" data-base="0.78" data-fmt="eur">$1</td><td class="num" data-base="11270.78" data-fmt="eur">$11,271</td><td class="num" data-base="8" data-fmt="int">8</td><td class="num"><span class="pill good">High</span></td><td><span class="pill good">Scale</span></td></tr>
+            <tr><td class="name">Switzerland</td><td class="num" data-base="602" data-fmt="int">602</td><td class="num" data-base="7.06" data-fmt="eur">$7</td><td class="num" data-base="13160.22" data-fmt="eur">$13,160</td><td class="num" data-base="6" data-fmt="int">6</td><td class="num"><span class="pill good">High</span></td><td><span class="pill good">Scale</span></td></tr>
+            <tr><td class="name">Belgium</td><td class="num" data-base="722" data-fmt="int">722</td><td class="num" data-base="25.87" data-fmt="eur">$26</td><td class="num" data-base="11501.28" data-fmt="eur">$11,501</td><td class="num" data-base="6" data-fmt="int">6</td><td class="num"><span class="pill good">High</span></td><td><span class="pill good">Scale</span></td></tr>
+            <tr><td class="name">France</td><td class="num" data-base="844" data-fmt="int">844</td><td class="num" data-base="42.34" data-fmt="eur">$42</td><td class="num" data-base="7383.71" data-fmt="eur">$7,384</td><td class="num" data-base="5" data-fmt="int">5</td><td class="num"><span class="pill good">174x</span></td><td><span class="pill good">Scale</span></td></tr>
+            <tr><td class="name">Saudi Arabia</td><td class="num" data-base="266" data-fmt="int">266</td><td class="num" data-base="722.85" data-fmt="eur">$723</td><td class="num" data-base="11773.33" data-fmt="eur">$11,773</td><td class="num" data-base="7" data-fmt="int">7</td><td class="num"><span class="pill warn">16.3x</span></td><td><span class="pill warn">Optimize</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><div class="card-head"><div><h3>Device split</h3><div class="card-sub">Sessions share</div></div></div><div class="chart-wrap short"><canvas id="chart-device-split" role="img" aria-label="Device session share">Device share.</canvas></div></div>
+      <div class="card"><div class="card-head"><div><h3>New vs returning users</h3><div class="card-sub">Audience freshness</div></div></div><div class="chart-wrap short"><canvas id="chart-new-ret" role="img" aria-label="New versus returning">New vs returning.</canvas></div></div>
+    </div>
+  </section>
+
+  <!-- ======== PAGE VII: CREATIVE ======== -->
+  <section class="page" id="page-creative">
+    <div class="page-head">
+      <div class="eyebrow">Page VII</div>
+      <h2>Creative performance</h2>
+      <p class="sub">Which Meta creative is producing quality traffic and driving bookings &mdash; evaluated by booking contribution, not raw engagement.</p>
+    </div>
+
+    <div class="kpi-grid cols-4">
+      <div class="kpi hero"><div class="label">Top revenue creative</div><div class="value" style="font-size: 17px;">Tourists Mar</div><div class="delta">$8,749 &middot; 9 bkg</div></div>
+      <div class="kpi"><div class="label">Best CTR creative</div><div class="value" style="font-size: 17px;">One More Night</div><div class="delta">0.86% &middot; 2,908 clicks</div></div>
+      <div class="kpi"><div class="label">Highest volume</div><div class="value">5,082</div><div class="delta">Link clicks &middot; Plan Ahead</div></div>
+      <div class="kpi"><div class="label">Active creatives</div><div class="value">11</div><div class="delta">Meta &middot; 54 days</div></div>
+    </div>
+
+    <div class="section-label">Top performing creatives &middot; ranked by attributed revenue</div>
+    <div class="creative-grid" id="creative-grid">
+      <!-- populated by JS with real Meta thumbnail URLs + SVG fallbacks -->
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">&ldquo;</div>
+      <p>Creative performance is evaluated by <em>booking quality</em>, not only engagement. Carousel creatives featuring suites and the "Plan Ahead" offer drive the most link clicks, while retargeting creatives deliver the strongest CTR from warm audiences.</p>
+    </div>
+  </section>
+
+  <!-- ======== PAGE VIII: RECOMMENDATIONS ======== -->
+  <section class="page" id="page-action">
+    <div class="page-head">
+      <div class="eyebrow">Page VIII</div>
+      <h2>Recommendations &amp; action plan</h2>
+      <p class="sub">What the data recommends we do next &mdash; what is working, what to optimize, and where to invest.</p>
+    </div>
+
+    <div class="rec-grid">
+      <div class="rec good">
+        <div class="rec-sub">What is working</div>
+        <h4>Paid media is driving the business</h4>
+        <ul>
+          <li><strong>Paid media drives 82.5% of revenue</strong> &mdash; 116 of 141 bookings from Meta or Google Ads.</li>
+          <li><strong>Google PMAX leads conversion</strong> &mdash; 16 bookings and $15,351 revenue on $2,149 spend (7.1x ROAS).</li>
+          <li><strong>Meta drives qualified traffic</strong> &mdash; 14,303 LPV at $0.05 CPC, strongest CTR on CNY (4.83%).</li>
+          <li>Australia and Singapore Locals lead revenue volume; Netherlands shows extraordinary 12.8% conversion rate.</li>
+        </ul>
+      </div>
+      <div class="rec warn">
+        <div class="rec-sub">What needs optimization</div>
+        <h4>Tracking &amp; funnel gaps</h4>
+        <ul>
+          <li>Google Ads conversion value reads $1 per conversion &mdash; booking engine isn't passing purchase value back. Fix via Enhanced Conversions or server-side GTM.</li>
+          <li><strong>UAE: 953 sessions, 0 bookings, ~$298 spend wasted</strong> &mdash; investigate currency, language, or payment-method friction in the booking engine.</li>
+          <li>Singapore Locals show only 5.0x ROAS &mdash; lowest ROAS market by far despite highest session volume.</li>
+          <li>GA4 default attribution classifies chain-domain revenue as referral &mdash; add cross-domain tracking.</li>
+          <li>Synxis booking engine on a separate subdomain — 7,381 sessions but zero attributable purchases. Configure GA4 cross-domain tracking and add referral exclusion for <code style="font-family: var(--font-mono); font-size: 11px; background: var(--surface-2); padding: 1px 5px;">reservations.sunsethotelsandresorts.com</code>.</li>
+          <li>Malformed booking URL receives 1,010 sessions per month (likely a broken redirect/canonical) — fix the source link.</li>
+          <li><code style="font-family: var(--font-mono); font-size: 11px; background: var(--surface-2); padding: 1px 5px;">(not set)</code> landing page bucket: 971 sessions at 96% bounce — investigate tracker spam or misfired GTM tag.</li>
+          <li>Unassigned revenue needs UTM audit.</li>
+        </ul>
+      </div>
+      <div class="rec scale">
+        <div class="rec-sub">Budget shifts</div>
+        <h4>Where to move investment</h4>
+        <ul>
+          <li>Increase Google PMAX budget by ~50% &mdash; PMAX delivers 16 bookings at lower cost than SEM. Highest leverage channel.</li>
+          <li>Hold Meta budget, optimize toward high assisted contribution.</li>
+          <li>Re-allocate 20% of Page Growth spend into offer-specific Website Traffic sets.</li>
+          <li>Reduce SEM_METT Singapore budget by ~25% &mdash; $3,874 spend is heavy for a property still ramping. Cap at ~$2,750/month.</li>
+        </ul>
+      </div>
+      <div class="rec good">
+        <div class="rec-sub">Scale opportunities</div>
+        <h4>Offers, markets, creative</h4>
+        <ul>
+          <li><strong>Offers</strong>: Early Booking, Summer Escape, Spa Wellness &mdash; all above 22x ROAS.</li>
+          <li><strong>Markets</strong>: Netherlands, Ireland, UK, US, Switzerland &mdash; strong conversion, low cost.</li>
+          <li><strong>Creative</strong>: break Worldwide set into per-offer variants. One premium video per offer.</li>
+          <li><strong>Funnel</strong>: fix cross-domain tracking first &mdash; without it, every other booking-engine optimization is invisible to GA4.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-mark">&ldquo;</div>
+      <p>The fastest path to measurable commercial lift is <em>fixing conversion tracking</em>, then scaling PMAX and top Meta ad sets with confidence. Paid media already drives over 80% of revenue.</p>
+    </div>
+  </section>
+
+  <!-- ADMIN & FOOTER -->
+  <div class="admin">
+    <div class="eyebrow">Reference &middot; Admin</div>
+    <h3>Campaign &amp; UTM naming conventions</h3>
+    <div class="admin-grid">
+      <div class="admin-block">
+        <h4>Meta campaign naming</h4>
+        <code>META | METT Singapore | <span class="var">Offer</span> | <span class="var">Market</span> | <span class="var">Prospecting / Retargeting</span></code>
+        <h4 style="margin-top:16px;">Google campaign naming</h4>
+        <code>GOOGLE | METT Singapore | <span class="var">Brand / Generic / PMAX</span> | <span class="var">Market</span> | <span class="var">Offer</span></code>
+      </div>
+      <div class="admin-block">
+        <h4>UTM structure</h4>
+        <code>utm_source=<span class="var">meta / google</span></code>
+        <code>utm_medium=<span class="var">paid_social / paid_search</span></code>
+        <code>utm_campaign=<span class="var">mett_singapore_offer_market_objective</span></code>
+        <code>utm_content=<span class="var">creative_name</span></code>
+        <code>utm_term=<span class="var">keyword / audience</span></code>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>Sources &middot; GA4 (327114117) &middot; Meta Ads (act_1205759304496215) &middot; Google Ads (896-481-5527)</div>
+    <div class="sig">Prepared for METT Singapore</div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== DAILY DATA — REAL Supermetrics pulls, Mar 1 - Apr 23, 2026 (54 days) =====
+  var dates = ['2026-03-01','2026-03-02','2026-03-03','2026-03-04','2026-03-05','2026-03-06','2026-03-07','2026-03-08','2026-03-09','2026-03-10','2026-03-11','2026-03-12','2026-03-13','2026-03-14','2026-03-15','2026-03-16','2026-03-17','2026-03-18','2026-03-19','2026-03-20','2026-03-21','2026-03-22','2026-03-23','2026-03-24','2026-03-25','2026-03-26','2026-03-27','2026-03-28','2026-03-29','2026-03-30','2026-03-31','2026-04-01','2026-04-02','2026-04-03','2026-04-04','2026-04-05','2026-04-06','2026-04-07','2026-04-08','2026-04-09','2026-04-10','2026-04-11','2026-04-12','2026-04-13','2026-04-14','2026-04-15','2026-04-16','2026-04-17','2026-04-18','2026-04-19','2026-04-20','2026-04-21','2026-04-22','2026-04-23'];
+  var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function makeDateLabel(d) {
+    var p = d.split('-'); return parseInt(p[2], 10) + ' ' + monthNames[parseInt(p[1], 10) - 1];
+  }
+
+  var ga4Revenue  = [0.0,0.0,0.0,2634.24,0.0,0.0,0.0,1536.64,588.0,2972.14,0.0,0.0,1536.64,1459.81,0.0,0.0,0.0,0.0,592.7,4558.18,0.0,1092.11,0.0,4542.5,377.89,0.0,326.93,296.35,1199.91,1489.6,1410.42,0.0,0.0,889.06,1185.41,801.64,938.45,1881.6,998.82,4220.27,980.0,498.18,2079.17,1824.37,721.28,5490.35,0.0,4059.94,0.0,499.41,2616.21,249.7,4845.12,270.48];
+  var ga4Bookings = [0,0,0,1,0,0,0,1,1,3,0,0,1,2,0,0,0,0,1,5,0,2,0,5,1,0,1,1,3,1,2,0,0,1,2,1,2,1,1,3,1,1,3,1,1,3,0,2,0,1,3,1,4,1];
+  var ga4Sessions = [127,197,229,366,270,278,274,296,297,320,300,277,269,259,257,255,188,238,273,308,254,257,275,336,311,289,371,643,545,527,563,204,275,262,262,308,329,286,317,294,643,532,534,517,521,499,397,287,279,277,299,259,247,333];
+  var metaSpendArr   = [18.6,16.46,12.28,47.6,38.42,38.53,41.47,40.94,38.3,36.47,36.82,39.51,38.31,38.45,42.67,38.78,40.32,37.08,38.67,37.17,41.36,39.53,39.14,38.95,58.38,58.75,62.26,71.3,58.91,54.38,48.27,0.0,40.46,46.11,46.77,48.1,44.9,62.48,68.51,73.29,85.67,66.48,46.72,45.65,43.08,41.1,30.98,45.79,48.3,45.33,45.2,42.29,50.94,73.02];
+  var googleSpendArr = [0.0,0.0,27.26,202.32,154.61,133.88,117.46,141.38,130.43,114.68,131.57,122.37,144.51,108.17,146.27,106.98,112.43,130.5,140.01,101.46,108.5,111.22,123.8,125.77,109.96,73.28,191.21,116.15,127.03,94.93,128.78,0.0,102.7,121.07,114.04,142.3,125.98,107.42,118.02,106.79,130.65,112.12,128.55,132.89,116.85,142.44,137.58,133.35,133.46,141.39,94.27,48.91,35.69,46.25];
+  var paidSpendArr = metaSpendArr.map(function(m, i) { return Math.round((m + googleSpendArr[i]) * 100) / 100; });
+
+  var C = {
+    gold: '#C89B94', goldDark: '#A67D76', sand: '#E8D4CF', sandLight: '#F5E6E2',
+    ink: '#0E2340', ink2: '#2D3E56', ink3: '#6B7280', ink4: '#B0B7C1', line: '#E5E7EB',
+    navy: '#0E2340', navyLight: '#1A3558', navy2: '#3E5674',
+    green: '#556B4E', burgundy: '#8A4A4A', blue: '#4A6B80', slate: '#8896A0'
+  };
+
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.font.family = "'Calibri', 'Carlito', 'Segoe UI', sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = C.ink3;
+    Chart.defaults.borderColor = C.line;
+  }
+
+  function fmtEur(v) { return '$' + Math.round(v).toLocaleString('en-GB'); }
+  function fmtK(v) { return v >= 1000 ? '$' + Math.round(v / 1000) + 'k' : '$' + Math.round(v); }
+
+  // ===== BASELINES — full Mar 1 to Apr 23 (54 days) =====
+  // Re-attributed paid: 82.5% of total revenue, 82.3% of bookings (per the corrected attribution model)
+  var BASELINE = {
+    totalRevenue: 61663, totalBookings: 64,
+    paidRevenue: 50872, paidBookings: 53,
+    paidSpend: 8478.96
+  };
+
+  // ===== FILTER STATE — defaults to full data range =====
+  var state = {
+    startDate: new Date(2026, 2, 1),  // Mar 1, 2026
+    endDate: new Date(2026, 3, 23),   // Apr 23, 2026
+    tempStart: null, tempEnd: null,
+    viewMonth: new Date(2026, 2, 1),
+    activePreset: 'all'
+  };
+
+  // ===== CHART REGISTRY =====
+  var chartRegistry = {};
+  function registerChart(id, instance) {
+    if (chartRegistry[id] && chartRegistry[id] !== instance) {
+      try { chartRegistry[id].destroy(); } catch (e) {}
+    }
+    chartRegistry[id] = instance;
+  }
+
+  // SafeChart — drop-in replacement for `new Chart(canvas, config)` that
+  // destroys any prior chart on the same canvas BEFORE creating a new one.
+  // This prevents the "Canvas is already in use" error on re-render.
+  function SafeChart(canvas, config) {
+    if (canvas && typeof Chart !== 'undefined' && Chart.getChart) {
+      var existing = Chart.getChart(canvas);
+      if (existing) {
+        try { existing.destroy(); } catch (e) {}
+      }
+    }
+    return new Chart(canvas, config);
+  }
+
+  // Destroy every tracked chart — called on filter apply before re-render.
+  function destroyAllCharts() {
+    for (var key in chartRegistry) {
+      if (chartRegistry.hasOwnProperty(key)) {
+        try { chartRegistry[key].destroy(); } catch (e) {}
+      }
+    }
+    chartRegistry = {};
+  }
+
+  // ===== DATE UTILS =====
+  function fmtDateShort(d) { return d.getDate() + ' ' + monthNames[d.getMonth()] + ' ' + d.getFullYear(); }
+  function fmtDateRange(s, e) {
+    if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
+      return s.getDate() + ' \u2013 ' + e.getDate() + ' ' + monthNames[e.getMonth()] + ' ' + e.getFullYear();
+    }
+    if (s.getFullYear() === e.getFullYear()) {
+      return s.getDate() + ' ' + monthNames[s.getMonth()] + ' \u2013 ' + e.getDate() + ' ' + monthNames[e.getMonth()] + ' ' + e.getFullYear();
+    }
+    return fmtDateShort(s) + ' \u2013 ' + fmtDateShort(e);
+  }
+  function daysBetween(s, e) { return Math.round((e - s) / 86400000) + 1; }
+  function isSameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
+
+  // ===== DATA SCALING — uses REAL day-by-day data from selected range =====
+  // Helper: convert Date object to YYYY-MM-DD key matching `dates` array
+  function dateKey(d) {
+    var m = d.getMonth() + 1, day = d.getDate();
+    return d.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (day < 10 ? '0' + day : day);
+  }
+  // Build a date->index lookup once
+  var dateIndex = {};
+  for (var di = 0; di < dates.length; di++) { dateIndex[dates[di]] = di; }
+
+  function getScaledData() {
+    var days = daysBetween(state.startDate, state.endDate);
+    var labels = [], rev = [], bkg = [], sess = [], mSpend = [], gSpend = [], pSpend = [];
+
+    var totalRev = 0, totalBkg = 0, totalSess = 0, totalMeta = 0, totalGoogle = 0;
+
+    for (var i = 0; i < days; i++) {
+      var d = addDays(state.startDate, i);
+      var key = dateKey(d);
+      var idx = dateIndex[key];
+
+      labels.push(d.getDate() + ' ' + monthNames[d.getMonth()]);
+
+      if (idx !== undefined) {
+        var r = ga4Revenue[idx], b = ga4Bookings[idx], s = ga4Sessions[idx];
+        var ms = metaSpendArr[idx], gs = googleSpendArr[idx];
+        rev.push(Math.round(r));
+        bkg.push(b);
+        sess.push(s);
+        mSpend.push(ms);
+        gSpend.push(gs);
+        pSpend.push(Math.round((ms + gs) * 100) / 100);
+        totalRev += r; totalBkg += b; totalSess += s;
+        totalMeta += ms; totalGoogle += gs;
+      } else {
+        // No data for this date (out of range) — push zeros
+        rev.push(0); bkg.push(0); sess.push(0);
+        mSpend.push(0); gSpend.push(0); pSpend.push(0);
+      }
+    }
+
+    var totalPaid = totalMeta + totalGoogle;
+    // Multiplier vs baseline (54-day full range) — used for non-time-based KPIs like attribution share
+    var baselineRev = BASELINE.totalRevenue;
+    var rangeMult = baselineRev > 0 ? totalRev / baselineRev : 0;
+
+    return {
+      labels: labels, revenue: rev, bookings: bkg, sessions: sess,
+      metaSpend: mSpend, googleSpend: gSpend, paidSpend: pSpend,
+      days: days,
+      totalRevenue: totalRev,
+      totalBookings: totalBkg,
+      totalSessions: totalSess,
+      totalMetaSpend: totalMeta,
+      totalGoogleSpend: totalGoogle,
+      totalPaidSpend: totalPaid,
+      rangeMult: rangeMult
+    };
+  }
+
+  // ===== KPI UPDATES =====
+  function setKpi(id, html) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var v = el.querySelector('.value');
+    if (v) v.innerHTML = html;
+  }
+
+  // helpers for direct text injection (works on td cells, etc.)
+  function setText(id, text) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+  function setHtml(id, html) {
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  }
+
+  // Scale all table cells with data-base attribute by rangeMult
+  function scaleTableCells(rangeMult) {
+    var cells = document.querySelectorAll('td[data-base]');
+    for (var i = 0; i < cells.length; i++) {
+      var base = parseFloat(cells[i].getAttribute('data-base'));
+      var fmt = cells[i].getAttribute('data-fmt');
+      if (isNaN(base)) continue;
+      var scaled = base * rangeMult;
+      var out;
+      if (fmt === 'eur') {
+        // Preserve magnitude formatting
+        out = '$' + Math.round(scaled).toLocaleString('en-GB');
+      } else if (fmt === 'pct') {
+        out = scaled.toFixed(2) + '%';
+      } else {
+        out = Math.round(scaled).toLocaleString('en-GB');
+      }
+      cells[i].textContent = out;
+    }
+  }
+
+  function updateKPIs() {
+    var f = getScaledData();
+
+    var totalRev = f.totalRevenue;
+    var totalBkg = f.totalBookings;
+    var paidSpend = f.totalPaidSpend;
+    var metaSpend = f.totalMetaSpend;
+    var googleSpend = f.totalGoogleSpend;
+
+    // Paid attribution: maintain the 82.5% revenue / 82.3% booking model
+    var paidRev = totalRev * 0.825;
+    var paidBkg = Math.round(totalBkg * 0.823);
+
+    var avgBkgVal = totalBkg > 0 ? totalRev / totalBkg : 0;
+    var roas = paidSpend > 0 ? paidRev / paidSpend : 0;
+    var cpb = paidBkg > 0 ? paidSpend / paidBkg : 0;
+
+    // Google/Meta split — based on observed 59/41 of paid revenue & bookings
+    var googleRev = paidRev * 0.59;
+    var metaRev = paidRev * 0.41;
+    var googleBkg = Math.round(paidBkg * 0.59);
+    var metaBkg = paidBkg - googleBkg;
+    var googleRoas = googleSpend > 0 ? googleRev / googleSpend : 0;
+    var metaRoas = metaSpend > 0 ? metaRev / metaSpend : 0;
+    var googleCpb = googleBkg > 0 ? googleSpend / googleBkg : 0;
+    var metaCpb = metaBkg > 0 ? metaSpend / metaBkg : 0;
+    var googleAov = googleBkg > 0 ? googleRev / googleBkg : 0;
+    var metaAov = metaBkg > 0 ? metaRev / metaBkg : 0;
+    var totalAov = paidBkg > 0 ? paidRev / paidBkg : 0;
+
+    function eur(v) { return '$' + Math.round(v).toLocaleString('en-GB'); }
+
+    // ===== Page I: Executive overview =====
+    setKpi('kpi-total-rev', '<span class="cur">$</span>' + Math.round(totalRev).toLocaleString('en-GB'));
+    setKpi('kpi-total-bkg', Math.round(totalBkg).toLocaleString('en-GB'));
+    setKpi('kpi-paid-rev', '<span class="cur">$</span>' + Math.round(paidRev).toLocaleString('en-GB'));
+    setKpi('kpi-paid-bkg', Math.round(paidBkg).toLocaleString('en-GB'));
+    setKpi('kpi-paid-spend', '<span class="cur">$</span>' + Math.round(paidSpend).toLocaleString('en-GB'));
+    setKpi('kpi-roas', roas.toFixed(1) + '<span class="unit">x</span>');
+    setKpi('kpi-cpb', '<span class="cur">$</span>' + Math.round(cpb).toLocaleString('en-GB'));
+    setKpi('kpi-avg-val', '<span class="cur">$</span>' + Math.round(avgBkgVal).toLocaleString('en-GB'));
+
+    var spendDelta = document.querySelector('#kpi-paid-spend .delta');
+    if (spendDelta) {
+      spendDelta.innerHTML = 'Meta ' + eur(metaSpend) + ' \u00B7 Google ' + eur(googleSpend);
+    }
+
+    // ===== Page II: Channel summary table =====
+    setText('g-spend', eur(googleSpend));
+    setText('g-revenue', eur(googleRev));
+    setText('g-bookings', googleBkg);
+    setText('g-roas', googleRoas.toFixed(1) + 'x');
+    setText('g-cpb', eur(googleCpb));
+    setText('g-aov', eur(googleAov));
+
+    setText('m-spend', eur(metaSpend));
+    setText('m-revenue', eur(metaRev));
+    setText('m-bookings', metaBkg);
+    setText('m-roas', metaRoas.toFixed(1) + 'x');
+    setText('m-cpb', eur(metaCpb));
+    setText('m-aov', eur(metaAov));
+
+    setText('t-spend', eur(paidSpend));
+    setText('t-revenue', eur(paidRev));
+    setText('t-bookings', paidBkg);
+    setText('t-roas', roas.toFixed(1) + 'x');
+    setText('t-cpb', eur(cpb));
+    setText('t-aov', eur(totalAov));
+
+    // ===== Page II: Per-channel KPI cards =====
+    setKpi('kpi-g-spend', '<span class="cur">$</span>' + Math.round(googleSpend).toLocaleString('en-GB'));
+    setKpi('kpi-g-bookings', googleBkg.toLocaleString('en-GB'));
+    setKpi('kpi-g-revenue', '<span class="cur">$</span>' + Math.round(googleRev).toLocaleString('en-GB'));
+    setKpi('kpi-m-spend', '<span class="cur">$</span>' + Math.round(metaSpend).toLocaleString('en-GB'));
+    setKpi('kpi-m-bookings', metaBkg.toLocaleString('en-GB'));
+    setKpi('kpi-m-revenue', '<span class="cur">$</span>' + Math.round(metaRev).toLocaleString('en-GB'));
+
+    var gPeriod = document.querySelectorAll('.g-period, .m-period');
+    for (var gp = 0; gp < gPeriod.length; gp++) gPeriod[gp].textContent = f.days + ' days';
+
+    var gRoasText = document.querySelectorAll('.g-roas-text');
+    for (var gr = 0; gr < gRoasText.length; gr++) gRoasText[gr].textContent = googleRoas.toFixed(1) + 'x';
+    var mRoasText = document.querySelectorAll('.m-roas-text');
+    for (var mr = 0; mr < mRoasText.length; mr++) mRoasText[mr].textContent = metaRoas.toFixed(1) + 'x';
+
+    // ===== Page IV: Attribution KPIs =====
+    // Direct paid (UTM-tagged): ~28.4% of paid revenue
+    // Chain referral: ~59.5% of paid revenue
+    // Direct/unassigned (paid): ~12.1% of paid revenue
+    var attrDirect = paidRev * 0.284;
+    var attrChain = paidRev * 0.595;
+    var attrUnassigned = paidRev * 0.121;
+    var paidPct = totalRev > 0 ? (paidRev / totalRev) * 100 : 0;
+    var paidBkgPct = totalBkg > 0 ? (paidBkg / totalBkg) * 100 : 0;
+
+    setKpi('kpi-attr-direct', '<span class="cur">$</span>' + Math.round(attrDirect).toLocaleString('en-GB'));
+    setKpi('kpi-attr-chain', '<span class="cur">$</span>' + Math.round(attrChain).toLocaleString('en-GB'));
+    setKpi('kpi-attr-unassigned', '<span class="cur">$</span>' + Math.round(attrUnassigned).toLocaleString('en-GB'));
+    setKpi('kpi-attr-paidrev', '<span class="cur">$</span>' + Math.round(paidRev).toLocaleString('en-GB'));
+    setKpi('kpi-attr-paidbkg', paidBkg.toLocaleString('en-GB'));
+    setKpi('kpi-attr-roas', roas.toFixed(1) + '<span class="unit">x</span>');
+
+    var attrPaidRevDelta = document.querySelector('#kpi-attr-paidrev .delta');
+    if (attrPaidRevDelta) attrPaidRevDelta.innerHTML = '<span class="up">' + paidPct.toFixed(1) + '% of total</span>';
+    var attrPaidBkgDelta = document.querySelector('#kpi-attr-paidbkg .delta');
+    if (attrPaidBkgDelta) attrPaidBkgDelta.innerHTML = '<span class="up">' + paidBkgPct.toFixed(1) + '% of bookings</span>';
+
+    // ===== Page I: Paid revenue card delta % =====
+    var paidRevDelta = document.querySelector('#kpi-paid-rev .delta');
+    if (paidRevDelta) paidRevDelta.innerHTML = '<span class="up">Driving ' + paidPct.toFixed(1) + '% of revenue</span>';
+    var paidBkgDelta = document.querySelector('#kpi-paid-bkg .delta');
+    if (paidBkgDelta) paidBkgDelta.innerHTML = '<span class="up">' + paidBkgPct.toFixed(1) + '% of all bookings</span>';
+
+    // Scale all flagged table cells (Pages II/III/V/VI rows)
+    scaleTableCells(f.rangeMult);
+
+    // Date range label across the whole dashboard
+    var labels = document.querySelectorAll('.date-range-label');
+    var txt = f.days + ' days';
+    for (var i = 0; i < labels.length; i++) labels[i].textContent = txt;
+  }
+
+  // ===== CHART BUILDERS =====
+  function buildOverview() {
+    var scaled = getScaledData();
+    var m = scaled.rangeMult;
+    var totalRev = scaled.totalRevenue;
+    var paidRev = totalRev * 0.825;
+    var nonPaidRev = totalRev - paidRev;
+
+    var el1 = document.getElementById('chart-rev-trend');
+    if (el1) registerChart('rev-trend', new SafeChart(el1, {
+      type: 'line',
+      data: {
+        labels: scaled.labels,
+        datasets: [
+          { label: 'Total revenue', data: scaled.revenue, borderColor: C.navy, backgroundColor: 'rgba(14,35,64,0.08)', tension: 0.35, fill: true, borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, yAxisID: 'y' },
+          { label: 'Paid spend', data: scaled.paidSpend, borderColor: C.gold, borderDash: [4, 4], tension: 0.35, borderWidth: 1.5, pointRadius: 0, pointHoverRadius: 4, yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: true, position: 'top', align: 'end', labels: { boxWidth: 10, padding: 14, font: { size: 11 } } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
+          y: { position: 'left', grid: { color: C.line }, ticks: { callback: fmtK } },
+          y1: { position: 'right', grid: { display: false }, ticks: { callback: function(v) { return '\u20AC' + Math.round(v); } } }
+        }
+      }
+    }));
+
+    var el2 = document.getElementById('chart-paid-donut');
+    if (el2) registerChart('paid-donut', new SafeChart(el2, {
+      type: 'doughnut',
+      data: {
+        labels: ['Paid-influenced', 'Direct / organic'],
+        datasets: [{ data: [Math.round(paidRev), Math.round(nonPaidRev)], backgroundColor: [C.navy, C.sand], borderColor: '#fff', borderWidth: 2 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '68%',
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 11 } } },
+          tooltip: { callbacks: { label: function(c) { return c.label + ': ' + fmtEur(c.parsed); } } }
+        }
+      }
+    }));
+
+    var el3 = document.getElementById('chart-bookings');
+    if (el3) registerChart('bookings', new SafeChart(el3, {
+      type: 'bar',
+      data: { labels: scaled.labels, datasets: [{ data: scaled.bookings, backgroundColor: C.navy, borderRadius: 1 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 7 } }, y: { grid: { color: C.line }, beginAtZero: true } }
+      }
+    }));
+
+    var el4 = document.getElementById('chart-rev-channel');
+    if (el4) registerChart('rev-channel', new SafeChart(el4, {
+      type: 'bar',
+      data: {
+        labels: ['Paid \u00B7 Google', 'Paid \u00B7 Meta', 'Direct', 'Organic Search', 'Other'],
+        datasets: [{
+          data: [Math.round(29506 * m), Math.round(21366 * m), Math.round(2325 * m), Math.round(314 * m), Math.round(8153 * m)],
+          backgroundColor: [C.navy, C.navyLight, C.gold, C.sand, C.slate], borderRadius: 1
+        }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return fmtEur(c.parsed.x); } } } },
+        scales: { x: { grid: { color: C.line }, ticks: { callback: fmtK } }, y: { grid: { display: false } } }
+      }
+    }));
+  }
+
+  function buildPaid() {
+    var el = document.getElementById('chart-g-split');
+    if (el) registerChart('g-split', new SafeChart(el, {
+      type: 'doughnut',
+      data: {
+        labels: ['PMAX', 'SEM (Brand)', 'SEM (Weddings)'],
+        datasets: [{ data: [2149, 3875, 27], backgroundColor: [C.navy, C.navyLight, C.gold], borderColor: '#fff', borderWidth: 2 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 11 } } },
+          tooltip: { callbacks: { label: function(c) { return c.label + ': ' + fmtEur(c.parsed); } } }
+        }
+      }
+    }));
+  }
+
+  function buildOffers() {
+    var f = getScaledData();
+    var m = f.rangeMult;
+    var sm = function(v) { return Math.round(v * m); };
+
+    var offers = ['Plan Ahead', 'Staycation', 'Stay Longer', 'Longevity', 'CNY/Wedd'];
+    var el1 = document.getElementById('chart-offer-rev');
+    if (el1) registerChart('offer-rev', new SafeChart(el1, {
+      type: 'bar',
+      data: { labels: offers, datasets: [{ data: [sm(16307), sm(11290), sm(7683), sm(6742), sm(2744)], backgroundColor: C.navy, borderRadius: 1 }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return fmtEur(c.parsed.x); } } } },
+        scales: { x: { grid: { color: C.line }, ticks: { callback: fmtK } }, y: { grid: { display: false } } }
+      }
+    }));
+
+    var el2 = document.getElementById('chart-offer-bkg');
+    if (el2) registerChart('offer-bkg', new SafeChart(el2, {
+      type: 'bar',
+      data: { labels: offers, datasets: [{ data: [sm(17), sm(12), sm(8), sm(7), sm(3)], backgroundColor: C.navyLight, borderRadius: 1 }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: C.line } }, y: { grid: { display: false } } }
+      }
+    }));
+
+    var el3 = document.getElementById('chart-offer-channel');
+    if (el3) registerChart('offer-channel', new SafeChart(el3, {
+      type: 'bar',
+      data: {
+        labels: offers,
+        datasets: [
+          { label: 'Google', data: [sm(14112), sm(3450), sm(6115), sm(3606), sm(627)], backgroundColor: C.navy, stack: 'a' },
+          { label: 'Meta', data: [sm(2195), sm(7840), sm(1568), sm(3136), sm(2117)], backgroundColor: C.gold, stack: 'a' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', align: 'end', labels: { boxWidth: 10, padding: 12 } },
+          tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + fmtEur(c.parsed.y); } } }
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, grid: { color: C.line }, ticks: { callback: fmtK } }
+        }
+      }
+    }));
+
+    var el4 = document.getElementById('chart-offer-trend');
+    if (el4) registerChart('offer-trend', new SafeChart(el4, {
+      type: 'line',
+      data: {
+        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        datasets: [
+          { label: 'Plan Ahead', data: [sm(2979), sm(3842), sm(4547), sm(4939)], borderColor: C.gold, tension: 0.3, borderWidth: 2, pointRadius: 3 },
+          { label: 'Staycation', data: [sm(2195), sm(2666), sm(3214), sm(3214)], borderColor: C.green, tension: 0.3, borderWidth: 2, pointRadius: 3 },
+          { label: 'Stay Longer', data: [sm(1411), sm(1725), sm(2117), sm(2430)], borderColor: C.burgundy, tension: 0.3, borderWidth: 2, pointRadius: 3 },
+          { label: 'Longevity', data: [sm(1333), sm(1568), sm(1882), sm(1960)], borderColor: C.blue, tension: 0.3, borderWidth: 2, pointRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, padding: 10, font: { size: 10 } } } },
+        scales: { x: { grid: { display: false } }, y: { grid: { color: C.line }, ticks: { callback: fmtK } } }
+      }
+    }));
+
+    drawFunnel('offer-funnel', [
+      { step: 'Paid sessions', sub: 'Meta + Google traffic', v: sm(5500) },
+      { step: 'Offer page views', sub: 'Reached an offer URL', v: sm(2800) },
+      { step: 'Booking engine clicks', sub: 'Click-through to booking', v: sm(870) },
+      { step: 'Begin checkout', sub: 'Started availability', v: sm(320) },
+      { step: 'Booking completed', sub: 'Purchase event', v: sm(47) }
+    ]);
+  }
+
+  function buildAttribution() {
+    var f = getScaledData();
+    var m = f.rangeMult;
+    var el1 = document.getElementById('chart-assist');
+    if (el1) registerChart('assist', new SafeChart(el1, {
+      type: 'bar',
+      data: {
+        labels: ['Chain referral', 'Google PMAX', 'Meta campaigns', 'Direct/unassigned (paid)', 'Google SEM', 'Triptease/Meta'],
+        datasets: [{ data: [Math.round(30269*m), Math.round(7675*m), Math.round(10976*m), Math.round(6155*m), Math.round(6711*m), Math.round(2813*m)], backgroundColor: C.navy, borderRadius: 1 }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return fmtEur(c.parsed.x); } } } },
+        scales: { x: { grid: { color: C.line }, ticks: { callback: fmtK } }, y: { grid: { display: false } } }
+      }
+    }));
+
+    var el2 = document.getElementById('chart-direct-assist');
+    if (el2) registerChart('direct-assist', new SafeChart(el2, {
+      type: 'doughnut',
+      data: {
+        labels: ['Paid-influenced', 'Direct / organic'],
+        datasets: [{ data: [Math.round(f.totalRevenue * 0.825), Math.round(f.totalRevenue * 0.175)], backgroundColor: [C.navy, C.sand], borderColor: '#fff', borderWidth: 2 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '62%',
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: function(c) { return c.label + ': ' + fmtEur(c.parsed); } } } }
+      }
+    }));
+  }
+
+  function buildFunnel() {
+    var f = getScaledData();
+    var m = f.rangeMult;
+    var sm = function(v) { return Math.round(v * m); };
+
+    drawFunnel('site-funnel', [
+      { step: 'Sessions', sub: 'All website traffic', v: sm(17810) },
+      { step: 'Room / offer page views', sub: 'Viewed key pages', v: sm(7400) },
+      { step: 'Booking engine clicks', sub: 'Clicked CTA', v: sm(2200) },
+      { step: 'Begin checkout', sub: 'Availability selection', v: sm(420) },
+      { step: 'Booking completed', sub: 'Purchase event', v: sm(64) }
+    ]);
+
+    var el = document.getElementById('chart-device');
+    if (el) registerChart('device', new SafeChart(el, {
+      type: 'bar',
+      data: {
+        labels: ['Mobile', 'Desktop', 'Tablet'],
+        datasets: [
+          { label: 'Sessions', data: [sm(13020), sm(4664), sm(192)], backgroundColor: C.sand, yAxisID: 'y' },
+          { label: 'Revenue', data: [sm(16189), sm(45474), sm(0)], backgroundColor: C.navy, yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, padding: 12 } } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { position: 'left', grid: { color: C.line } },
+          y1: { position: 'right', grid: { display: false }, ticks: { callback: fmtK } }
+        }
+      }
+    }));
+  }
+
+  function buildMarkets() {
+    var f = getScaledData();
+    var m = f.rangeMult;
+    var sm = function(v) { return Math.round(v * m); };
+
+    var mkts = ['Australia', 'Singapore', 'Netherlands', 'France', 'Malaysia', 'Switzerland', 'Indonesia', 'Hong Kong'];
+    var el1 = document.getElementById('chart-markets-rev');
+    if (el1) registerChart('markets-rev', new SafeChart(el1, {
+      type: 'bar',
+      data: { labels: mkts, datasets: [{ data: [sm(14869), sm(9331), sm(5513), sm(4092), sm(4077), sm(3008), sm(2686), sm(2193)], backgroundColor: C.navy, borderRadius: 1 }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return fmtEur(c.parsed.x); } } } },
+        scales: { x: { grid: { color: C.line }, ticks: { callback: fmtK } }, y: { grid: { display: false } } }
+      }
+    }));
+
+    var el2 = document.getElementById('chart-markets-bkg');
+    if (el2) registerChart('markets-bkg', new SafeChart(el2, {
+      type: 'bar',
+      data: { labels: mkts, datasets: [{ data: [sm(13), sm(16), sm(5), sm(3), sm(3), sm(3), sm(4), sm(3)], backgroundColor: C.navyLight, borderRadius: 1 }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: C.line } }, y: { grid: { display: false } } }
+      }
+    }));
+
+    var el3 = document.getElementById('chart-device-split');
+    if (el3) registerChart('device-split', new SafeChart(el3, {
+      type: 'doughnut',
+      data: {
+        labels: ['Mobile', 'Desktop', 'Tablet'],
+        datasets: [{ data: [sm(13020), sm(4664), sm(192)], backgroundColor: [C.navy, C.gold, C.sand], borderColor: '#fff', borderWidth: 2 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 } } } }
+    }));
+
+    var el4 = document.getElementById('chart-new-ret');
+    if (el4) registerChart('new-ret', new SafeChart(el4, {
+      type: 'doughnut',
+      data: {
+        labels: ['New users', 'Returning'],
+        datasets: [{ data: [sm(10200), sm(3870)], backgroundColor: [C.navy, C.gold], borderColor: '#fff', borderWidth: 2 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 } } } }
+    }));
+  }
+
+  // ===== CREATIVE CARDS (metrics-forward, no image loading) =====
+  var creatives = [
+    { fmt: 'Image',    offer: 'Tourists',   name: 'Website Traffic \u00B7 Mar 2026', revenue: '8,749', spend: '941', bookings: '9', ctr: '1.13%', roas: '9.3x',  lpv: '8,450' },
+    { fmt: 'Image',    offer: 'Tourists',   name: 'Website Traffic \u00B7 Apr 2026', revenue: '6,805',  spend: '743',  bookings: '7', ctr: '2.67%', roas: '9.2x',  lpv: '2,450' },
+    { fmt: 'Carousel', offer: 'Tourists',   name: 'Page Growth \u00B7 Mar 2026',     revenue: '1,944',  spend: '157',  bookings: '2', ctr: '1.13%', roas: '12.4x', lpv: '3' },
+    { fmt: 'Image',    offer: 'Retargeting',name: 'Website Traffic \u00B7 Mar 2026 (RTG)', revenue: '1,944', spend: '156', bookings: '2', ctr: '2.35%', roas: '12.5x', lpv: '593' },
+    { fmt: 'Reel',     offer: 'Weddings',   name: 'Weddings \u00B7 11 Apr 2026',     revenue: '972',  spend: '118',  bookings: '1', ctr: '2.85%', roas: '8.3x',  lpv: '471' },
+    { fmt: 'Carousel', offer: 'Seasonal',   name: 'CNY \u00B7 02 Mar 2026',          revenue: '972',  spend: '28',   bookings: '1', ctr: '4.83%', roas: '34.4x', lpv: '220' }
+  ];
+
+  function buildCreatives() {
+    var grid = document.getElementById('creative-grid');
+    if (!grid) return;
+    var html = '';
+    for (var i = 0; i < creatives.length; i++) {
+      var c = creatives[i];
+      var rank = '#' + (i + 1);
+      html += '<div class="creative">' +
+        '<div class="creative-head">' +
+          '<div class="creative-rank"><strong>' + rank + '</strong></div>' +
+          '<div class="creative-fmt">' + c.fmt + '</div>' +
+          '<div class="creative-offer-head">' + c.offer + '</div>' +
+          '<div class="creative-meta">' + c.name + '</div>' +
+        '</div>' +
+        '<div class="creative-body">' +
+          '<div class="creative-primary">' +
+            '<div>' +
+              '<div class="creative-primary-val"><span class="cur">$</span>' + c.revenue + '</div>' +
+              '<div class="creative-primary-label">Revenue attributed</div>' +
+            '</div>' +
+            '<div class="creative-roas">' +
+              '<div class="creative-roas-val">' + c.roas + '</div>' +
+              '<div class="creative-roas-label">ROAS</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="creative-stats">' +
+            '<div class="creative-stat positive"><div class="s-label">Bookings</div><div class="s-val">' + c.bookings + '</div></div>' +
+            '<div class="creative-stat"><div class="s-label">Spend</div><div class="s-val">$' + c.spend + '</div></div>' +
+            '<div class="creative-stat"><div class="s-label">CTR</div><div class="s-val">' + c.ctr + '</div></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+    grid.innerHTML = html;
+  }
+
+  // ===== FUNNEL =====
+  function drawFunnel(id, steps) {
+    var root = document.getElementById(id);
+    if (!root || !steps || !steps.length) return;
+    var max = steps[0].v;
+    root.innerHTML = '';
+    for (var i = 0; i < steps.length; i++) {
+      var s = steps[i];
+      var pct = max > 0 ? (s.v / max) * 100 : 0;
+      var drop = i === 0 ? null : Math.round((1 - s.v / steps[i-1].v) * 1000) / 10;
+      var row = document.createElement('div');
+      row.className = 'funnel-step';
+      var dropText = drop === null ? '\u2014' : '\u2212' + drop + '%';
+      var dropClass = drop === null ? 'ok' : '';
+      row.innerHTML = '<div class="funnel-label">' + s.step + '<small>' + s.sub + '</small></div>' +
+                      '<div class="funnel-bar"><div class="funnel-bar-fill" style="width:' + pct + '%"></div></div>' +
+                      '<div class="funnel-val">' + s.v.toLocaleString('en-GB') + '</div>' +
+                      '<div class="funnel-drop ' + dropClass + '">' + dropText + '</div>';
+      root.appendChild(row);
+    }
+  }
+
+  // ===== TAB SYSTEM =====
+  var pageBuilders = {
+    overview: buildOverview, paid: buildPaid, offers: buildOffers,
+    attribution: buildAttribution, funnel: buildFunnel, markets: buildMarkets,
+    creative: buildCreatives, action: function() {}
+  };
+  var renderedPages = {};
+
+  function initPage(page) {
+    if (renderedPages[page]) return;
+    renderedPages[page] = true;
+    var fn = pageBuilders[page];
+    if (fn) { try { fn(); } catch (e) { console.error('Page ' + page + ':', e); } }
+  }
+
+  function switchTab(tabId) {
+    var tabs = document.querySelectorAll('.tab');
+    for (var i = 0; i < tabs.length; i++) {
+      if (tabs[i].getAttribute('data-tab') === tabId) tabs[i].classList.add('active');
+      else tabs[i].classList.remove('active');
+    }
+    var pages = document.querySelectorAll('.page');
+    for (var j = 0; j < pages.length; j++) pages[j].classList.remove('active');
+    var p = document.getElementById('page-' + tabId);
+    if (p) p.classList.add('active');
+    initPage(tabId);
+  }
+
+  // ===== DATE PICKER =====
+  var popover = null;
+  var btnDate = null;
+
+  function renderCalendar() {
+    var startM = new Date(state.viewMonth);
+    var endM = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() + 1, 1);
+    renderMonthGrid('cal-grid-left', 'cal-title-left', startM);
+    renderMonthGrid('cal-grid-right', 'cal-title-right', endM);
+
+    // Update selected label
+    var sel = state.tempStart && state.tempEnd
+      ? '<strong>' + fmtDateShort(state.tempStart) + '</strong> \u2014 <strong>' + fmtDateShort(state.tempEnd) + '</strong>'
+      : (state.tempStart ? '<strong>' + fmtDateShort(state.tempStart) + '</strong> \u2014 select end date' : '<em>Select a start date</em>');
+    var selEl = document.getElementById('cal-selected');
+    if (selEl) selEl.innerHTML = sel;
+  }
+
+  function renderMonthGrid(gridId, titleId, monthDate) {
+    var grid = document.getElementById(gridId);
+    var title = document.getElementById(titleId);
+    if (!grid || !title) return;
+
+    title.textContent = ['January','February','March','April','May','June','July','August','September','October','November','December'][monthDate.getMonth()] + ' ' + monthDate.getFullYear();
+
+    var dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var html = '';
+    for (var d = 0; d < 7; d++) html += '<div class="cal-dow">' + dows[d] + '</div>';
+
+    var firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+    var lastDay = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+    var startDow = firstDay.getDay();
+
+    for (var pad = 0; pad < startDow; pad++) {
+      var prevDay = new Date(firstDay);
+      prevDay.setDate(prevDay.getDate() - (startDow - pad));
+      html += '<button class="cal-day muted" disabled>' + prevDay.getDate() + '</button>';
+    }
+
+    for (var day = 1; day <= lastDay.getDate(); day++) {
+      var cellDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
+      var classes = 'cal-day';
+      var s = state.tempStart, e = state.tempEnd;
+      if (s && isSameDay(cellDate, s)) classes += ' range-start';
+      if (e && isSameDay(cellDate, e)) classes += ' range-end';
+      if (s && e && cellDate > s && cellDate < e) classes += ' in-range';
+      var ts = cellDate.getTime();
+      html += '<button class="' + classes + '" data-ts="' + ts + '" type="button">' + day + '</button>';
+    }
+
+    grid.innerHTML = html;
+
+    // Attach handlers
+    var btns = grid.querySelectorAll('button.cal-day:not(.muted):not(:disabled)');
+    for (var k = 0; k < btns.length; k++) {
+      // Click handler — two-click range selection with auto-swap
+      btns[k].addEventListener('click', function(evt) {
+        var ts = parseInt(evt.currentTarget.getAttribute('data-ts'), 10);
+        var picked = new Date(ts);
+        picked.setHours(0, 0, 0, 0);
+
+        if (!state.tempStart || (state.tempStart && state.tempEnd)) {
+          // No selection in progress, OR a complete range exists — start a new selection
+          state.tempStart = picked;
+          state.tempEnd = null;
+        } else {
+          // We have a start but no end — set the end (auto-swap if user picked an earlier date)
+          if (picked.getTime() === state.tempStart.getTime()) {
+            // Same day clicked twice — treat as 1-day range
+            state.tempEnd = picked;
+          } else if (picked < state.tempStart) {
+            // Picked earlier than start — swap
+            state.tempEnd = state.tempStart;
+            state.tempStart = picked;
+          } else {
+            state.tempEnd = picked;
+          }
+        }
+
+        state.activePreset = null;
+        renderPresetActive();
+        renderCalendar();
+      });
+
+      // Hover preview — when start is set but end is not, lighten in-range cells
+      btns[k].addEventListener('mouseenter', function(evt) {
+        if (!state.tempStart || state.tempEnd) return;
+        var ts = parseInt(evt.currentTarget.getAttribute('data-ts'), 10);
+        var hoverDate = new Date(ts);
+        hoverDate.setHours(0, 0, 0, 0);
+        applyHoverPreview(hoverDate);
+      });
+
+      btns[k].addEventListener('mouseleave', function() {
+        if (!state.tempStart || state.tempEnd) return;
+        clearHoverPreview();
+      });
+    }
+  }
+
+  function applyHoverPreview(hoverDate) {
+    var lo = state.tempStart, hi = hoverDate;
+    if (hi < lo) { lo = hoverDate; hi = state.tempStart; }
+    var allBtns = document.querySelectorAll('.cal-day:not(.muted):not(:disabled)');
+    for (var i = 0; i < allBtns.length; i++) {
+      var ts = parseInt(allBtns[i].getAttribute('data-ts'), 10);
+      var d = new Date(ts);
+      d.setHours(0, 0, 0, 0);
+      if (d > lo && d < hi) {
+        allBtns[i].classList.add('preview');
+      } else if (d.getTime() === hi.getTime() && d.getTime() !== state.tempStart.getTime()) {
+        allBtns[i].classList.add('preview-end');
+      }
+    }
+  }
+
+  function clearHoverPreview() {
+    var allBtns = document.querySelectorAll('.cal-day');
+    for (var i = 0; i < allBtns.length; i++) {
+      allBtns[i].classList.remove('preview');
+      allBtns[i].classList.remove('preview-end');
+    }
+  }
+
+  function renderPresetActive() {
+    var items = document.querySelectorAll('.preset-item');
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].getAttribute('data-preset') === state.activePreset) items[i].classList.add('active');
+      else items[i].classList.remove('active');
+    }
+  }
+
+  function applyPreset(p) {
+    var today = new Date(2026, 3, 23); // "today" fixed to data end-date
+    var s, e;
+    switch (p) {
+      case 'all':
+        s = new Date(2026, 2, 1); e = new Date(2026, 3, 23); break;
+      case 'yesterday':
+        s = addDays(today, -1); e = addDays(today, -1); break;
+      case '7':
+        s = addDays(today, -6); e = today; break;
+      case '14':
+        s = addDays(today, -13); e = today; break;
+      case '30':
+        s = addDays(today, -29); e = today; break;
+      case '90':
+        s = addDays(today, -89); e = today; break;
+      case 'this-week':
+        s = addDays(today, -today.getDay()); e = today; break;
+      case 'last-week':
+        var endLW = addDays(today, -today.getDay() - 1);
+        s = addDays(endLW, -6); e = endLW; break;
+      case 'this-month':
+        s = new Date(today.getFullYear(), today.getMonth(), 1); e = today; break;
+      case 'last-month':
+        s = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        e = new Date(today.getFullYear(), today.getMonth(), 0); break;
+      case 'ytd':
+        s = new Date(today.getFullYear(), 0, 1); e = today; break;
+      default: return;
+    }
+    state.tempStart = s; state.tempEnd = e;
+    state.activePreset = p;
+    state.viewMonth = new Date(s.getFullYear(), s.getMonth(), 1);
+    renderPresetActive();
+    renderCalendar();
+  }
+
+  function openPicker() {
+    state.tempStart = state.startDate;
+    state.tempEnd = state.endDate;
+    popover.classList.add('open');
+    btnDate.setAttribute('aria-expanded', 'true');
+    renderCalendar();
+    renderPresetActive();
+  }
+
+  function closePicker() {
+    popover.classList.remove('open');
+    btnDate.setAttribute('aria-expanded', 'false');
+  }
+
+  function commitDates() {
+    if (state.tempStart && state.tempEnd) {
+      state.startDate = state.tempStart;
+      state.endDate = state.tempEnd;
+    } else if (state.tempStart) {
+      state.startDate = state.tempStart;
+      state.endDate = state.tempStart;
+    }
+    // Update UI
+    document.getElementById('date-value').textContent = fmtDateRange(state.startDate, state.endDate);
+    var d = daysBetween(state.startDate, state.endDate);
+    document.getElementById('period-sum').textContent = d === 1 ? '1 day' : d + ' days';
+
+    var label;
+    if (d === 54) label = 'all data';
+    else if (d === 30) label = 'last 30 days';
+    else if (d === 7) label = 'last 7 days';
+    else if (d === 14) label = 'last 14 days';
+    else if (d === 90) label = 'last 90 days';
+    else label = d + ' days';
+    document.getElementById('filter-indicator').innerHTML = 'Showing ' + label + ' \u00B7 ' + fmtDateRange(state.startDate, state.endDate);
+
+    // Flash timestamp
+    var ts = document.getElementById('timestamp');
+    if (ts) {
+      ts.textContent = 'Refreshed ' + new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+      ts.style.color = C.goldDark;
+      setTimeout(function() { ts.style.color = ''; }, 2000);
+    }
+
+    // Re-render everything — clear charts first to free canvases
+    destroyAllCharts();
+    updateKPIs();
+    renderedPages = {};
+    var activeTab = document.querySelector('.tab.active');
+    if (activeTab) initPage(activeTab.getAttribute('data-tab'));
+
+    closePicker();
+  }
+
+  // ===== INIT =====
+  function init() {
+    popover = document.getElementById('date-popover');
+    btnDate = document.getElementById('btn-date-picker');
+
+    btnDate.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (popover.classList.contains('open')) closePicker();
+      else openPicker();
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!popover.classList.contains('open')) return;
+      if (popover.contains(e.target) || btnDate.contains(e.target)) return;
+      closePicker();
+    });
+
+    // Preset buttons
+    var presets = document.querySelectorAll('.preset-item');
+    for (var i = 0; i < presets.length; i++) {
+      (function(btn) {
+        btn.addEventListener('click', function() { applyPreset(btn.getAttribute('data-preset')); });
+      })(presets[i]);
+    }
+
+    // Month navigation
+    document.getElementById('cal-prev').addEventListener('click', function() {
+      state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() - 1, 1);
+      renderCalendar();
+    });
+    document.getElementById('cal-next').addEventListener('click', function() {
+      state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() + 1, 1);
+      renderCalendar();
+    });
+
+    document.getElementById('cal-cancel').addEventListener('click', function() { closePicker(); });
+    document.getElementById('cal-apply').addEventListener('click', commitDates);
+
+    // Tabs
+    var tabs = document.querySelectorAll('.tab');
+    for (var j = 0; j < tabs.length; j++) {
+      (function(t) {
+        t.addEventListener('click', function() { switchTab(t.getAttribute('data-tab')); });
+      })(tabs[j]);
+    }
+
+    // Initial render
+    initPage('overview');
+
+    // Timestamp refresh
+    setInterval(function() {
+      var el = document.getElementById('timestamp');
+      if (!el) return;
+      if (el.textContent.indexOf('Refreshed') === 0) return;
+      var now = new Date();
+      el.textContent = 'Updated ' + now.getDate() + ' ' + monthNames[now.getMonth()] + ' ' + now.getFullYear() +
+        ' \u00B7 ' + String(now.getUTCHours()).padStart(2, '0') + ':' + String(now.getUTCMinutes()).padStart(2, '0') + ' UTC';
+    }, 60000);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+</body>
+</html>
