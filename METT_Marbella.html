@@ -98,6 +98,8 @@
   .cal-day.muted { color: var(--ink-4); }
   .cal-day.in-range { background: var(--gold-soft); color: var(--gold-2); }
   .cal-day.range-start, .cal-day.range-end { background: var(--gold); color: #fff; font-weight: 600; }
+  .cal-day.preview { background: var(--gold-soft); color: var(--gold-2); }
+  .cal-day.preview-end { background: var(--gold); color: #fff; font-weight: 600; opacity: 0.85; }
   .cal-day:disabled { opacity: 0.3; cursor: not-allowed; }
 
   .cal-footer { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 14px; }
@@ -467,7 +469,7 @@
           </div>
         </div>
         <div class="cal-footer">
-          <div class="cal-selected" id="cal-selected"><strong>25 Mar 2026</strong> &mdash; <strong>23 Apr 2026</strong></div>
+          <div class="cal-selected" id="cal-selected"><strong>1 Mar 2026</strong> &mdash; <strong>23 Apr 2026</strong></div>
           <div class="cal-actions">
             <button class="cal-btn" type="button" id="cal-cancel">Cancel</button>
             <button class="cal-btn primary" type="button" id="cal-apply">Apply</button>
@@ -525,6 +527,11 @@
         <div class="value">204</div>
         <div class="delta"><span class="up">82.3% of all bookings</span></div>
       </div>
+      <div class="kpi" id="kpi-paid-spend">
+        <div class="label">Total paid spend</div>
+        <div class="value"><span class="cur">&euro;</span>13,704</div>
+        <div class="delta">Meta &euro;5,897 &middot; Google &euro;7,807</div>
+      </div>
       <div class="kpi hero" id="kpi-roas">
         <div class="label">Blended ROAS</div>
         <div class="value">29.6<span class="unit">x</span></div>
@@ -539,11 +546,6 @@
         <div class="label">Avg booking value</div>
         <div class="value"><span class="cur">&euro;</span>1,982</div>
         <div class="delta">Luxury market positioning</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Conversion rate</div>
-        <div class="value">0.70<span class="unit">%</span></div>
-        <div class="delta">Site-wide session conversion</div>
       </div>
     </div>
 
@@ -593,30 +595,30 @@
           <tbody>
             <tr>
               <td class="name">Google Ads <span class="badge cap">Capture</span></td>
-              <td class="num">&euro;7,807</td>
-              <td class="num">&euro;239,204</td>
-              <td class="num">120</td>
-              <td class="num"><span class="pill good">30.6x</span></td>
-              <td class="num">&euro;65</td>
-              <td class="num">&euro;1,993</td>
+              <td class="num" id="g-spend">&euro;7,807</td>
+              <td class="num" id="g-revenue">&euro;239,204</td>
+              <td class="num" id="g-bookings">120</td>
+              <td class="num"><span class="pill good" id="g-roas">30.6x</span></td>
+              <td class="num" id="g-cpb">&euro;65</td>
+              <td class="num" id="g-aov">&euro;1,993</td>
             </tr>
             <tr>
               <td class="name">Meta Ads <span class="badge gen">Generate</span></td>
-              <td class="num">&euro;5,897</td>
-              <td class="num">&euro;166,227</td>
-              <td class="num">84</td>
-              <td class="num"><span class="pill good">28.2x</span></td>
-              <td class="num">&euro;70</td>
-              <td class="num">&euro;1,979</td>
+              <td class="num" id="m-spend">&euro;5,897</td>
+              <td class="num" id="m-revenue">&euro;166,227</td>
+              <td class="num" id="m-bookings">84</td>
+              <td class="num"><span class="pill good" id="m-roas">28.2x</span></td>
+              <td class="num" id="m-cpb">&euro;70</td>
+              <td class="num" id="m-aov">&euro;1,979</td>
             </tr>
             <tr class="tot-row">
               <td>Total paid</td>
-              <td class="num">&euro;13,704</td>
-              <td class="num">&euro;405,431</td>
-              <td class="num">204</td>
-              <td class="num">29.6x</td>
-              <td class="num">&euro;67</td>
-              <td class="num">&euro;1,987</td>
+              <td class="num" id="t-spend">&euro;13,704</td>
+              <td class="num" id="t-revenue">&euro;405,431</td>
+              <td class="num" id="t-bookings">204</td>
+              <td class="num" id="t-roas">29.6x</td>
+              <td class="num" id="t-cpb">&euro;67</td>
+              <td class="num" id="t-aov">&euro;1,987</td>
             </tr>
           </tbody>
         </table>
@@ -630,10 +632,10 @@
 
     <div class="section-label">Google Ads &middot; high-intent demand capture</div>
     <div class="kpi-grid cols-4">
-      <div class="kpi hero"><div class="label">Spend</div><div class="value"><span class="cur">&euro;</span>7,807</div><div class="delta">54 days &middot; EUR</div></div>
-      <div class="kpi"><div class="label">Bookings</div><div class="value">120</div><div class="delta"><span class="up">Re-attributed</span></div></div>
-      <div class="kpi"><div class="label">Revenue</div><div class="value"><span class="cur">&euro;</span>239,204</div><div class="delta"><span class="up">30.6x ROAS</span></div></div>
-      <div class="kpi"><div class="label">Clicks</div><div class="value">11,420</div><div class="delta">CTR 0.62% &middot; CPC &euro;0.68</div></div>
+      <div class="kpi hero" id="kpi-g-spend"><div class="label">Spend</div><div class="value"><span class="cur">&euro;</span>7,807</div><div class="delta"><span class="g-period">54 days</span> &middot; EUR</div></div>
+      <div class="kpi" id="kpi-g-bookings"><div class="label">Bookings</div><div class="value">120</div><div class="delta"><span class="up">Re-attributed</span></div></div>
+      <div class="kpi" id="kpi-g-revenue"><div class="label">Revenue</div><div class="value"><span class="cur">&euro;</span>239,204</div><div class="delta"><span class="up"><span class="g-roas-text">30.6x</span> ROAS</span></div></div>
+      <div class="kpi" id="kpi-g-clicks"><div class="label">Clicks</div><div class="value">11,420</div><div class="delta"><span class="g-clicks-meta">CTR 0.62% &middot; CPC &euro;0.68</span></div></div>
     </div>
 
     <div class="grid-2">
@@ -658,10 +660,10 @@
 
     <div class="section-label">Meta Ads &middot; demand generation &amp; assisted booking</div>
     <div class="kpi-grid cols-4">
-      <div class="kpi hero"><div class="label">Spend</div><div class="value"><span class="cur">&euro;</span>5,897</div><div class="delta">54 days &middot; EUR</div></div>
-      <div class="kpi"><div class="label">Bookings</div><div class="value">84</div><div class="delta"><span class="up">Re-attributed</span></div></div>
-      <div class="kpi"><div class="label">Revenue</div><div class="value"><span class="cur">&euro;</span>166,227</div><div class="delta"><span class="up">28.2x ROAS</span></div></div>
-      <div class="kpi"><div class="label">Landing page views</div><div class="value">23,840</div><div class="delta">CTR 1.55% &middot; CPC &euro;0.14</div></div>
+      <div class="kpi hero" id="kpi-m-spend"><div class="label">Spend</div><div class="value"><span class="cur">&euro;</span>5,897</div><div class="delta"><span class="m-period">54 days</span> &middot; EUR</div></div>
+      <div class="kpi" id="kpi-m-bookings"><div class="label">Bookings</div><div class="value">84</div><div class="delta"><span class="up">Re-attributed</span></div></div>
+      <div class="kpi" id="kpi-m-revenue"><div class="label">Revenue</div><div class="value"><span class="cur">&euro;</span>166,227</div><div class="delta"><span class="up"><span class="m-roas-text">28.2x</span> ROAS</span></div></div>
+      <div class="kpi" id="kpi-m-lpv"><div class="label">Landing page views</div><div class="value">23,840</div><div class="delta"><span class="m-lpv-meta">CTR 1.55% &middot; CPC &euro;0.14</span></div></div>
     </div>
 
     <div class="card">
@@ -747,12 +749,12 @@
     </div>
 
     <div class="kpi-grid cols-6">
-      <div class="kpi"><div class="label">Direct paid revenue</div><div class="value"><span class="cur">&euro;</span>115,106</div><div class="delta">UTM-tagged paid sessions</div></div>
-      <div class="kpi"><div class="label">Chain referral (paid)</div><div class="value"><span class="cur">&euro;</span>241,040</div><div class="delta">Reassigned from referral</div></div>
-      <div class="kpi"><div class="label">Direct/unassigned (paid)</div><div class="value"><span class="cur">&euro;</span>49,215</div><div class="delta">Ad-driven direct &amp; unassigned</div></div>
-      <div class="kpi hero"><div class="label">Paid influenced revenue</div><div class="value"><span class="cur">&euro;</span>405,431</div><div class="delta"><span class="up">82.5% of total</span></div></div>
-      <div class="kpi hero"><div class="label">Paid influenced bookings</div><div class="value">204</div><div class="delta"><span class="up">82.3% of bookings</span></div></div>
-      <div class="kpi"><div class="label">True blended ROAS</div><div class="value">29.6<span class="unit">x</span></div><div class="delta"><span class="up">Healthy commercial return</span></div></div>
+      <div class="kpi" id="kpi-attr-direct"><div class="label">Direct paid revenue</div><div class="value"><span class="cur">&euro;</span>115,106</div><div class="delta">UTM-tagged paid sessions</div></div>
+      <div class="kpi" id="kpi-attr-chain"><div class="label">Chain referral (paid)</div><div class="value"><span class="cur">&euro;</span>241,040</div><div class="delta">Reassigned from referral</div></div>
+      <div class="kpi" id="kpi-attr-unassigned"><div class="label">Direct/unassigned (paid)</div><div class="value"><span class="cur">&euro;</span>49,215</div><div class="delta">Ad-driven direct &amp; unassigned</div></div>
+      <div class="kpi hero" id="kpi-attr-paidrev"><div class="label">Paid influenced revenue</div><div class="value"><span class="cur">&euro;</span>405,431</div><div class="delta"><span class="up">82.5% of total</span></div></div>
+      <div class="kpi hero" id="kpi-attr-paidbkg"><div class="label">Paid influenced bookings</div><div class="value">204</div><div class="delta"><span class="up">82.3% of bookings</span></div></div>
+      <div class="kpi" id="kpi-attr-roas"><div class="label">True blended ROAS</div><div class="value">29.6<span class="unit">x</span></div><div class="delta"><span class="up">Healthy commercial return</span></div></div>
     </div>
 
     <div class="grid-2">
@@ -1188,14 +1190,26 @@
     if (v) v.innerHTML = html;
   }
 
+  // helpers for direct text injection (works on td cells, etc.)
+  function setText(id, text) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+  function setHtml(id, html) {
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  }
+
   function updateKPIs() {
     var f = getScaledData();
 
     var totalRev = f.totalRevenue;
     var totalBkg = f.totalBookings;
     var paidSpend = f.totalPaidSpend;
+    var metaSpend = f.totalMetaSpend;
+    var googleSpend = f.totalGoogleSpend;
 
-    // Paid attribution: maintain the 82.5% revenue / 82.3% booking model from re-attribution logic
+    // Paid attribution: maintain the 82.5% revenue / 82.3% booking model
     var paidRev = totalRev * 0.825;
     var paidBkg = Math.round(totalBkg * 0.823);
 
@@ -1203,14 +1217,103 @@
     var roas = paidSpend > 0 ? paidRev / paidSpend : 0;
     var cpb = paidBkg > 0 ? paidSpend / paidBkg : 0;
 
+    // Google/Meta split — based on observed 59/41 of paid revenue & bookings
+    var googleRev = paidRev * 0.59;
+    var metaRev = paidRev * 0.41;
+    var googleBkg = Math.round(paidBkg * 0.59);
+    var metaBkg = paidBkg - googleBkg;
+    var googleRoas = googleSpend > 0 ? googleRev / googleSpend : 0;
+    var metaRoas = metaSpend > 0 ? metaRev / metaSpend : 0;
+    var googleCpb = googleBkg > 0 ? googleSpend / googleBkg : 0;
+    var metaCpb = metaBkg > 0 ? metaSpend / metaBkg : 0;
+    var googleAov = googleBkg > 0 ? googleRev / googleBkg : 0;
+    var metaAov = metaBkg > 0 ? metaRev / metaBkg : 0;
+    var totalAov = paidBkg > 0 ? paidRev / paidBkg : 0;
+
+    function eur(v) { return '\u20AC' + Math.round(v).toLocaleString('en-GB'); }
+
+    // ===== Page I: Executive overview =====
     setKpi('kpi-total-rev', '<span class="cur">\u20AC</span>' + Math.round(totalRev).toLocaleString('en-GB'));
     setKpi('kpi-total-bkg', Math.round(totalBkg).toLocaleString('en-GB'));
     setKpi('kpi-paid-rev', '<span class="cur">\u20AC</span>' + Math.round(paidRev).toLocaleString('en-GB'));
     setKpi('kpi-paid-bkg', Math.round(paidBkg).toLocaleString('en-GB'));
+    setKpi('kpi-paid-spend', '<span class="cur">\u20AC</span>' + Math.round(paidSpend).toLocaleString('en-GB'));
     setKpi('kpi-roas', roas.toFixed(1) + '<span class="unit">x</span>');
     setKpi('kpi-cpb', '<span class="cur">\u20AC</span>' + Math.round(cpb).toLocaleString('en-GB'));
     setKpi('kpi-avg-val', '<span class="cur">\u20AC</span>' + Math.round(avgBkgVal).toLocaleString('en-GB'));
 
+    var spendDelta = document.querySelector('#kpi-paid-spend .delta');
+    if (spendDelta) {
+      spendDelta.innerHTML = 'Meta ' + eur(metaSpend) + ' \u00B7 Google ' + eur(googleSpend);
+    }
+
+    // ===== Page II: Channel summary table =====
+    setText('g-spend', eur(googleSpend));
+    setText('g-revenue', eur(googleRev));
+    setText('g-bookings', googleBkg);
+    setText('g-roas', googleRoas.toFixed(1) + 'x');
+    setText('g-cpb', eur(googleCpb));
+    setText('g-aov', eur(googleAov));
+
+    setText('m-spend', eur(metaSpend));
+    setText('m-revenue', eur(metaRev));
+    setText('m-bookings', metaBkg);
+    setText('m-roas', metaRoas.toFixed(1) + 'x');
+    setText('m-cpb', eur(metaCpb));
+    setText('m-aov', eur(metaAov));
+
+    setText('t-spend', eur(paidSpend));
+    setText('t-revenue', eur(paidRev));
+    setText('t-bookings', paidBkg);
+    setText('t-roas', roas.toFixed(1) + 'x');
+    setText('t-cpb', eur(cpb));
+    setText('t-aov', eur(totalAov));
+
+    // ===== Page II: Per-channel KPI cards =====
+    setKpi('kpi-g-spend', '<span class="cur">\u20AC</span>' + Math.round(googleSpend).toLocaleString('en-GB'));
+    setKpi('kpi-g-bookings', googleBkg.toLocaleString('en-GB'));
+    setKpi('kpi-g-revenue', '<span class="cur">\u20AC</span>' + Math.round(googleRev).toLocaleString('en-GB'));
+    setKpi('kpi-m-spend', '<span class="cur">\u20AC</span>' + Math.round(metaSpend).toLocaleString('en-GB'));
+    setKpi('kpi-m-bookings', metaBkg.toLocaleString('en-GB'));
+    setKpi('kpi-m-revenue', '<span class="cur">\u20AC</span>' + Math.round(metaRev).toLocaleString('en-GB'));
+
+    var gPeriod = document.querySelectorAll('.g-period, .m-period');
+    for (var gp = 0; gp < gPeriod.length; gp++) gPeriod[gp].textContent = f.days + ' days';
+
+    var gRoasText = document.querySelectorAll('.g-roas-text');
+    for (var gr = 0; gr < gRoasText.length; gr++) gRoasText[gr].textContent = googleRoas.toFixed(1) + 'x';
+    var mRoasText = document.querySelectorAll('.m-roas-text');
+    for (var mr = 0; mr < mRoasText.length; mr++) mRoasText[mr].textContent = metaRoas.toFixed(1) + 'x';
+
+    // ===== Page IV: Attribution KPIs =====
+    // Direct paid (UTM-tagged): ~28.4% of paid revenue
+    // Chain referral: ~59.5% of paid revenue
+    // Direct/unassigned (paid): ~12.1% of paid revenue
+    var attrDirect = paidRev * 0.284;
+    var attrChain = paidRev * 0.595;
+    var attrUnassigned = paidRev * 0.121;
+    var paidPct = totalRev > 0 ? (paidRev / totalRev) * 100 : 0;
+    var paidBkgPct = totalBkg > 0 ? (paidBkg / totalBkg) * 100 : 0;
+
+    setKpi('kpi-attr-direct', '<span class="cur">\u20AC</span>' + Math.round(attrDirect).toLocaleString('en-GB'));
+    setKpi('kpi-attr-chain', '<span class="cur">\u20AC</span>' + Math.round(attrChain).toLocaleString('en-GB'));
+    setKpi('kpi-attr-unassigned', '<span class="cur">\u20AC</span>' + Math.round(attrUnassigned).toLocaleString('en-GB'));
+    setKpi('kpi-attr-paidrev', '<span class="cur">\u20AC</span>' + Math.round(paidRev).toLocaleString('en-GB'));
+    setKpi('kpi-attr-paidbkg', paidBkg.toLocaleString('en-GB'));
+    setKpi('kpi-attr-roas', roas.toFixed(1) + '<span class="unit">x</span>');
+
+    var attrPaidRevDelta = document.querySelector('#kpi-attr-paidrev .delta');
+    if (attrPaidRevDelta) attrPaidRevDelta.innerHTML = '<span class="up">' + paidPct.toFixed(1) + '% of total</span>';
+    var attrPaidBkgDelta = document.querySelector('#kpi-attr-paidbkg .delta');
+    if (attrPaidBkgDelta) attrPaidBkgDelta.innerHTML = '<span class="up">' + paidBkgPct.toFixed(1) + '% of bookings</span>';
+
+    // ===== Page I: Paid revenue card delta % =====
+    var paidRevDelta = document.querySelector('#kpi-paid-rev .delta');
+    if (paidRevDelta) paidRevDelta.innerHTML = '<span class="up">Driving ' + paidPct.toFixed(1) + '% of revenue</span>';
+    var paidBkgDelta = document.querySelector('#kpi-paid-bkg .delta');
+    if (paidBkgDelta) paidBkgDelta.innerHTML = '<span class="up">' + paidBkgPct.toFixed(1) + '% of all bookings</span>';
+
+    // Date range label across the whole dashboard
     var labels = document.querySelectorAll('.date-range-label');
     var txt = f.days + ' days';
     for (var i = 0; i < labels.length; i++) labels[i].textContent = txt;
@@ -1642,22 +1745,72 @@
     // Attach handlers
     var btns = grid.querySelectorAll('button.cal-day:not(.muted):not(:disabled)');
     for (var k = 0; k < btns.length; k++) {
+      // Click handler — two-click range selection with auto-swap
       btns[k].addEventListener('click', function(evt) {
         var ts = parseInt(evt.currentTarget.getAttribute('data-ts'), 10);
         var picked = new Date(ts);
+        picked.setHours(0, 0, 0, 0);
+
         if (!state.tempStart || (state.tempStart && state.tempEnd)) {
-          state.tempStart = picked;
-          state.tempEnd = null;
-        } else if (picked < state.tempStart) {
+          // No selection in progress, OR a complete range exists — start a new selection
           state.tempStart = picked;
           state.tempEnd = null;
         } else {
-          state.tempEnd = picked;
+          // We have a start but no end — set the end (auto-swap if user picked an earlier date)
+          if (picked.getTime() === state.tempStart.getTime()) {
+            // Same day clicked twice — treat as 1-day range
+            state.tempEnd = picked;
+          } else if (picked < state.tempStart) {
+            // Picked earlier than start — swap
+            state.tempEnd = state.tempStart;
+            state.tempStart = picked;
+          } else {
+            state.tempEnd = picked;
+          }
         }
+
         state.activePreset = null;
         renderPresetActive();
         renderCalendar();
       });
+
+      // Hover preview — when start is set but end is not, lighten in-range cells
+      btns[k].addEventListener('mouseenter', function(evt) {
+        if (!state.tempStart || state.tempEnd) return;
+        var ts = parseInt(evt.currentTarget.getAttribute('data-ts'), 10);
+        var hoverDate = new Date(ts);
+        hoverDate.setHours(0, 0, 0, 0);
+        applyHoverPreview(hoverDate);
+      });
+
+      btns[k].addEventListener('mouseleave', function() {
+        if (!state.tempStart || state.tempEnd) return;
+        clearHoverPreview();
+      });
+    }
+  }
+
+  function applyHoverPreview(hoverDate) {
+    var lo = state.tempStart, hi = hoverDate;
+    if (hi < lo) { lo = hoverDate; hi = state.tempStart; }
+    var allBtns = document.querySelectorAll('.cal-day:not(.muted):not(:disabled)');
+    for (var i = 0; i < allBtns.length; i++) {
+      var ts = parseInt(allBtns[i].getAttribute('data-ts'), 10);
+      var d = new Date(ts);
+      d.setHours(0, 0, 0, 0);
+      if (d > lo && d < hi) {
+        allBtns[i].classList.add('preview');
+      } else if (d.getTime() === hi.getTime() && d.getTime() !== state.tempStart.getTime()) {
+        allBtns[i].classList.add('preview-end');
+      }
+    }
+  }
+
+  function clearHoverPreview() {
+    var allBtns = document.querySelectorAll('.cal-day');
+    for (var i = 0; i < allBtns.length; i++) {
+      allBtns[i].classList.remove('preview');
+      allBtns[i].classList.remove('preview-end');
     }
   }
 
