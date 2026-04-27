@@ -1783,9 +1783,26 @@
     for (var k = 0; k < btns.length; k++) {
       // Click handler — two-click range selection with auto-swap
       btns[k].addEventListener('click', function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
         var ts = parseInt(evt.currentTarget.getAttribute('data-ts'), 10);
+        // Always create a fresh Date object normalized to midnight
         var picked = new Date(ts);
-        picked.setHours(0, 0, 0, 0);
+        picked = new Date(picked.getFullYear(), picked.getMonth(), picked.getDate());
+
+        // Normalize tempStart/tempEnd to ensure they're real Date objects at midnight
+        if (state.tempStart && !(state.tempStart instanceof Date)) {
+          state.tempStart = new Date(state.tempStart);
+        }
+        if (state.tempStart) {
+          state.tempStart = new Date(state.tempStart.getFullYear(), state.tempStart.getMonth(), state.tempStart.getDate());
+        }
+        if (state.tempEnd && !(state.tempEnd instanceof Date)) {
+          state.tempEnd = new Date(state.tempEnd);
+        }
+        if (state.tempEnd) {
+          state.tempEnd = new Date(state.tempEnd.getFullYear(), state.tempEnd.getMonth(), state.tempEnd.getDate());
+        }
 
         if (!state.tempStart || (state.tempStart && state.tempEnd)) {
           // No selection in progress, OR a complete range exists — start a new selection
@@ -1793,10 +1810,12 @@
           state.tempEnd = null;
         } else {
           // We have a start but no end — set the end (auto-swap if user picked an earlier date)
-          if (picked.getTime() === state.tempStart.getTime()) {
+          var pickedTime = picked.getTime();
+          var startTime = state.tempStart.getTime();
+          if (pickedTime === startTime) {
             // Same day clicked twice — treat as 1-day range
             state.tempEnd = picked;
-          } else if (picked < state.tempStart) {
+          } else if (pickedTime < startTime) {
             // Picked earlier than start — swap
             state.tempEnd = state.tempStart;
             state.tempStart = picked;
@@ -1806,6 +1825,7 @@
         }
 
         state.activePreset = null;
+        clearHoverPreview();
         renderPresetActive();
         renderCalendar();
       });
@@ -1896,8 +1916,9 @@
   }
 
   function openPicker() {
-    state.tempStart = state.startDate;
-    state.tempEnd = state.endDate;
+    // Clone and normalize to midnight to avoid time-of-day comparison bugs
+    state.tempStart = state.startDate ? new Date(state.startDate.getFullYear(), state.startDate.getMonth(), state.startDate.getDate()) : null;
+    state.tempEnd = state.endDate ? new Date(state.endDate.getFullYear(), state.endDate.getMonth(), state.endDate.getDate()) : null;
     popover.classList.add('open');
     btnDate.setAttribute('aria-expanded', 'true');
     renderCalendar();
