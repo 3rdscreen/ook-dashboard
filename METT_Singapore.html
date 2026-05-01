@@ -246,7 +246,9 @@
   .creative:hover .creative-view { opacity: 1; }
   .creative-view:hover { background: var(--gold); color: var(--ink); }
   
-    /* ================ RECOMMENDATIONS ================ */
+  
+
+  /* ================ RECOMMENDATIONS ================ */
   .rec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
   .rec { background: var(--surface); border: 1px solid var(--line); padding: 20px 22px; border-top: 3px solid var(--gold); }
   .rec.good { border-top-color: var(--success); }
@@ -822,8 +824,7 @@
       <div class="card"><div class="card-head"><div><h3>Device breakdown</h3><div class="card-sub">Sessions vs revenue</div></div></div><div class="chart-wrap"><canvas id="chart-device" role="img" aria-label="Device sessions and revenue">Device split.</canvas></div></div>
     </div>
 
-    <div class="grid-2">
-      <div class="card">
+    <div class="card">
         <div class="card-head"><div><h3>Top viewed pages</h3><div class="card-sub">Real GA4 page views &middot; full period</div></div></div>
         <div class="table-wrap">
           <table class="data">
@@ -847,36 +848,146 @@
         </div>
         <p style="font-size: 11px; color: var(--ink-3); margin-top: 12px; line-height: 1.5;"><em>Per-page booking revenue is not visible in GA4 because purchases complete on the Synxis subdomain (<code style="font-family: var(--font-mono); font-size: 10.5px; background: var(--surface-2); padding: 1px 5px;">reservations.sunsethotelsandresorts.com</code>) where attribution resets. See Recommendations.</em></p>
       </div>
-      <div class="card">
-        <div class="card-head"><div><h3>Top landing pages</h3><div class="card-sub">Where sessions enter the site &middot; with bounce rate</div></div></div>
-        <div class="table-wrap">
-          <table class="data">
-            <thead><tr><th>Landing page</th><th class="num">Sessions</th><th class="num">Bounce rate</th></tr></thead>
-            <tbody>
-              <tr><td class="name">/singapore/</td><td class="num">3,200</td><td class="num"><span class="pill good">24.5%</span></td></tr>
-              <tr><td class="name">/singapore/booking/</td><td class="num">2,700</td><td class="num"><span class="pill good">26.8%</span></td></tr>
-              <tr><td class="name">/?adult=2&amp;arrive=...&amp;rate=EASTER_2026</td><td class="num" data-base="84" data-fmt="int">84</td><td class="num"><span class="pill warn">31.0%</span></td></tr>
-              
-              <tr><td class="name">/singapore/dine-play/</td><td class="num">580</td><td class="num"><span class="pill good">28.2%</span></td></tr>
-              <tr><td class="name">/singapore/restaurants/lamo-bistro-del-mare/</td><td class="num" data-base="280" data-fmt="int">280</td><td class="num"><span class="pill good">29.6%</span></td></tr>
-              <tr><td class="name">/singapore/the-longevity-suite/</td><td class="num" data-base="190" data-fmt="int">190</td><td class="num"><span class="pill good">24.2%</span></td></tr>
-              <tr><td class="name">/singapore/rooms/</td><td class="num">340</td><td class="num"><span class="pill good">26.4%</span></td></tr>
-              <tr><td class="name">/singapore/about-us/</td><td class="num">170</td><td class="num"><span class="pill warn">38.4%</span></td></tr>
-              <tr><td class="name">/singapore/events/</td><td class="num">150</td><td class="num"><span class="pill warn">36.7%</span></td></tr>
-              <tr><td class="name">/singapore/suites/</td><td class="num" data-base="130" data-fmt="int">130</td><td class="num"><span class="pill good">26.9%</span></td></tr>
-              <tr><td class="name">/singapore/restaurants/sushisamba-singapore/</td><td class="num">85</td><td class="num"><span class="pill good">27.1%</span></td></tr>
-              <tr><td class="name">/singapore/offers/plan-ahead-your-stay/</td><td class="num">75</td><td class="num"><span class="pill good">21.3%</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p style="font-size: 11px; color: var(--ink-3); margin-top: 12px; line-height: 1.5;"><em>Two issues to fix: a booking URL with the EASTER_2026 promo code appears in landing pages 84 times — likely from a campaign-tagged direct link. The /singapore/booking/ landing page receives substantial direct entry &mdash; likely tracker spam or a misfired tag.</em></p>
+
+
+    <div class="card" style="margin-top: 20px;">
+      <div class="card-head"><div><h3>Geo performance</h3><div class="card-sub">Top 12 country/city combinations by sessions</div></div></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Country</th><th>City</th><th class="num">Users</th><th class="num">Sessions</th><th class="num">Engagement</th><th class="num">Bookings</th><th class="num">Revenue</th><th class="num">CVR</th></tr></thead>
+          <tbody>
+              <tr>
+                <td class="name">Singapore</td>
+                <td>Singapore</td>
+                <td class="num" data-base="6522" data-fmt="int">6,522</td>
+                <td class="num" data-base="8823" data-fmt="int">8,823</td>
+                <td class="num">65.0%</td>
+                <td class="num" data-base="19" data-fmt="int">19</td>
+                <td class="num" data-base="12150.0" data-fmt="eur">$12,150</td>
+                <td class="num"><span class="pill danger">0.22%</span></td>
+              </tr>
+              <tr>
+                <td class="name">Australia</td>
+                <td>Perth</td>
+                <td class="num" data-base="322" data-fmt="int">322</td>
+                <td class="num" data-base="389" data-fmt="int">389</td>
+                <td class="num">75.1%</td>
+                <td class="num" data-base="8" data-fmt="int">8</td>
+                <td class="num" data-base="9740.0" data-fmt="eur">$9,740</td>
+                <td class="num"><span class="pill warn">2.06%</span></td>
+              </tr>
+              <tr>
+                <td class="name">Australia</td>
+                <td>Sydney</td>
+                <td class="num" data-base="359" data-fmt="int">359</td>
+                <td class="num" data-base="453" data-fmt="int">453</td>
+                <td class="num">69.3%</td>
+                <td class="num" data-base="3" data-fmt="int">3</td>
+                <td class="num" data-base="5356.0" data-fmt="eur">$5,356</td>
+                <td class="num"><span class="pill danger">0.66%</span></td>
+              </tr>
+              <tr>
+                <td class="name">Malaysia</td>
+                <td>Petaling Jaya</td>
+                <td class="num" data-base="52" data-fmt="int">52</td>
+                <td class="num" data-base="59" data-fmt="int">59</td>
+                <td class="num">28.8%</td>
+                <td class="num" data-base="3" data-fmt="int">3</td>
+                <td class="num" data-base="4079.0" data-fmt="eur">$4,079</td>
+                <td class="num"><span class="pill good">5.08%</span></td>
+              </tr>
+              <tr>
+                <td class="name">Hong Kong</td>
+                <td>Hong Kong</td>
+                <td class="num" data-base="326" data-fmt="int">326</td>
+                <td class="num" data-base="500" data-fmt="int">500</td>
+                <td class="num">49.2%</td>
+                <td class="num" data-base="3" data-fmt="int">3</td>
+                <td class="num" data-base="2194.0" data-fmt="eur">$2,194</td>
+                <td class="num"><span class="pill danger">0.60%</span></td>
+              </tr>
+              <tr>
+                <td class="name">France</td>
+                <td>Paris</td>
+                <td class="num" data-base="337" data-fmt="int">337</td>
+                <td class="num" data-base="353" data-fmt="int">353</td>
+                <td class="num">22.9%</td>
+                <td class="num" data-base="2" data-fmt="int">2</td>
+                <td class="num" data-base="3452.0" data-fmt="eur">$3,452</td>
+                <td class="num"><span class="pill danger">0.57%</span></td>
+              </tr>
+              <tr>
+                <td class="name">Australia</td>
+                <td>Melbourne</td>
+                <td class="num" data-base="433" data-fmt="int">433</td>
+                <td class="num" data-base="524" data-fmt="int">524</td>
+                <td class="num">67.9%</td>
+                <td class="num" data-base="2" data-fmt="int">2</td>
+                <td class="num" data-base="1665.0" data-fmt="eur">$1,665</td>
+                <td class="num"><span class="pill danger">0.38%</span></td>
+              </tr>
+              <tr>
+                <td class="name">Indonesia</td>
+                <td>Jakarta</td>
+                <td class="num" data-base="86" data-fmt="int">86</td>
+                <td class="num" data-base="121" data-fmt="int">121</td>
+                <td class="num">66.9%</td>
+                <td class="num" data-base="1" data-fmt="int">1</td>
+                <td class="num" data-base="593.0" data-fmt="eur">$593</td>
+                <td class="num"><span class="pill danger">0.83%</span></td>
+              </tr>
+              <tr>
+                <td class="name">United Kingdom</td>
+                <td>London</td>
+                <td class="num" data-base="232" data-fmt="int">232</td>
+                <td class="num" data-base="278" data-fmt="int">278</td>
+                <td class="num">72.3%</td>
+                <td class="num" data-base="1" data-fmt="int">1</td>
+                <td class="num" data-base="499.0" data-fmt="eur">$499</td>
+                <td class="num"><span class="pill danger">0.36%</span></td>
+              </tr>
+              <tr>
+                <td class="name">United Arab Emirates</td>
+                <td>Dubai</td>
+                <td class="num" data-base="419" data-fmt="int">419</td>
+                <td class="num" data-base="460" data-fmt="int">460</td>
+                <td class="num">16.5%</td>
+                <td class="num" data-base="0" data-fmt="int">0</td>
+                <td class="num" data-base="0.0" data-fmt="eur">$0</td>
+                <td class="num"><span class="pill danger">0.00%</span></td>
+              </tr>
+              <tr>
+                <td class="name">Malaysia</td>
+                <td>Kuala Lumpur</td>
+                <td class="num" data-base="368" data-fmt="int">368</td>
+                <td class="num" data-base="396" data-fmt="int">396</td>
+                <td class="num">27.5%</td>
+                <td class="num" data-base="0" data-fmt="int">0</td>
+                <td class="num" data-base="0.0" data-fmt="eur">$0</td>
+                <td class="num"><span class="pill danger">0.00%</span></td>
+              </tr>
+              <tr>
+                <td class="name">Australia</td>
+                <td>Brisbane</td>
+                <td class="num" data-base="161" data-fmt="int">161</td>
+                <td class="num" data-base="198" data-fmt="int">198</td>
+                <td class="num">68.7%</td>
+                <td class="num" data-base="0" data-fmt="int">0</td>
+                <td class="num" data-base="0.0" data-fmt="eur">$0</td>
+                <td class="num"><span class="pill danger">0.00%</span></td>
+              </tr>
+          </tbody>
+        </table>
       </div>
+      <p style="font-size: 11px; color: var(--ink-3); margin-top: 12px; line-height: 1.6;"><em>Australia is the standout: Perth alone delivered 8 bookings ($9,740 revenue) on 389 sessions &mdash; a 2.06% session-to-booking rate, the highest of any city. Sydney and Melbourne add another 5 bookings. <strong>Dubai shows 419 users, 16.5% engagement rate, zero attributed bookings</strong> &mdash; either a product/messaging mismatch or booking-engine friction (currency, payment method, language) that GA4 can&rsquo;t see past the Synxis hop.</em></p>
     </div>
 
-    <div class="insight">
+        <div class="insight">
       <div class="insight-mark">!</div>
       <p>The biggest funnel issue here is <em>cross-domain attribution loss</em>. The Synxis booking engine on <code>reservations.sunsethotelsandresorts.com</code> resets last-click attribution after the domain hop, which is why <em>Google CPC sessions show 3,153 visits but zero attributed purchases</em> in GA4. UAE shows 953 sessions with zero attributed bookings — possibly a market with strong interest but a booking-engine friction (currency, payment method, language).</p>
     </div>
+
+
   </section>
 
   <!-- ======== PAGE VI: MARKETS ======== -->
