@@ -1070,6 +1070,39 @@
   var ga4Sessions = [247,279,369,522,510,504,445,615,604,598,565,546,426,459,557,716,687,699,665,543,529,570,665,672,615,677,533,596,761,691,639,569,728,606,591,716,766,667,669,778,743,558,783,832,1003,859,1271,835,811,866,948,840,710,777,633,554,737,799,841,667,675];
   var metaSpendArr   = [0,0,0,28.06,105.67,96.36,104.45,109.44,98.14,99.48,100.88,97.69,98.35,103.41,106.99,95.21,106.89,101.75,100.15,99.72,110.55,116.56,101.32,101.82,101.31,98.86,87.56,90.11,95.96,87.41,69.65,1.16,115.75,81.01,91.28,96.14,86.07,88.26,90.44,101.44,117.15,160.36,145.84,131.68,128.91,151.37,221.11,202.51,166.92,174.83,165.67,196.69,253.39,215.74,222.74,229.66,235.88,217.66,215.11,206.8,31.48];
   var googleSpendArr = [0,0,0,89.07,102.65,86.56,143.99,93.32,111.29,73.39,83.07,147.05,91.38,113.05,142.27,126.42,132.23,103.42,105.33,86.36,96.41,109.76,96.2,100.02,70.77,107.33,98.17,93.04,116.7,42.62,42.91,24.96,314.44,159.34,184.11,175.51,181.3,185.33,148.02,185.71,153.31,124.79,216.77,176.7,183.0,270.53,302.76,297.9,297.76,283.38,328.27,352.23,244.76,211.37,193.86,282.79,329.83,289.38,267.27,236.71,204.22];
+
+  // Per-creative daily arrays — index 0..7 corresponds to creatives[0..7]
+  var creativeDailySpend = [
+    [0.00,0.00,0.00,21.53,85.01,79.56,84.44,87.59,80.62,81.54,82.62,79.05,80.43,84.46,87.70,74.40,71.30,66.89,66.03,65.77,74.23,78.48,68.54,66.14,66.44,66.93,69.35,69.61,70.26,64.76,55.88,1.16,84.64,63.44,72.76,76.29,67.63,66.87,65.91,63.95,42.48,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00],
+    [0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,2.09,1.27,33.78,41.47,29.01,52.33,46.80,38.38,29.91,32.58,32.85,48.38,51.31,59.75,50.47,66.51,82.89,74.63,68.42,49.89,0.00],
+    [0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,6.57,18.03,10.46,9.93,0.00,11.84,9.82,10.39,10.47,10.70,15.51,18.00,37.00,15.97,17.45,5.68,0.00,0.00,11.20,16.55,17.13,17.54,16.94,9.79,17.54,22.35,20.28,20.62,29.76,29.87,26.03,26.13,23.44,0.00],
+    [0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,8.10,23.88,24.76,17.44,29.22,34.58,31.95,27.56,29.01,48.71,35.80,29.71,49.25,53.42,36.09,28.28,28.87,43.68,37.27,24.94,16.34],
+    [0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,30.29,75.63,36.13,23.58,34.08,11.64,19.90,28.41,34.68,34.19,35.14,31.13,62.17,47.13,63.40,48.32,40.28,33.46,39.14,53.49,0.00],
+    [0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,3.22,14.78,11.06,11.66,12.19,16.65,23.71,22.65,25.96,23.99,23.75,25.74,24.79,27.22,27.08,28.23,29.28,25.12,27.07,25.54,11.55],
+    [0.00,0.00,0.00,5.98,20.52,16.77,20.01,21.85,17.52,17.94,18.26,18.63,17.92,18.95,19.29,17.70,18.89,18.88,17.51,16.62,18.05,20.10,16.78,18.26,17.19,17.38,17.99,11.24,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00],
+    [0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,12.51,17.53,14.55,16.29,3.46,11.45,19.24,30.89,27.20,11.07,17.61,20.27,9.14,0.00,16.98,28.27,23.35,12.31,16.80,27.42,3.59]
+  ];
+  var creativeDailyImp = [
+    [0,0,0,10752,47612,47502,40838,41345,38152,34526,37798,37320,38870,35569,35582,32140,30288,29312,30417,30758,35171,41808,43551,44401,43982,43829,48011,46961,41051,39932,34629,210,50225,31392,37404,45846,42503,45639,46845,42205,27701,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2186,1059,22917,35562,22614,29927,18072,14685,9614,17694,21172,36992,30836,28653,20374,38794,38318,31850,28039,16852,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3460,11228,8999,7915,0,11839,12765,12162,8457,8989,15438,15163,20039,15047,11689,4780,0,0,12211,17658,15821,15507,10366,7765,17739,19948,12094,14276,23756,17689,11872,8006,10738,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1964,4955,6862,5534,10069,12296,11022,9460,11109,19227,14606,11125,17729,17865,13059,11572,12165,15848,9637,8537,5716],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,18116,45257,13995,3885,11014,1729,9925,13146,18039,11971,9525,5073,19500,13699,18158,8024,6536,7919,7584,12262,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,960,5333,5184,6681,6377,8409,11128,10447,11909,13225,12898,12499,12049,12532,13671,16286,15743,12621,10000,11629,5541],
+    [0,0,0,1369,4920,3468,4099,5129,4442,3833,3761,3832,3765,4001,4263,3660,3716,3609,3615,3214,3641,4461,3952,3304,3460,3637,4805,2816,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3686,5680,5805,6683,1308,3917,6123,9822,9042,3900,6417,6066,2933,0,4815,9252,8034,4575,5157,7668,976]
+  ];
+  var creativeDailyClk = [
+    [0,0,0,87,634,578,595,649,534,509,535,498,524,558,547,487,443,430,400,399,506,596,469,521,486,484,533,603,525,507,415,7,591,411,478,644,555,532,612,484,323,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,36,23,395,612,389,605,461,349,241,369,408,597,574,602,431,744,878,704,645,388,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,27,114,89,84,0,83,83,81,96,92,150,156,179,148,163,47,0,0,106,150,156,152,147,87,128,174,127,132,207,161,153,76,158,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,33,125,129,91,213,235,185,153,156,334,241,165,305,320,210,144,136,233,179,111,99],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,287,1012,394,168,399,67,335,456,575,441,358,219,588,454,601,331,241,313,275,486,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,113,97,108,87,132,183,152,150,170,204,175,175,182,192,220,216,175,137,187,68],
+    [0,0,0,30,121,73,120,135,105,91,85,117,99,110,124,80,81,108,88,93,96,117,75,82,91,87,95,60,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,46,223,198,228,48,99,174,258,223,92,147,135,57,0,126,211,177,87,116,204,21]
+  ];
+
   var paidSpendArr = metaSpendArr.map(function(m, i) { return Math.round((m + googleSpendArr[i]) * 100) / 100; });
 
   var C = {
@@ -1671,48 +1704,90 @@
   var creatives = [
     { fmt: 'Carousel', offer: 'One More Night', name: 'Carousel \u00B7 19 Feb 2026',
       thumb: 'https://scontent-fra5-2.cdninstagram.com/v/t51.71878-15/645703522_4327466734236754_6576803159415250283_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=106&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQUQuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=a8CWjt4YZcEQ7kNvwEhNiFG&_nc_oc=Adqs0fbT1mWo3pc-FD6ihpe4tjzTI_buAZ5rfjHaPziXVswAJuNVFFXiyj1Ulk8s-IM&_nc_zt=23&_nc_ht=scontent-fra5-2.cdninstagram.com&edm=AEQ6tj4EAAAA&_nc_gid=PdHX39X0TByGrU0cM3IWVw&oh=00_Af4AuzXeFz0A_nfH8ZXmC60XVlu3ffJpcYMGyBaGd20sGA&oe=69FA2601',
-      permalink: 'https://www.facebook.com/1008960214964580/posts/963515819509020',
-      spend: '1,200', imp: '893,625', clicks: '9,804', ctr: '1.10%' },
+      permalink: 'https://www.facebook.com/1008960214964580/posts/963515819509020' },
     { fmt: 'Carousel', offer: 'Plan Ahead', name: 'Carousel \u00B7 10 Apr 2026',
       thumb: 'https://scontent-fra5-1.cdninstagram.com/v/t51.71878-15/670124159_796146180234371_5178582112198217713_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=110&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQUQuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=OT2-1pa88kAQ7kNvwFzihNh&_nc_oc=AdojkIH4EU1mVUA1DuPffeUXyjwDooVjEcZiR2VTCrnnXnDcgPJkdNyr1e3cEMFJirE&_nc_zt=23&_nc_ht=scontent-fra5-1.cdninstagram.com&edm=AEQ6tj4EAAAA&_nc_gid=qUqyWy-qunfp-tEFam1OEQ&oh=00_Af7KaoOOd9vgOK_rFsSa-EGyeg7Lo6EJkJEj-RuX3A4eLw&oe=69FA4A53',
-      permalink: 'https://www.facebook.com/1008960214964580/posts/992352426625359',
-      spend: '894', imp: '466,398', clicks: '9,455', ctr: '2.03%' },
+      permalink: 'https://www.facebook.com/1008960214964580/posts/992352426625359' },
     { fmt: 'Reel', offer: 'Opening RTG', name: 'Reel \u00B7 27 Mar 2026',
       thumb: 'https://scontent-fra3-1.cdninstagram.com/v/t51.71878-15/657610192_1317763403516988_3376127230475708782_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=108&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQUQuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=abTzJ38LwssQ7kNvwH_n7Rc&_nc_oc=AdozAkLVDWhuWZZBUeDvpywIdPvJGAVl67ZzmfthmHxjBpBn9-NMM6uHEEAlvhsVWQs&_nc_zt=23&_nc_ht=scontent-fra3-1.cdninstagram.com&edm=AEQ6tj4EAAAA&_nc_gid=IvwmbUk-piwtMe6pqvoNqQ&_nc_tpa=Q5bMBQFvQbBD98jQF1fzXrOVz4mpu7eAqU6gRg3IIR0M_OItYEUhq8sDRzk7A2Muaf_AMipQV4uMj4-h&oh=00_Af7um6K8Jogy6e08Ks-NzHMpCmYhfbqVE6UOUxpo31AXMA&oe=69FA4EF4',
-      permalink: 'https://www.facebook.com/100171635828527/posts/1610225046944094/',
-      spend: '511', imp: '383,692', clicks: '3,697', ctr: '0.96%' },
+      permalink: 'https://www.facebook.com/100171635828527/posts/1610225046944094/' },
     { fmt: 'Reel', offer: 'Summer Escape', name: 'Reel \u00B7 10 Aug 2025',
       thumb: 'https://scontent-fra5-1.cdninstagram.com/v/t51.71878-15/528430481_767723972458687_8310726185662375547_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=102&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQUQuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=cLXyAphtJgMQ7kNvwHw4TGE&_nc_oc=Adow7Jsf12Jf54JKBA5owMKV2UeyFT4Mo5_sjjY1puprF4EKVn1aEd3xinCxS-4zmUk&_nc_zt=23&_nc_ht=scontent-fra5-1.cdninstagram.com&edm=AEQ6tj4EAAAA&_nc_gid=PZPP-jleCceZsmzn0rR0cQ&_nc_tpa=Q5bMBQGZqh942bkXiD0I67GsSEiUXOxTYZU-DDnzjHhZmg-2e2KwdXIpPBeGaPoRM6lZaX3iDBSX9Rrl&oh=00_Af4rFeFqq5kiWkBV6k6mrWI7WMHIr1xkl66RbSdznTR0cQ&oe=69FA256E',
-      permalink: 'https://www.facebook.com/112394591676013/posts/1430815418268035/',
-      spend: '500', imp: '176,214', clicks: '2,473', ctr: '1.40%' },
+      permalink: 'https://www.facebook.com/112394591676013/posts/1430815418268035/' },
     { fmt: 'Carousel', offer: 'Suite METT', name: 'Carousel \u00B7 10 Apr 2026',
       thumb: 'https://scontent-fra3-1.cdninstagram.com/v/t51.71878-15/669780401_1466557341590357_604142709113555372_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=105&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQUQuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=EvclxgcLxbUQ7kNvwGmzC9D&_nc_oc=AdqXY-9-lLLpN8p9bnmEkxa1DqobZxsrsLnKsyDe9BLEpviiIYIQSGIayMJxOGgB4Ks&_nc_zt=23&_nc_ht=scontent-fra3-1.cdninstagram.com&edm=AEQ6tj4EAAAA&_nc_gid=p9-tJq7WFX_jxHd_2OTgVg&oh=00_Af4e5nqAD3eyFYFwar_TBUb634-ibaH0jtv-C9fwDopBtA&oe=69FA3A9B',
-      permalink: 'https://www.facebook.com/1008960214964580/posts/992335116627090',
-      spend: '464', imp: '75,603', clicks: '2,979', ctr: '3.94%' },
+      permalink: 'https://www.facebook.com/1008960214964580/posts/992335116627090' },
     { fmt: 'Reel', offer: 'Ghost \u00B7 Brand', name: 'Ghost Reel \u00B7 10 Apr 2026',
       thumb: 'https://scontent-fra5-1.xx.fbcdn.net/v/t45.1600-4/670008658_26663280509968412_3094624517444875991_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=d5bd00&_nc_ohc=6SZSeCBxm1IQ7kNvwHyfoX6&_nc_oc=Adov9Fj5PruDFda3yaokTB5K9rpe--s80CGTBxrQCnD_GjgKleZrZm4xzNKYTL6WAWo&_nc_zt=1&_nc_ht=scontent-fra5-1.xx&edm=AJcBmwoEAAAA&_nc_gid=WPIQr34wj8O2_b7XC_ElMA&_nc_tpa=Q5bMBQHIei5onb4jjMsFzE4vbuORvv0EAOf1Si2UPM8M42D9sM1j2qCvjkOcNxsU5XvlggTFsSOAc2Pp&oh=00_Af4vCOuXR9zH5ByPV3dM8ODvmQ0R01beBftVjcgkLngXYg&oe=69FA4387',
-      permalink: 'https://www.facebook.com/reel/1609878496896795/',
-      spend: '441', imp: '215,122', clicks: '3,137', ctr: '1.46%' },
+      permalink: 'https://www.facebook.com/reel/1609878496896795/' },
     { fmt: 'Reel', offer: 'Brand \u00B7 Aug', name: 'Reel \u00B7 15 Aug 2025',
       thumb: 'https://scontent-fra5-1.cdninstagram.com/v/t51.71878-15/639450309_1454766576263027_2049103482771689819_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=100&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQUQuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=g-BCqjX6_kQQ7kNvwH_P-ru&_nc_oc=AdpCFZe28H4d4-yPmJzKyGBWm0GFr9sVOKQRRzSkgP6no4h26Wb2AnxqqvytA_-aGo0&_nc_zt=23&_nc_ht=scontent-fra5-1.cdninstagram.com&edm=AEQ6tj4EAAAA&_nc_gid=Pk_u4QeLEwcyLyOXztTMSg&_nc_tpa=Q5bMBQGwid8JsN6DpUX-JOps3eqNT1Jl0Jcw0-lSRfbs_TX4CgBLtrRA0hYFCKdsOsA66Ri0X1WwaGkm&oh=00_Af7JZPG1k6xItmhTwdpfBDEFBHMmZ2XZ5lntcrtA5qM0hg&oe=69FA488B',
-      permalink: 'https://www.facebook.com/100171635828527/posts/1653033009158828/',
-      spend: '440', imp: '94,772', clicks: '2,363', ctr: '2.49%' },
+      permalink: 'https://www.facebook.com/100171635828527/posts/1653033009158828/' },
     { fmt: 'Reel', offer: 'Spa & Wellness', name: 'Reel \u00B7 15 Oct 2025',
       thumb: 'https://scontent-fra5-1.cdninstagram.com/v/t51.71878-15/670198613_956576533417662_3028008300130577155_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=100&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQUQuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=05c9ue35AI8Q7kNvwEPSEw0&_nc_oc=AdqLUezZiOKN6XDChcfueX5cQXiqKs0I3UMywCgdb3tTFbK9gKbAdVb7eab2Ve2CdAA&_nc_zt=23&_nc_ht=scontent-fra5-1.cdninstagram.com&edm=AEQ6tj4EAAAA&_nc_gid=AK5_U6gUGhd7mNrroTIQ7g&_nc_tpa=Q5bMBQFRhTenB1ssQaPj7HeaSqCE-W1vn2_T1Ge_qtK5U5eCfMjcEFZaLstFLkaYnslZSZHrVVnDymF4&oh=00_Af6FwOwWEjkiPdNzIE96vcfNOUum3oTL7OTtJ_JsfC0TKQ&oe=69FA24C6',
-      permalink: 'https://www.facebook.com/112227835024231/posts/1636626657663982/',
-      spend: '340', imp: '111,859', clicks: '2,870', ctr: '2.57%' }
+      permalink: 'https://www.facebook.com/112227835024231/posts/1636626657663982/' }
   ];
 
   function buildCreatives() {
     var grid = document.getElementById('creative-grid');
     if (!grid) return;
     grid.innerHTML = '';
+    // [LIVE-CREATIVES] Logs to console.log so you can verify in DevTools
+    if (typeof console !== 'undefined') console.log('[creatives] rebuild for ' + state.startDate.toISOString().slice(0,10) + ' to ' + state.endDate.toISOString().slice(0,10));
+
+    // Determine the active date filter window from state.startDate/endDate
+    // Compute index range into the daily arrays
+    var sIdx = 0, eIdx = dates.length - 1;
+    if (state && state.startDate && state.endDate) {
+      function fmtDate(d) {
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      }
+      var sStr = fmtDate(state.startDate);
+      var eStr = fmtDate(state.endDate);
+      for (var di = 0; di < dates.length; di++) {
+        if (dates[di] === sStr) sIdx = di;
+        if (dates[di] === eStr) eIdx = di;
+      }
+    }
+
+    // Compute live stats per creative for the selected window, then sort by spend desc
+    var enriched = [];
     for (var i = 0; i < creatives.length; i++) {
-      var c = creatives[i];
+      var sumSpend = 0, sumImp = 0, sumClk = 0;
+      for (var j = sIdx; j <= eIdx; j++) {
+        sumSpend += (creativeDailySpend[i] && creativeDailySpend[i][j]) || 0;
+        sumImp += (creativeDailyImp[i] && creativeDailyImp[i][j]) || 0;
+        sumClk += (creativeDailyClk[i] && creativeDailyClk[i][j]) || 0;
+      }
+      enriched.push({
+        c: creatives[i],
+        spend: sumSpend, imp: sumImp, clk: sumClk,
+        ctr: sumImp > 0 ? (sumClk / sumImp * 100) : 0
+      });
+    }
+    // Re-rank by spend (descending) so #1 is always the highest-spend creative in the picked range
+    enriched.sort(function(a, b) { return b.spend - a.spend; });
+
+    function fmtNum(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000) return n.toLocaleString('en-US');
+      return String(Math.round(n));
+    }
+    function fmtSpend(n) {
+      if (n >= 10000) return Math.round(n).toLocaleString('en-US');
+      if (n >= 1000) return Math.round(n).toLocaleString('en-US');
+      return n.toFixed(0);
+    }
+
+    for (var i = 0; i < enriched.length; i++) {
+      var entry = enriched[i];
+      var c = entry.c;
+      // Hide creatives with zero spend in the selected window
+      if (entry.spend < 1) continue;
       var rank = '#' + (i + 1);
       var isVideo = (c.fmt === 'Reel' || c.fmt === 'Video');
 
-      // SVG fallback as a data URI — built without HTML interpolation to avoid quote conflicts
+      // SVG fallback
       var svgMarkup = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">' +
         '<rect fill="#0E2340" width="400" height="400"/>' +
         '<text x="200" y="180" font-family="Calibri" font-size="16" fill="#C89B94" text-anchor="middle" letter-spacing="2">METT MARBELLA</text>' +
@@ -1721,7 +1796,6 @@
         '</text></svg>';
       var fallbackSvg = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgMarkup)));
 
-      // Build the card as DOM nodes (safer than innerHTML with attribute soup)
       var card = document.createElement('a');
       card.className = 'creative';
       card.href = c.permalink;
@@ -1767,9 +1841,9 @@
         '<div class="creative-offer-name">' + c.offer + '</div>' +
         '<div class="creative-meta">' + c.name + '</div>' +
         '<div class="creative-stats-row">' +
-          '<div class="creative-stat"><div class="s-label">Spend</div><div class="s-val"><span class="cur">\u20AC</span>' + c.spend + '</div></div>' +
-          '<div class="creative-stat"><div class="s-label">Impr</div><div class="s-val">' + c.imp + '</div></div>' +
-          '<div class="creative-stat"><div class="s-label">CTR</div><div class="s-val">' + c.ctr + '</div></div>' +
+          '<div class="creative-stat"><div class="s-label">Spend</div><div class="s-val"><span class="cur">\u20AC</span>' + fmtSpend(entry.spend) + '</div></div>' +
+          '<div class="creative-stat"><div class="s-label">Impr</div><div class="s-val">' + fmtNum(entry.imp) + '</div></div>' +
+          '<div class="creative-stat"><div class="s-label">CTR</div><div class="s-val">' + entry.ctr.toFixed(2) + '%</div></div>' +
         '</div>';
       card.appendChild(content);
 
