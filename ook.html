@@ -1948,7 +1948,7 @@ function buildCampaignTable(datesArr, label){
     // for historical dates (frozen at Apr 26). Without UAE ALL here, the row filters
     // out as spend=0 for any Apr-27+ date because the legacy buckets have no entries.
     { name:'UAE Sales - ASC',        agg: aggMetaGeo(['UAE ALL - ASC','UAE Abaya - ASC','UAE Pyjama - ASC']) },
-    { name:'KSA Sales - ASC',        agg: aggMetaGeo(['KSA Abaya - ASC','KSA Pyjama - ASC']) },
+    { name:'KSA Sales - ASC',        agg: aggMetaGeo(['KSA ALL - ASC','KSA Abaya - ASC','KSA Pyjama - ASC']) },
     // KU: post Apr-28 will live in 'KU ALL - ASC' once the migration runs (same pattern as UAE).
     // Including all three keys here is forward-compatible — once Pyjama is renamed to ALL on the
     // first Apr-28+ refresh, this aggregator picks up the new bucket without further changes.
@@ -2093,18 +2093,15 @@ function buildAdsetTable(datesArr, label){
   function dataCell(h, val){ return `<td style="${tdC}">${h ? val : '—'}</td>`; }
   function geoLabel(geo){ return `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#9ca3af;margin-right:6px;vertical-align:middle"></span>${geo}`; }
 
-  // ── META adsets — UAE consolidated to single ALL row (Apr 27+); KSA/KU still split
+  // ── META adsets — UAE consolidated to single ALL row (Apr 27+); KSA consolidated to ALL (May 7+)
   const metaAdsets = [
     { geo:'UAE',                    agg: aggAdset('meta',['UAE ALL - ASC']) },
-    { geo:'KSA', isGeoHeader:true,  agg: aggAdset('meta',['KSA Abaya - ASC','KSA Pyjama - ASC']) },
-    { geo:'↳ Abaya',   indent:true, agg: aggAdset('meta',['KSA Abaya - ASC']) },
-    { geo:'↳ Pyjama',  indent:true, agg: aggAdset('meta',['KSA Pyjama - ASC']) },
-    // KU: post Apr-28 will live in 'KU ALL - ASC' once the migration runs (same as UAE Apr 27).
-    // Until then, parent header sums Abaya+Pyjama. Once consolidated, KU ALL takes over the parent
-    // and the children show frozen historical numbers (Apr 27 last entry for Abaya).
-    { geo:'KU / QA / BH', isGeoHeader:true, agg: aggAdset('meta',['KU ALL - ASC','KU Abaya - ASC','KU Pyjama - ASC']) },
-    { geo:'↳ Abaya',   indent:true, agg: aggAdset('meta',['KU Abaya - ASC']) },
-    { geo:'↳ Pyjama',  indent:true, agg: aggAdset('meta',['KU Pyjama - ASC']) },
+    // KSA: post May-7 lives in 'KSA ALL - ASC'; legacy Abaya/Pyjama buckets remain
+    // for historical dates (frozen at May 6). Without KSA ALL here, the row filters
+    // out post-consolidation. Pattern matches UAE Apr-27 transition.
+    { geo:'KSA',                    agg: aggAdset('meta',['KSA ALL - ASC','KSA Abaya - ASC','KSA Pyjama - ASC']) },
+    // KU: post Apr-28 lives in 'KU ALL - ASC'.
+    { geo:'KU / QA / BH',           agg: aggAdset('meta',['KU ALL - ASC','KU Abaya - ASC','KU Pyjama - ASC']) },
     { geo:'Catalogue / Retargeting',agg: aggAdset('meta',['Catalogue Retargeting / Prospecting - GCC']) },
     { geo:'Followers – Brand GCC',  agg: aggRecs(getAdset('meta', META_FOLLOWERS_KEY)), isFollowers:true },
   ].filter(a => a.agg.spend > 0 || a.isFollowers);
@@ -3722,7 +3719,7 @@ ${pk!=='meta'?`    <div class="cc">
 // Meta campaign → adset → ads mapping
 const META_CAMPS = [
   { label:"UAE",           adsets:["UAE ALL - ASC","UAE Abaya - ASC"],                          prefix:"UAE ·" },
-  { label:"KSA",           adsets:["KSA Abaya - ASC","KSA Pyjama - ASC"],                       prefix:"KSA ·" },
+  { label:"KSA",           adsets:["KSA ALL - ASC","KSA Abaya - ASC","KSA Pyjama - ASC"],          prefix:"KSA ·" },
   { label:"KU / QA / BH", adsets:["KU ALL - ASC","KU Abaya - ASC","KU Pyjama - ASC"],          prefix:"KU ·"  },
   { label:"Catalogue",     adsets:["Catalogue Retargeting / Prospecting - GCC"],                prefix:"CAT ·" },
 ];
