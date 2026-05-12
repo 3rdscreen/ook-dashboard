@@ -439,7 +439,6 @@
         <button class="preset-item" data-preset="last-week" type="button"><span class="preset-radio"></span>Last week</button>
         <button class="preset-item" data-preset="this-month" type="button"><span class="preset-radio"></span>This month</button>
         <button class="preset-item" data-preset="last-month" type="button"><span class="preset-radio"></span>Last month</button>
-        <button class="preset-item" data-preset="ytd" type="button"><span class="preset-radio"></span>Year to date</button>
       </aside>
       <div class="cal-area">
         <div class="cal-months">
@@ -2118,8 +2117,6 @@
       case 'last-month':
         s = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         e = new Date(today.getFullYear(), today.getMonth(), 0); break;
-      case 'ytd':
-        s = new Date(today.getFullYear(), 0, 1); e = today; break;
       default: return;
     }
     // Clamp the range to actual data bounds — never select dates outside the data

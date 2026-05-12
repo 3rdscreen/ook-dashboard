@@ -104,7 +104,9 @@
   .cal-month { flex: 1; min-width: 0; }
   .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 2px; }
   .cal-title { font-size: 13px; font-weight: 600; color: var(--ink); }
-  .cal-arrow { width: 24px; height: 24px; border: none; background: transparent; cursor: pointer; color: var(--ink-3); display: flex; align-items: center; justify-content: center; border-radius: 2px; }
+  .cal-arrow { width: 24px; height: 24px; border: none; background: transparent; cursor: pointer; color: var(--ink-3); display: flex; align-items: center; justify-content: center; border-radius: 2px; transition: opacity 0.15s; }
+  .cal-arrow:hover:not(:disabled) { background: var(--gold-soft); color: var(--gold-2); }
+  .cal-arrow:disabled { opacity: 0.15; cursor: not-allowed; pointer-events: none; }
   .cal-arrow:hover { background: var(--surface-2); color: var(--ink); }
   .cal-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
@@ -470,7 +472,6 @@
         <button class="preset-item" data-preset="last-week" type="button"><span class="preset-radio"></span>Last week</button>
         <button class="preset-item" data-preset="this-month" type="button"><span class="preset-radio"></span>This month</button>
         <button class="preset-item" data-preset="last-month" type="button"><span class="preset-radio"></span>Last month</button>
-        <button class="preset-item" data-preset="ytd" type="button"><span class="preset-radio"></span>Year to date</button>
       </aside>
       <div class="cal-area">
         <div class="cal-months">
@@ -1190,6 +1191,10 @@
   // ===== DAILY DATA — REAL Supermetrics pulls, Mar 1 - May 10, 2026 (71 days) =====
   var dates = ['2026-03-01','2026-03-02','2026-03-03','2026-03-04','2026-03-05','2026-03-06','2026-03-07','2026-03-08','2026-03-09','2026-03-10','2026-03-11','2026-03-12','2026-03-13','2026-03-14','2026-03-15','2026-03-16','2026-03-17','2026-03-18','2026-03-19','2026-03-20','2026-03-21','2026-03-22','2026-03-23','2026-03-24','2026-03-25','2026-03-26','2026-03-27','2026-03-28','2026-03-29','2026-03-30','2026-03-31','2026-04-01','2026-04-02','2026-04-03','2026-04-04','2026-04-05','2026-04-06','2026-04-07','2026-04-08','2026-04-09','2026-04-10','2026-04-11','2026-04-12','2026-04-13','2026-04-14','2026-04-15','2026-04-16','2026-04-17','2026-04-18','2026-04-19','2026-04-20','2026-04-21','2026-04-22','2026-04-23','2026-04-24','2026-04-25','2026-04-26','2026-04-27','2026-04-28','2026-04-29','2026-04-30','2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-05-07','2026-05-08','2026-05-09','2026-05-10'];
   var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Calendar date bounds — derived from data range so out-of-data dates are disabled
+  var _dmin = dates[0].split('-'), _dmax = dates[dates.length - 1].split('-');
+  var DATA_MIN = new Date(+_dmin[0], +_dmin[1] - 1, +_dmin[2]);
+  var DATA_MAX = new Date(+_dmax[0], +_dmax[1] - 1, +_dmax[2]);
   function makeDateLabel(d) {
     var p = d.split('-'); return parseInt(p[2], 10) + ' ' + monthNames[parseInt(p[1], 10) - 1];
   }
@@ -1978,8 +1983,11 @@
       if (s && isSameDay(cellDate, s)) classes += ' range-start';
       if (e && isSameDay(cellDate, e)) classes += ' range-end';
       if (s && e && cellDate > s && cellDate < e) classes += ' in-range';
+      // Disable any date outside the actual data range
+      var outOfRange = (cellDate < DATA_MIN || cellDate > DATA_MAX);
       var ts = cellDate.getTime();
-      html += '<button class="' + classes + '" data-ts="' + ts + '" type="button">' + day + '</button>';
+      var disabledAttr = outOfRange ? ' disabled' : '';
+      html += '<button class="' + classes + '" data-ts="' + ts + '" type="button"' + disabledAttr + '>' + day + '</button>';
     }
 
     grid.innerHTML = html;
@@ -2116,8 +2124,6 @@
       case 'last-month':
         s = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         e = new Date(today.getFullYear(), today.getMonth(), 0); break;
-      case 'ytd':
-        s = new Date(today.getFullYear(), 0, 1); e = today; break;
       default: return;
     }
     state.tempStart = s; state.tempEnd = e;
@@ -2207,12 +2213,39 @@
       })(presets[i]);
     }
 
-    // Month navigation
+    // Month navigation — disable when at data boundary
+    function canGoPrev() {
+      // Left pane shows state.viewMonth; clicking prev would shift it back one month.
+      // Disable if the current left-pane month is the same month as DATA_MIN (or earlier).
+      return state.viewMonth.getFullYear() > DATA_MIN.getFullYear() ||
+             (state.viewMonth.getFullYear() === DATA_MIN.getFullYear() &&
+              state.viewMonth.getMonth() > DATA_MIN.getMonth());
+    }
+    function canGoNext() {
+      // Right pane shows viewMonth + 1; clicking next shifts it forward.
+      // Disable if the right-pane month is the same month as DATA_MAX (or later).
+      var rightYear = state.viewMonth.getFullYear() + (state.viewMonth.getMonth() === 11 ? 1 : 0);
+      var rightMonth = (state.viewMonth.getMonth() + 1) % 12;
+      return rightYear < DATA_MAX.getFullYear() ||
+             (rightYear === DATA_MAX.getFullYear() && rightMonth < DATA_MAX.getMonth());
+    }
+    function updateNavButtons() {
+      var prev = document.getElementById('cal-prev');
+      var next = document.getElementById('cal-next');
+      if (prev) prev.disabled = !canGoPrev();
+      if (next) next.disabled = !canGoNext();
+    }
+    // Hook into renderCalendar — wrap the original
+    var _origRender = renderCalendar;
+    renderCalendar = function() { _origRender(); updateNavButtons(); };
+
     document.getElementById('cal-prev').addEventListener('click', function() {
+      if (!canGoPrev()) return;
       state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() - 1, 1);
       renderCalendar();
     });
     document.getElementById('cal-next').addEventListener('click', function() {
+      if (!canGoNext()) return;
       state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() + 1, 1);
       renderCalendar();
     });
