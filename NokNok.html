@@ -264,7 +264,7 @@ tbody tr.total td{background:#f4f7fb;font-weight:700;color:var(--navy);border-to
       <div class="kpi"><div class="k">Total Spend</div><div class="v" id="kSpend">$1,978.82</div><div class="s">All campaigns</div></div>
       <div class="kpi"><div class="k">Clicks</div><div class="v" id="kClicks">12,961</div><div class="s" id="kClicksSub">CTR 0.63% · CPC $0.15</div></div>
       <div class="kpi"><div class="k">Installs</div><div class="v" id="kInstalls">985</div><div class="s" id="kInstallsSub">CPI $1.03</div></div>
-      <div class="kpi"><div class="k">Register / Signup</div><div class="v" id="kRegs">33</div><div class="s" id="kRegsSub">CPR $7.66</div></div>
+      <div class="kpi"><div class="k">Register / Signup</div><div class="v" id="kRegs">18</div><div class="s" id="kRegsSub">CPR $14.05</div></div>
       <div class="kpi"><div class="k">Purchased</div><div class="v" id="kPurch">528</div><div class="s" id="kPurchSub">CPP $1.83</div></div>
       <div class="kpi"><div class="k">Purchase Value</div><div class="v" id="kValue">$12,200</div><div class="s">Reg + Sales</div></div>
       <div class="kpi"><div class="k">AOV</div><div class="v" id="kAov">$23.11</div><div class="s">Avg. order value</div></div>
@@ -279,8 +279,8 @@ tbody tr.total td{background:#f4f7fb;font-weight:700;color:var(--navy);border-to
       <div class="farrow">→</div>
       <div class="fstage act">
         <div class="fstage-label"><span class="ic">✍️</span>Activation</div>
-        <div class="fmetric"><div class="k">Registrations</div><div class="v" id="fRegs">33</div><div class="s">Mobile app event</div></div>
-        <div class="fmetric"><div class="k">Cost / Reg.</div><div class="v" id="fCpr">$7.66</div><div class="s">Blended CPR</div></div>
+        <div class="fmetric"><div class="k">Registrations</div><div class="v" id="fRegs">18</div><div class="s">Mobile app event</div></div>
+        <div class="fmetric"><div class="k">Cost / Reg.</div><div class="v" id="fCpr">$14.05</div><div class="s">Reg. campaign CPR</div></div>
       </div>
       <div class="farrow">→</div>
       <div class="fstage conv">
@@ -488,12 +488,13 @@ function renderDashboard(start, end){
   const totalClicks = it.clicks + r.clicks + stt.clicks;
   const totalImpr = it.impr + r.impr + stt.impr;
   const totalInstalls = it.installs;
-  const totalRegs = it.regs + r.regs;          // install-attributed + reg campaign
+  const headlineRegs = r.regs;                 // Registration campaign only (Option C)
+  const installRegsBonus = it.regs;            // install-attributed regs = bonus, not headline
   const totalPurch = stt.purch + r.purch;      // sales + reg campaign
   const totalValue = stt.value + r.value;
   const convSpend = stt.spend + r.spend;       // sales + reg spend backs purchases/value
   const blendedCpi = totalInstalls? it.spend/totalInstalls : 0;
-  const blendedCpr = totalRegs? (r.spend)/(totalRegs) : 0; // CPR driven by reg-campaign spend / all regs (approx)
+  const headlineCpr = headlineRegs? r.spend/headlineRegs : 0; // reg-campaign spend / reg-campaign regs
   const blendedCpp = totalPurch? convSpend/totalPurch : 0;
   const blendedAov = totalPurch? totalValue/totalPurch : 0;
   const blendedRoas = convSpend? totalValue/convSpend : 0;
@@ -506,8 +507,8 @@ function renderDashboard(start, end){
   document.getElementById('kClicksSub').textContent = `CTR ${blendedCtr.toFixed(2)}% · CPC ${money(blendedCpc)}`;
   document.getElementById('kInstalls').textContent = int(totalInstalls);
   document.getElementById('kInstallsSub').textContent = totalInstalls? `CPI ${money(blendedCpi)}` : 'CPI —';
-  document.getElementById('kRegs').textContent = int(totalRegs);
-  document.getElementById('kRegsSub').textContent = totalRegs? `CPR ${money(blendedCpr)}` : 'CPR —';
+  document.getElementById('kRegs').textContent = int(headlineRegs);
+  document.getElementById('kRegsSub').textContent = headlineRegs? `CPR ${money(headlineCpr)}` : 'CPR —';
   document.getElementById('kPurch').textContent = int(totalPurch);
   document.getElementById('kPurchSub').textContent = totalPurch? `CPP ${money(blendedCpp)}` : 'CPP —';
   document.getElementById('kValue').textContent = money0(totalValue);
@@ -516,8 +517,8 @@ function renderDashboard(start, end){
   // Funnel
   document.getElementById('fInstalls').textContent = int(totalInstalls);
   document.getElementById('fCpi').textContent = totalInstalls? money(blendedCpi) : '—';
-  document.getElementById('fRegs').textContent = int(totalRegs);
-  document.getElementById('fCpr').textContent = totalRegs? money(blendedCpr) : '—';
+  document.getElementById('fRegs').textContent = int(headlineRegs);
+  document.getElementById('fCpr').textContent = headlineRegs? money(headlineCpr) : '—';
   document.getElementById('fPurch').textContent = int(totalPurch);
   document.getElementById('fPurchSub').textContent = totalPurch? `CPP ${money(blendedCpp)}` : 'CPP —';
   document.getElementById('fValue').textContent = money0(totalValue);
