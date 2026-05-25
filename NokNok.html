@@ -212,17 +212,44 @@ tbody tr.total td{background:#f4f7fb;font-weight:700;color:var(--navy);border-to
 .foot .fd{width:4px;height:4px;border-radius:50%;background:var(--ink-4)}
 
 @media(max-width:980px){
+  .wrap{padding:26px 24px 70px}
   .funnel{grid-template-columns:1fr;gap:14px}
   .farrow{transform:rotate(90deg);height:30px;width:auto}
   .kpi-strip{grid-template-columns:repeat(2,1fr)}
   .kpi-7{grid-template-columns:repeat(3,1fr)}
   .kpi{border-right:none;border-bottom:1px solid var(--line)}
   .grid-2,.rank-grid,.insights{grid-template-columns:1fr}
+  .reg-kpi6{grid-template-columns:repeat(3,1fr)!important}
 }
-@media(max-width:560px){
-  .wrap{padding:20px 16px 60px}
-  .cover{padding:28px 22px}
-  .kpi-7{grid-template-columns:repeat(2,1fr)}
+@media(max-width:640px){
+  .wrap{padding:18px 14px 56px}
+  .cover{padding:26px 20px;border-radius:20px}
+  .cover-title{margin-top:22px}
+  .cover-meta{gap:20px 28px;margin-top:20px}
+  .kpi-strip,.kpi-7{grid-template-columns:repeat(2,1fr)!important}
+  .reg-kpi6{grid-template-columns:repeat(2,1fr)!important}
+  .kpi{padding:15px 16px}
+  .kpi .v,.kpi-7 .kpi .v{font-size:21px}
+  .sec{margin-top:42px}
+  .card{padding:20px 18px}
+  .chart-box{height:260px}
+  /* table → horizontal scroll with smaller type */
+  table{font-size:12.5px;min-width:600px}
+  thead th,tbody td{padding:10px 11px}
+  .tbl-card-head{padding:16px 18px}
+  .tbl-card-head h3{font-size:17px}
+  .tbl-scroll{position:relative;-webkit-overflow-scrolling:touch}
+  .tbl-scroll::after{content:"swipe →";position:absolute;top:11px;right:12px;font-size:9px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-4);font-weight:700;pointer-events:none;opacity:.7}
+  .cal-pop{width:calc(100vw - 24px)!important;max-width:360px;padding:18px 16px 14px}
+  .cal-day{font-size:13px}
+}
+@media(max-width:400px){
+  .kpi-strip,.kpi-7,.reg-kpi6{grid-template-columns:1fr!important}
+  .kpi{border-bottom:1px solid var(--line)}
+  .cover-meta{gap:16px 22px}
+  .cover-title{font-size:32px}
+  .live-badge{display:none}
 }
 </style>
 </head>
@@ -325,7 +352,7 @@ tbody tr.total td{background:#f4f7fb;font-weight:700;color:var(--navy);border-to
   <section class="sec">
     <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">Complete Registration campaign</h2></div>
     <p class="sec-sub">Optimizing for <strong>app signup events</strong>, live since May 13. This campaign spans three ad sets (Car Draw, Generic, and Panini) — beyond registrations it drove <strong>188 in-app purchases worth $3,979.85</strong> as a side effect.</p>
-    <div class="kpi-strip" style="grid-template-columns:repeat(6,1fr)">
+    <div class="kpi-strip reg-kpi6" style="grid-template-columns:repeat(6,1fr)">
       <div class="kpi"><div class="k">Spend</div><div class="v" id="rSpend">$252.91</div><div class="s">Campaign budget</div></div>
       <div class="kpi"><div class="k">Registrations</div><div class="v" id="rRegs">18</div><div class="s">Signup event</div></div>
       <div class="kpi"><div class="k">Cost / Reg.</div><div class="v" id="rCpr">$14.05</div><div class="s">CPR</div></div>
@@ -432,7 +459,7 @@ function renderDashboard(start, end){
     const s = sumDays(a.days, start, end, 6);
     return {name:a.name, impr:s[0], clicks:s[1], spend:s[2], reach:s[3], purch:s[4], value:s[5]};
   }).filter(a=>a.impr>0 || a.spend>0 || a.purch>0);
-  salesAgg.sort((x,y)=> (y.spend?y.value/y.spend:0) - (x.spend?x.value/x.spend:0));
+  salesAgg.sort((x,y)=> (y.purch-x.purch) || (y.value-x.value) || ((y.spend?y.value/y.spend:0)-(x.spend?x.value/x.spend:0)));
 
   let sb='', stt={spend:0,impr:0,clicks:0,purch:0,value:0};
   salesAgg.forEach(a=>{
@@ -466,8 +493,8 @@ function renderDashboard(start, end){
     const s = sumDays(a.days, start, end, 8);
     return {name:a.name, impr:s[0], clicks:s[1], spend:s[2], reach:s[3], regs:s[4], sessions:s[5], purch:s[6], value:s[7]};
   });
-  // Keep ALL ads visible (incl. new/zero-data ones). Sort active first by spend, zero-activity ads sink to bottom.
-  regAdsAgg.sort((x,y)=> (y.spend-x.spend) || (y.impr-x.impr));
+  // Keep ALL ads visible (incl. new/zero-data ones). Sort by registrations (KPI) desc, then spend, then impressions.
+  regAdsAgg.sort((x,y)=> (y.regs-x.regs) || (y.spend-x.spend) || (y.impr-x.impr));
   let rab='', rat={spend:0,impr:0,clicks:0,regs:0,sessions:0,purch:0,value:0};
   let activeCount=0;
   regAdsAgg.forEach(a=>{
