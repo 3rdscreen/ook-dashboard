@@ -563,13 +563,13 @@ const PL=[
   {key:"google", label:"GOOGLE",   color:"#34A853"},
 ];
 const GK={
-  meta:  ["uae","ksa","ku","cat"],
+  meta:  ["uae","ksa","ku","uk","cat"],
   tiktok:["uae","ksa","ku","cat"],
   snap:  ["uae","ksa","ku"],
   google:["uae","ksa","ku"],
 };
-const GL={uae:"UAE",ksa:"KSA",ku:"KU / QA / BH",cat:"Catalogue / Retargeting",ret:"Retargeting"};
-const GC=["#1a1a1a","#6B7280","#9CA3AF","#D1D5DB"];
+const GL={uae:"UAE",ksa:"KSA",ku:"KU / QA / BH",uk:"UK",cat:"Catalogue / Retargeting",ret:"Retargeting"};
+const GC=["#1a1a1a","#6B7280","#9CA3AF","#9333ea","#D1D5DB"];
 
 // ═══════════════════════════════════════════════════════
 // STATE
@@ -1536,6 +1536,7 @@ function reRenderMetaAds(){
     { label:'UAE',          pattern:/_UAE_/i },
     { label:'KSA',          pattern:/_KSA_/i },
     { label:'KU / QA / BH',pattern:/_Ku[_&\s]|Ku\s*&\s*Qa|Ku\s*&\s*Q/i },
+    { label:'UK',           pattern:/[_ ]UK$/i },
     { label:'Catalogue',    pattern:/^EN_|^en_/ },
   ];
   // Detect campaign type: Pyjama, Abaya, or Catalogue
@@ -1560,7 +1561,7 @@ function reRenderMetaAds(){
     const geo=detectGeo2(name); if(!geo) return;
     // UAE consolidated to single ALL ad set on Apr 27 — render as one group, not split by creative
     // KSA consolidated May 7, KU consolidated Apr 28 — same treatment
-    const ct = (geo==='Catalogue') ? 'Catalogue' : (geo==='UAE'||geo==='KSA'||geo==='KU / QA / BH') ? 'ALL' : detectCampType(name);
+    const ct = (geo==='Catalogue') ? 'Catalogue' : (geo==='UAE'||geo==='KSA'||geo==='KU / QA / BH'||geo==='UK') ? 'ALL' : detectCampType(name);
     // Build display name: strip date suffix, version, copy, then strip _Meta_GEO_Sales_ASC
     // This makes 499_..._Meta_KSA_Sales_ASC and 499_..._Meta_KSA_Sales_ASC_v1 → same dn
     // while 499_..._Meta_KSA and 499_..._Meta_Ku&Qat remain DIFFERENT (handled by geo grouping)
@@ -4202,7 +4203,8 @@ function isAdActive(fullName) {
     // Detect geo in fullName
     const n = fullName.toUpperCase();
     let geo = null;
-    if (/_UAE/.test(n)) geo = 'UAE';
+    if (/[_ ]UK$/.test(n)) geo = 'UK';
+    else if (/_UAE/.test(n)) geo = 'UAE';
     else if (/_KSA/.test(n)) geo = 'KSA';
     else if (/KU[_&\s]|KU&QAT|QUAT|KUW|KWT/.test(n)) geo = 'KU';
     else if (/EN_ALL|EN_MEN|EN_WOMEN|CATALOGUE|CATALOG|RETARGET/.test(n)) geo = 'CAT';
@@ -4213,6 +4215,7 @@ function isAdActive(fullName) {
         // Prefer geo-specific match
         const geoKey = candidates.find(k => {
           const ku = k.toUpperCase();
+          if (geo === 'UK')  return /[_ ]UK$/.test(ku);
           if (geo === 'UAE') return /_UAE/.test(ku);
           if (geo === 'KSA') return /_KSA/.test(ku);
           if (geo === 'KU')  return /KU[_&\s]|KU&QAT|QUAT|KUW|KWT/.test(ku);
@@ -4441,6 +4444,7 @@ function renderGranular(pk, dates) {
     { label: "UAE",           pattern: /_UAE_/i },
     { label: "KSA",           pattern: /_KSA_/i },
     { label: "KU / QA / BH", pattern: /_Ku[\s_&]|Ku\s*&\s*Q/i },
+    { label: "UK",            pattern: /[_ ]UK$/i },
     { label: "Catalogue",     pattern: /^EN_|^en_/    },
   ];
 
