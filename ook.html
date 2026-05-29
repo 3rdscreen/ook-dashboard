@@ -1382,7 +1382,7 @@ function reRenderMetaAds(){
     // Determine which camp types are present, in order
     // UAE consolidated Apr 27, KSA consolidated May 7, KU consolidated Apr 28 — all use single 'ALL'
     const campOrder = g.label==='Catalogue' ? ['Catalogue']
-                    : (g.label==='UAE'||g.label==='KSA'||g.label==='KU / QA / BH') ? ['ALL']
+                    : (g.label==='UAE'||g.label==='KSA'||g.label==='KU / QA / BH'||g.label==='UK') ? ['ALL']
                     : ['Abaya','Pyjama','Catalogue'];
     const presentTypes = campOrder.filter(ct=>gData[ct] && Object.keys(gData[ct]).length>0);
     if(!presentTypes.length) return;
@@ -1936,6 +1936,12 @@ function buildMarketTable(datesArr, label){
     { label:'KUW/QA',    geoKey:'ku',   color:'#9333ea' },
     { label:'GCC',       geoKey:'cat',  color:'#ea580c' },
   ];
+  // UK launched May 25 2026 — only surface the market when it has spend in range
+  const ukSpendRange = ['meta','tiktok','snap','google'].reduce((s,pk)=>{
+    const dd = D[pk] || [];
+    return s + ds.reduce((a,d)=>{ const r=dd.find(x=>x.d===d); return a + ((r && r.uk && r.uk.spend) || 0); }, 0);
+  }, 0);
+  if (ukSpendRange > 0) markets.splice(3, 0, { label:'UK', geoKey:'uk', color:'#dc2626' });
 
   // Aggregate across all platforms per geo
   const platformKeys = ['meta','tiktok','snap','google'];
@@ -2869,6 +2875,7 @@ function buildBudgetByMarket(dateArg){
     {key:'uae', label:'UAE'},
     {key:'ksa', label:'KSA'},
     {key:'ku',  label:'KU/QA/BH'},
+    {key:'uk',  label:'UK'},
     {key:'cat', label:'Catalogue'},
   ];
 
