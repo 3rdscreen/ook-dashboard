@@ -297,7 +297,7 @@ tbody tr.total td{background:#f4f7fb;font-weight:700;color:var(--navy);border-to
       <div class="kpi"><div class="k">Purchased</div><div class="v" id="kPurch">699</div><div class="s" id="kPurchSub">CPP $1.84</div></div>
       <div class="kpi"><div class="k">Purchase Value</div><div class="v" id="kValue">$16,363</div><div class="s">Reg + Sales</div></div>
       <div class="kpi"><div class="k">AOV</div><div class="v" id="kAov">$23.41</div><div class="s">Avg. order value</div></div>
-      <div class="kpi"><div class="k">Est. First-Time Buyers</div><div class="v" id="kFtb">58</div><div class="s" id="kFtbSub">CFB $45.78 · ~70% of regs</div></div>
+      <div class="kpi"><div class="k">FTB</div><div class="v" id="kFtb">58</div><div class="s" id="kFtbSub">1st-Time Buyers · CFB $45.78</div></div>
     </div>
     <div class="eyebrow">Acquisition → Activation → Conversion</div>
     <div class="funnel">
@@ -318,7 +318,7 @@ tbody tr.total td{background:#f4f7fb;font-weight:700;color:var(--navy);border-to
         <div class="fmetric"><div class="k">In-App Purchases</div><div class="v" id="fPurch">699</div><div class="s" id="fPurchSub">CPP $1.84</div></div>
         <div class="fmetric"><div class="k">Purchase Value</div><div class="v" id="fValue">$16,363</div><div class="s" id="fValueSub">AOV $23.41</div></div>
         <div class="fmetric"><div class="k">Blended ROAS</div><div class="v" id="fRoas" style="color:var(--green)">12.74×</div><div class="s">Value ÷ Sales+Reg spend</div></div>
-        <div class="fmetric"><div class="k">Est. First-Time Buyers</div><div class="v" id="fFtb">58</div><div class="s" id="fFtbSub">CFB $45.78 · ~70% × regs</div></div>
+        <div class="fmetric"><div class="k">FTB</div><div class="v" id="fFtb">58</div><div class="s" id="fFtbSub">1st-Time Buyers · CFB $45.78</div></div>
       </div>
     </div>
   </section>
@@ -555,7 +555,7 @@ function renderDashboard(start, end){
   const FTB_RATE = 0.70;
   const estFtb = Math.round(acctRegs * FTB_RATE);
   const estCfb = estFtb ? acctRegSpend / estFtb : 0;      // Cost per First-Time Buyer
-  const ftbSub = estFtb ? `CFB ${money(estCfb)} · ~70% of regs` : 'No regs in range';
+  const ftbSub = estFtb ? `1st-Time Buyers · CFB ${money(estCfb)}` : 'No regs in range';
   document.getElementById('kFtb').textContent = estFtb ? int(estFtb) : '—';
   document.getElementById('kFtbSub').textContent = ftbSub;
   document.getElementById('fFtb').textContent = estFtb ? int(estFtb) : '—';
