@@ -1818,6 +1818,7 @@ function buildAdsetTable(datesArr, label){
     { geo:'GCC Sales - All',      agg: aggAdset('tiktok',['GCC Sales - All']) },
     { geo:'UAE Interest - IOS',   agg: aggAdset('tiktok',['UAE Interest - IOS']) },
     { geo:'KSA Interest - IOS',   agg: aggAdset('tiktok',['KSA Interest - IOS']) },
+    { geo:'KW/QA/BH Interest - IOS', agg: aggAdset('tiktok',['KW/QA/BH Interest - IOS']) },
   ].filter(a => a.agg.spend > 0);
   // Fallback: if tiktok GRANULAR adsets empty (dates beyond Mar 16), use D geo breakdown
   if(!ttAdsets.length){
